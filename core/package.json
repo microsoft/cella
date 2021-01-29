@@ -1,0 +1,53 @@
+{
+  "name": "@microsoft/twisp.core",
+  "version": "0.1.0",
+  "description": "Twisp core library",
+  "main": "dist/exports.js",
+  "typings": "dist/exports.d.ts",
+  "directories": {
+    "doc": "docs"
+  },
+  "engines": {
+    "node": ">=10.12.0"
+  },
+  "scripts": {
+    "eslint-fix": "eslint  . --fix --ext .ts",
+    "eslint": "eslint  . --ext .ts",
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "prepare": "npm run build",
+    "test-ci": "npm run build && mocha dist/test --timeout 100000",
+    "test": "mocha dist/test --timeout 200000",
+    "watch-test": "mocha dist/test --timeout 200000 --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Microsoft/twisp.git"
+  },
+  "keywords": [
+    "twisp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Microsoft/twisp/issues"
+  },
+  "homepage": "https://github.com/Microsoft/twisp#readme",
+  "readme": "https://github.com/Microsoft/twisp/blob/master/readme.md",
+  "devDependencies": {
+    "@types/node": "~14.14.22",
+    "mocha": "~8.2.1",
+    "@types/mocha": "~8.2.0",
+    "@typescript-eslint/eslint-plugin": "~4.14.1",
+    "@typescript-eslint/parser": "~4.14.1",
+    "eslint": "~7.18.0",
+    "@types/semver": "~7.3.4",
+    "@testdeck/mocha": "~0.1.2",
+    "typescript": "4.2.0-beta",
+    "source-map-support": "~0.5.19"
+  },
+  "dependencies": {
+    "yaml": "~1.10.0",
+    "semver": "~7.3.4"
+  }
+}
