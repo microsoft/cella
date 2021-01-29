@@ -6,6 +6,9 @@
 2. [Rush](https://rushjs.io/pages/intro/welcome/) 
 
 ## VSCode extensions:
+  - `ESLint`
+  - `Mocha Test Explorer`
+  - `Test Explorer UI`
 
 
 ``` bash
@@ -25,12 +28,12 @@ rush update
  or
  - in VSCode, just build (ctrl-shift-b)
 
-
  ## Important Rush commands
 
 ### `rush update` 
 Ensures that all the dependencies are installed for all the projects.  
 Safe to run mulitple times. 
+If you modify a `package.json` file you should re-run this. (or merge from upstream when `package.json` is updated)
 
 ### `rush purge` 
 Cleans out all the installed dependencies.  
