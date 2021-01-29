@@ -360,3 +360,4 @@ common/config/rush/pnpm-lock.yaml
 *.vsix
 
 **/.rush/
+**/dist/

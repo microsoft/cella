@@ -6,7 +6,7 @@
     {
       "label": "build/watch",
       "type": "shell",
-      "command": "node ${workspaceFolder}/core/node_modules/typescript/lib/tsc.js --build --watch",
+      "command": "node ${workspaceFolder}/core/node_modules/typescript/lib/tsc.js --build --watch projects.tsconfig.json",
       "isBackground": true,
       "problemMatcher": "$tsc-watch",
       "group": {
