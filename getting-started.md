@@ -1,9 +1,12 @@
 # Build Instructions
 
-Prerequisites: 
+## Prerequisites: 
 1. [Node.js](https://nodejs.org/en/download/) (>=14.15.0 <15.0.0) -- I suggest using [NVS](https://github.com/jasongin/nvs) -- written by a microsoft engineer.
 
 2. [Rush](https://rushjs.io/pages/intro/welcome/) 
+
+## VSCode extensions:
+
 
 ``` bash
 npm install -g @microsoft/rush
