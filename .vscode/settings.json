@@ -93,5 +93,6 @@
     "source-map-support/register",
     "ts-node/register"
   ],
-  "mochaExplorer.monkeyPatch": true
+  "mochaExplorer.monkeyPatch": true,
+  "mochaExplorer.debuggerConfig": "MochaTest"
 }

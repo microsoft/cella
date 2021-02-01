@@ -11,8 +11,8 @@ import { describe, it } from 'mocha';
 
 
 // sample test that uses describe/it
-describe('something', () => {
-  it('does', () => {
-    console.log('hi');
+describe('sample test', () => {
+  it('does not make mistakes', () => {
+    notStrictEqual('A', 'B', 'letters should not be equal');
   });
 });
