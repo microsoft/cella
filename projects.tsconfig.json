@@ -6,6 +6,9 @@
     },
     {
       "path": "cli/tsconfig.json"
+    },
+    {
+      "path": "test/tsconfig.json"
     }
   ]
 }

@@ -361,3 +361,6 @@ common/config/rush/pnpm-lock.yaml
 
 **/.rush/
 **/dist/
+/test/**/*.d.ts
+/test/**/*.map
+/test/**/*.js

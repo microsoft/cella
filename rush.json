@@ -55,6 +55,12 @@
       "projectFolder": "./cli",
       "reviewCategory": "production",
       "shouldPublish": false
+    },
+    {
+      "packageName": "twisp.test",
+      "projectFolder": "./test",
+      "reviewCategory": "production",
+      "shouldPublish": false
     }
   ]
 }

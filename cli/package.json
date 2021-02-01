@@ -12,11 +12,10 @@
   "scripts": {
     "eslint-fix": "eslint  . --fix --ext .ts",
     "eslint": "eslint  . --ext .ts",
+    "clean": "shx rm -rf dist .rush *.log && shx echo Done",
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
-    "test-ci": "npm run build && mocha dist/test --timeout 100000",
-    "test": "mocha dist/test --timeout 200000",
     "watch-test": "mocha dist/test --timeout 200000 --watch"
   },
   "repository": {
@@ -35,20 +34,17 @@
   "readme": "https://github.com/Microsoft/twisp/blob/master/readme.md",
   "devDependencies": {
     "@types/node": "~14.14.22",
-    "mocha": "~8.2.1",
-    "@types/mocha": "~8.2.0",
     "@typescript-eslint/eslint-plugin": "~4.14.1",
     "@typescript-eslint/parser": "~4.14.1",
     "eslint": "~7.18.0",
     "@types/semver": "~7.3.4",
-    "chalk": "~4.1.0",
-    "@testdeck/mocha": "~0.1.2",
     "typescript": "4.2.0-beta",
-    "source-map-support": "~0.5.19"
+    "shx": "0.3.3"
   },
   "dependencies": {
     "yaml": "~1.10.0",
     "semver": "~7.3.4",
+    "chalk": "~4.1.0",
     "@microsoft/twisp.core": "0.1.0"
   }
 }

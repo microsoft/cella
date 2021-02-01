@@ -10,7 +10,11 @@
     "**/obj/**": true,
     "**/bin/**": true,
     "**/node_modules/**": true,
-    "**/*.js.map": true,
+    "**/test/**/*.d.ts": true,
+    "**/test/**/*.js": true,
+    "**/*.?s.map": true,
+    "**/*.log": true,
+    "**/.rush": true,
     "**/*.js": {
       "when": "$(basename).ts"
     },
@@ -61,6 +65,10 @@
     {
       "changeProcessCWD": true,
       "directory": "./cli",
+    },
+    {
+      "changeProcessCWD": true,
+      "directory": "./test",
     }
   ],
   "git.ignoreLimitWarning": true,
@@ -69,9 +77,17 @@
     "source.organizeImports": true
   },
   "eslint.format.enable": true,
-  "mochaExplorer.files": "./*/dist/test/**/*.js",
-  "mochaExplorer.cwd": "./core",
-  "mochaExplorer.mochaPath": "./core/node_modules/mocha",
+  "mochaExplorer.files": "./test/**/*.ts",
+  "mochaExplorer.ignore": [
+    "./test/**/*.d.ts",
+    "./test/node_modules/**"
+  ],
+  "mochaExplorer.cwd": "./test",
+  "mochaExplorer.mochaPath": "./test/node_modules/mocha",
   "mochaExplorer.timeout": 500000,
-  "mochaExplorer.require": "source-map-support/register"
+  "mochaExplorer.require": [
+    "source-map-support/register",
+    "ts-node/register"
+  ],
+  "mochaExplorer.monkeyPatch": true
 }

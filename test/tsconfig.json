@@ -1,7 +1,8 @@
 {
   "extends": "../common/tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "experimentalDecorators": true,
+    "outDir": ".",
     "rootDir": ".",
     "types": [
       "node"
@@ -12,9 +13,6 @@
     "./**/*.ts"
   ],
   "exclude": [
-    "**/dist/**",
-    "test/scenarios/**",
-    "resources",
     "node_modules/**",
     "**/*.d.ts"
   ]

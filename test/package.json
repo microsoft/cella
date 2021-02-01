@@ -1,9 +1,7 @@
 {
-  "name": "@microsoft/twisp.core",
+  "name": "twisp.test",
   "version": "0.1.0",
-  "description": "Twisp core library",
-  "main": "dist/exports.js",
-  "typings": "dist/exports.d.ts",
+  "description": "Twisp test project",
   "directories": {
     "doc": "docs"
   },
@@ -13,10 +11,12 @@
   "scripts": {
     "eslint-fix": "eslint  . --fix --ext .ts",
     "eslint": "eslint  . --ext .ts",
-    "clean": "shx rm -rf dist .rush *.log && shx echo Done",
+    "clean": "shx rm -rf dist .rush && shx echo Done",
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
+    "test-ci": "npm run build && mocha dist/test --timeout 100000",
+    "test": "mocha dist/test --timeout 200000",
     "watch-test": "mocha dist/test --timeout 200000 --watch"
   },
   "repository": {
@@ -35,14 +35,20 @@
   "readme": "https://github.com/Microsoft/twisp/blob/master/readme.md",
   "devDependencies": {
     "@types/node": "~14.14.22",
+    "mocha": "~8.2.1",
+    "@types/mocha": "~8.2.0",
     "@typescript-eslint/eslint-plugin": "~4.14.1",
     "@typescript-eslint/parser": "~4.14.1",
     "eslint": "~7.18.0",
     "@types/semver": "~7.3.4",
+    "@testdeck/mocha": "~0.1.2",
     "typescript": "4.2.0-beta",
+    "source-map-support": "~0.5.19",
+    "ts-node": "9.1.1",
     "shx": "0.3.3"
   },
   "dependencies": {
+    "@microsoft/twisp.core": "0.1.0",
     "yaml": "~1.10.0",
     "semver": "~7.3.4"
   }

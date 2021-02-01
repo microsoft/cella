@@ -23,10 +23,8 @@
     "newLine": "LF"
   },
   "exclude": [
-    "dist",
-    "test/scenarios/**",
-    "resources",
-    "node_modules/**",
-    "**/*.d.ts"
+    "../**/dist/**",
+    "../node_modules/**",
+    "../**/*.d.ts"
   ]
 }
