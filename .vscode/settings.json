@@ -80,7 +80,11 @@
   "mochaExplorer.files": "./test/**/*.ts",
   "mochaExplorer.ignore": [
     "./test/**/*.d.ts",
-    "./test/node_modules/**"
+    "**/node_modules/**",
+    "./core/**",
+    "./cli/**",
+    "./common/**/*.ts",
+    "./common/**/*.js"
   ],
   "mochaExplorer.cwd": "./test",
   "mochaExplorer.mochaPath": "./test/node_modules/mocha",

@@ -15,9 +15,9 @@
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
-    "test-ci": "npm run build && mocha dist/test --timeout 100000",
-    "test": "mocha dist/test --timeout 200000",
-    "watch-test": "mocha dist/test --timeout 200000 --watch"
+    "test-ci": "npm run build && npm run test",
+    "test": "mocha --config ./mocha-config.yaml  --timeout 200000",
+    "watch-test": "mocha --config ./mocha-config.yaml --timeout 200000 --watch"
   },
   "repository": {
     "type": "git",

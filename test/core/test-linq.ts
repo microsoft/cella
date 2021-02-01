@@ -26,11 +26,7 @@ import * as assert from 'assert';
   @test async 'iterating thru collections'() {
     // items are items.
     assert.strictEqual([...linq.values(this.anArray)].join(','), this.anArray.join(','));
-
     assert.strictEqual(linq.values(this.anArray).count(), 5);
-
   }
-
-
 }
 
