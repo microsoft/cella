@@ -63,7 +63,7 @@ function npmForEach(cmd) {
         console.log(`  Done : command '${cmd}' - ${Math.floor(t2 - t1) / 100} s -- No Errors `)
       }
       console.log('---------------------------------------------------------');
-      process.exit(1);
+      process.exit(failing ? 1 : 0);
     }
   }));
 
