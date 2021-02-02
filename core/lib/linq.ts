@@ -27,13 +27,6 @@ export function when<T>(value: T, onTrue: (value: NonNullable<T>) => void, onFal
   return value ? onTrue(<NonNullable<T>>value) : onFalse();
 }
 
-
-/*
-  * Reverses the elements in an Array.
-  * reverse(): T[];
-  */
-
-
 export interface IterableWithLinq<T> extends Iterable<T> {
   linq: IterableWithLinq<T>;
   any(predicate?: (each: T) => boolean): boolean;

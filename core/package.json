@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "yaml": "~1.10.0",
-    "semver": "~7.3.4"
+    "semver": "~7.3.4",
+    "css-mediaquery": "0.1.2"
   }
 }

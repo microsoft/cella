@@ -52,7 +52,8 @@ Runs `npm test` on each project (does not build first -- see `rush test-ci`)
 Runs `npm test-ci` on each project (rebuilds the code then runs the tests)
 
 ### `rush clean`  
-Runs `npm clean` on each project -- cleans out the `./dist` folder for each project
+Runs `npm clean` on each project -- cleans out the `./dist` folder for each project.  
+Needs to have packages installed, so it can only be run after `rush update`
 
 ### `rush lint` 
 Runs `npm lint` on each project (runs the eslint on the source)
@@ -61,7 +62,7 @@ Runs `npm lint` on each project (runs the eslint on the source)
 Runs `npm eslint-fix` on each project (fixes all fixable linter errors)
 
 ### `rush set-versions` 
-This will set the `.build` verison for each project based on the commit number. 
+This will set the `x.x.build` verison for each project based on the commit number. 
 
 ### `rush sync-versions`
 This will ensure that all the projects have consistent versions for all dependencies, and ensures that cross-project version references are set correctly

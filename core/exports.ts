@@ -1,3 +1,4 @@
+export * from './lib/filesystem';
 export * from './lib/linq';
 export * from './lib/version';
 
