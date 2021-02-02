@@ -22,13 +22,13 @@ rush update
 ```
 
 ## Building code
- - `rush rebuild` to build the modules
- or
- - `rush watch` to setup the build watcher 
- or
- - in VSCode, just build (ctrl-shift-b)
+- `rush rebuild` to build the modules
+or
+- `rush watch` to setup the build watcher 
+or
+- in VSCode, just build (ctrl-shift-b)
 
- ## Important Rush commands
+## Important Rush commands
 
 ### `rush update` 
 Ensures that all the dependencies are installed for all the projects.  

@@ -2,6 +2,10 @@ const { spawn } = require('child_process');
 const { readFileSync } = require('fs');
 const { resolve } = require('path');
 
+/** Reads a json/jsonc file and returns the JSON.
+ * 
+ * Necessary because rush uses jsonc ( >,< )
+ */
 function read(filename) {
   const txt = readFileSync(filename, "utf8")
     .replace(/\r/gm, "")
@@ -17,8 +21,6 @@ const repo = `${__dirname}/..`;
 const rush = read(`${repo}/rush.json`);
 const pjs = {};
 
-
-
 function forEachProject(onEach) {
   // load all the projects
   for (const each of rush.projects) {
@@ -31,7 +33,7 @@ function forEachProject(onEach) {
 
 function npmForEach(cmd) {
   let count = 0;
-  let exitCode = 0;
+  let failing = false;
   const result = {};
   const procs = [];
   const t1 = process.uptime() * 100;
@@ -49,19 +51,19 @@ function npmForEach(cmd) {
 
   procs.forEach(proc => proc.on("close", (code, signal) => {
     count--;
-    exitCode += code;
+    failing || !!code;
 
     if (count === 0) {
       const t2 = process.uptime() * 100;
 
       console.log('---------------------------------------------------------');
-      if (exitCode !== 0) {
-        console.log(`  Done : command '${cmd}' - ${Math.floor(t2 - t1) / 100} s -- Errors ${exitCode} `)
+      if (failing) {
+        console.log(`  Done : command '${cmd}' - ${Math.floor(t2 - t1) / 100} s -- Errors encountered. `)
       } else {
         console.log(`  Done : command '${cmd}' - ${Math.floor(t2 - t1) / 100} s -- No Errors `)
       }
       console.log('---------------------------------------------------------');
-      process.exit(exitCode);
+      process.exit(1);
     }
   }));
 
@@ -71,3 +73,4 @@ function npmForEach(cmd) {
 module.exports.forEachProject = forEachProject;
 module.exports.npm = npmForEach;
 module.exports.projectCount = rush.projects.length;
+module.exports.read = read;

@@ -1,14 +1,5 @@
 const { readFileSync, writeFileSync } = require('fs');
-
-function read(filename) {
-  const txt = readFileSync(filename, 'utf8')
-    .replace(/\r/gm, '')
-    .replace(/\n/gm, '«')
-    .replace(/\/\*.*?\*\//gm, '')
-    .replace(/«/gm, '\n')
-    .replace(/\s+\/\/.*/g, '');
-  return JSON.parse(txt);
-}
+const { read } = require('./for-each');
 
 const packageList = {};
 const rush = read(`${__dirname}/../rush.json`);
@@ -105,7 +96,7 @@ for (const pj of Object.getOwnPropertyNames(pjs)) {
   }
 }
 
-// now compare to see if someone has an exnternal package with different version
+// now compare to see if someone has an external package with different version
 // than everyone else.
 for (const pj of Object.getOwnPropertyNames(pjs)) {
   const each = pjs[pj];
