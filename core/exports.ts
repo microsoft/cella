@@ -1,5 +1,11 @@
 export * from './lib/filesystem';
+export * from './lib/http-filesystem';
+export * from './lib/i18n';
 export * from './lib/linq';
+export * from './lib/local-filesystem';
+export * from './lib/messages';
+export * from './lib/unified-filesystem';
+export * from './lib/uri';
 export * from './lib/version';
 
 /** This adds the expected declarations to the Array type. */
