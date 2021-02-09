@@ -348,3 +348,19 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+
+# Rush files
+common/temp/**
+package-deps.json
+
+common/config/rush/shrinkwrap.yaml
+common/config/rush/pnpm-lock.yaml
+
+*.vsix
+
+**/.rush/
+**/dist/
+/test/**/*.d.ts
+/test/**/*.map
+/test/**/*.js
