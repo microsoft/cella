@@ -1,7 +1,6 @@
 import { EventEmitter } from 'ee-ts';
 import { Uri } from './uri';
 
-
 interface FileEntry {
   path: string;
 }
@@ -10,6 +9,7 @@ interface FolderEntry {
   path: string;
 }
 
+/** The event definitions for for unpackers */
 interface UnpackEvents {
   file(entry: FileEntry): void;
   folder(entry: FolderEntry): void;
@@ -18,6 +18,7 @@ interface UnpackEvents {
   error(entry: Readonly<FileEntry>, message: string): void;
 }
 
+/** Unpacker output options */
 export interface OutputOptions {
   /**
    * Strip # directories from the path
@@ -32,6 +33,7 @@ export interface OutputOptions {
   transform?: string;
 }
 
+/** Unpacker base class definition */
 export abstract class Unpacker extends EventEmitter<UnpackEvents> {
   constructor(protected archivePath: Uri) {
     super();

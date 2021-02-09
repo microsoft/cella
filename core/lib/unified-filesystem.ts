@@ -44,6 +44,7 @@ export class UnifiedFileSystem extends FileSystem {
 
     return filesystem;
   }
+
   /**
   * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
   * `file:///usr/home`, or `scheme:with/path`.

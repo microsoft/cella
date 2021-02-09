@@ -1,5 +1,5 @@
-import { FileType, LocalFileSystem, Uri } from '@microsoft/twisp.core';
-import { suite, test } from '@testdeck/mocha';
+import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/twisp.core';
+import { skip, suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
@@ -8,23 +8,15 @@ function uniqueTempFolder(): string {
   return mkdtempSync(`${tmpdir()}/twisp-temp$`);
 }
 
-/**
- * Creates a promise that resolves after a delay
- *
- * @param delayMS the length of time to delay in milliseconds.
- */
-export function Delay(delayMS: number): Promise<void> {
-  return new Promise<void>(res => setTimeout(res, delayMS));
-}
-
 @suite class LocalFileSystemTests {
   static tempFolder: string;
   static tempFolderUrl: Uri;
   static fs: LocalFileSystem;
 
   static before() {
+    const session = new Session();
     this.tempFolder = uniqueTempFolder();
-    this.fs = new LocalFileSystem();
+    this.fs = new LocalFileSystem(session);
     this.tempFolderUrl = this.fs.file(LocalFileSystemTests.tempFolder);
   }
 
@@ -134,7 +126,7 @@ export function Delay(delayMS: number): Promise<void> {
     // make sure it's gone!
     strict.ok(!(await fs.isFile(outputFile)), `the file ${outputFile.fsPath} should not exist`);
   }
-  @test async 'copy '() {
+  @test @skip async 'copy '() {
     // tbw
   }
 

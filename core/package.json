@@ -17,7 +17,8 @@
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
-    "watch-test": "mocha dist/test --timeout 200000 --watch"
+    "watch-test": "mocha dist/test --timeout 200000 --watch",
+    "translate": "ts-node ./.scripts/translate.ts"
   },
   "repository": {
     "type": "git",
@@ -41,7 +42,10 @@
     "@types/semver": "~7.3.4",
     "@types/tar-stream": "2.2.0",
     "typescript": "4.2.0-beta",
-    "shx": "0.3.3"
+    "ts-node": "9.1.1",
+    "ts-morph": "9.1.0",
+    "shx": "0.3.3",
+    "chalk": "4.1.0"
   },
   "dependencies": {
     "vscode-uri": "3.0.2",

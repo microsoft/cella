@@ -1,5 +1,7 @@
 import { EventEmitter } from 'ee-ts';
+import { Session } from './session';
 
+/** Event defintions for channel events */
 interface ChannelEvents {
   warning(text: string, context: any, msec: number): void;
   error(text: string, context: any, msec: number): void;
@@ -7,7 +9,13 @@ interface ChannelEvents {
   debug(text: string, context: any, msec: number): void;
 }
 
-class Stopwatch {
+
+/**
+ * @internal
+ *
+ * Tracks timing of events
+*/
+export class Stopwatch {
   start: number;
   last: number;
   constructor() {
@@ -25,8 +33,13 @@ class Stopwatch {
   }
 }
 
+/** Exposes a set of events that are used to communicate with the user
+ *
+ * Warning, Error, Message, Debug
+ */
 export class Channels extends EventEmitter<ChannelEvents> {
-  stopwatch = new Stopwatch();
+  /** @internal */
+  readonly stopwatch: Stopwatch;
 
   warning(text: string, context?: any) {
     this.emit('warning', text, context, this.stopwatch.total);
@@ -40,8 +53,8 @@ export class Channels extends EventEmitter<ChannelEvents> {
   debug(text: string, context?: any) {
     this.emit('debug', text, context, this.stopwatch.total);
   }
-
-  constructor() {
+  constructor(session: Session) {
     super();
+    this.stopwatch = session.stopwatch;
   }
 }

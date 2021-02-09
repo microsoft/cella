@@ -2,7 +2,10 @@ import { FileStat, FileSystem, FileType } from './filesystem';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 import { Uri } from './uri';
 
-
+/**
+ * HTTP/HTTPS Filesystem
+ *
+ */
 export class HttpFileSystem extends FileSystem {
   stat(uri: Uri): Promise<FileStat> {
     throw new Error('Method not implemented.');

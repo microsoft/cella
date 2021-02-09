@@ -1,5 +1,8 @@
 import { Readable, Writable } from 'stream';
 
+/**
+ * Adds Event to Promise mapping to Readable streams
+ * */
 export class ReadableEvents {
   /** @internal */
   constructor(private readable: Readable) {
@@ -36,6 +39,10 @@ export class ReadableEvents {
   }
 
 }
+
+/**
+ * Adds Event to Promise mapping to Writeable streams
+ * */
 
 export class WritableEvents {
   /** @internal */

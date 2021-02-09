@@ -1,3 +1,6 @@
+import { EventEmitter } from 'ee-ts';
+import { Stopwatch } from './channels';
+import { Session } from './session';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 import { Uri } from './uri';
 
@@ -60,8 +63,7 @@ export enum FileType {
 }
 
 
-export abstract class FileSystem {
-
+export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
   /**
  * Creates a new URI from a file system path, e.g. `c:\my\files`,
  * `/usr/home`, or `\\server\share\some\path`.
@@ -218,4 +220,52 @@ export abstract class FileSystem {
     }
     return false;
   }
+
+  private readonly stopwatch: Stopwatch;
+
+  constructor(session: Session) {
+    super();
+    this.stopwatch = session.stopwatch;
+  }
+
+  /** EventEmitter for when files are read */
+  protected read(path: Uri, context?: any) {
+    this.emit('read', path, context, this.stopwatch.total);
+  }
+
+  /** EventEmitter for when files are written */
+  protected write(path: Uri, context?: any) {
+    this.emit('write', path, context, this.stopwatch.total);
+  }
+
+  /** EventEmitter for when files are deleted */
+  protected deleted(path: Uri, context?: any) {
+    this.emit('deleted', path, context, this.stopwatch.total);
+  }
+
+  /** EventEmitter for when files are renamed */
+  protected renamed(path: Uri, context?: any) {
+    this.emit('renamed', path, context, this.stopwatch.total);
+  }
+
+  /** EventEmitter for when directories are read */
+  protected directoryRead(path: Uri, contents?: Promise<Array<[Uri, FileType]>>) {
+    this.emit('directoryRead', path, contents, this.stopwatch.total);
+  }
+
+  /** EventEmitter for when direcotries are created */
+  protected directoryCreated(path: Uri, context?: any) {
+    this.emit('directoryCreated', path, context, this.stopwatch.total);
+  }
+}
+
+
+/** Event definitions for FileSystem events */
+interface FileSystemEvents {
+  read(path: Uri, context: any, msec: number): void;
+  write(path: Uri, context: any, msec: number): void;
+  deleted(path: Uri, context: any, msec: number): void;
+  renamed(path: Uri, context: any, msec: number): void;
+  directoryRead(path: Uri, contents: Promise<Array<[Uri, FileType]>> | undefined, msec: number): void;
+  directoryCreated(path: Uri, context: any, msec: number): void;
 }

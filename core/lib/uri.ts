@@ -162,6 +162,7 @@ bad.fragment === '/project1';
     return this.uri.toString(skipEncoding);
   }
 
+  /** returns a JSON object with the components of the Uri */
   toJSON(): UriComponents {
     return this.uri.toJSON();
   }

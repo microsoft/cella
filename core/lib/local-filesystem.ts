@@ -33,6 +33,11 @@ class LocalFileStats implements FileStat {
 }
 
 
+/**
+ * Implementation of the Local File System
+ *
+ * This is used to handle the access to the local disks.
+ */
 export class LocalFileSystem extends FileSystem {
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
@@ -40,34 +45,58 @@ export class LocalFileSystem extends FileSystem {
   }
 
   async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
-    const folder = uri.fsPath;
-    const results = (await readdir(folder)).map(async each => {
-      const path = uri.fileSystem.file(join(folder, each));
-      return <[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(path.fsPath))];
-    });
-    return Promise.all(results);
+    let retval!: Promise<Array<[Uri, FileType]>>;
+    try {
+      const folder = uri.fsPath;
+      const items = (await readdir(folder)).map(async each => {
+        const path = uri.fileSystem.file(join(folder, each));
+        return <[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(path.fsPath))];
+      });
+      return retval = Promise.all(items);
+    } finally {
+      // log that.
+      this.directoryRead(uri, retval);
+    }
   }
 
   async createDirectory(uri: Uri): Promise<void> {
     await mkdir(uri.fsPath, { recursive: true });
+    this.directoryCreated(uri);
   }
 
-  async readFile(uri: Uri): Promise<Uint8Array> {
-    return await readFile(uri.fsPath);
+  readFile(uri: Uri): Promise<Uint8Array> {
+    let contents!: Promise<Uint8Array>;
+    try {
+      return contents = readFile(uri.fsPath);
+    } finally {
+      this.read(uri, contents);
+    }
   }
 
-  async writeFile(uri: Uri, content: Uint8Array): Promise<void> {
-    await writeFile(uri.fsPath, content);
+  writeFile(uri: Uri, content: Uint8Array): Promise<void> {
+    try {
+      return writeFile(uri.fsPath, content);
+    } finally {
+      this.write(uri, content);
+    }
   }
 
-  async delete(uri: Uri, options?: { recursive?: boolean | undefined; useTrash?: boolean | undefined; }): Promise<void> {
-    options = options || { recursive: false };
-    await rm(uri.fsPath, { recursive: options.recursive, force: true, maxRetries: 3 });
+  delete(uri: Uri, options?: { recursive?: boolean | undefined; useTrash?: boolean | undefined; }): Promise<void> {
+    try {
+      options = options || { recursive: false };
+      return rm(uri.fsPath, { recursive: options.recursive, force: true, maxRetries: 3 });
+    } finally {
+      this.deleted(uri);
+    }
   }
 
-  async rename(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
-    strict.equal(source.fileSystem, target.fileSystem, i`Cannot rename files across filesystems`);
-    await rename(source.fsPath, target.fsPath);
+  rename(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
+    try {
+      strict.equal(source.fileSystem, target.fileSystem, i`Cannot rename files across filesystems`);
+      return rename(source.fsPath, target.fsPath);
+    } finally {
+      this.renamed(source, { target, options });
+    }
   }
 
   async copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
@@ -80,10 +109,12 @@ export class LocalFileSystem extends FileSystem {
   }
 
   async readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    this.read(uri);
     return enhanceReadable(createReadStream(uri.fsPath));
   }
 
   async writeStream(uri: Uri): Promise<EnhancedWritable> {
+    this.write(uri);
     return enhanceWritable(createWriteStream(uri.fsPath));
   }
 }
