@@ -1,13 +1,12 @@
 import { fail } from 'assert';
 import { resolve } from 'path';
-import { length } from './linq';
 
 export type switches = {
   [key: string]: Array<string>;
 }
 
 function onlyOne(values: Array<string>, errorMessage: string) {
-  switch (length(values)) {
+  switch (values.length) {
     case 0:
       return undefined;
     case 1:

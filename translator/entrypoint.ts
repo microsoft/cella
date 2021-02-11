@@ -7,7 +7,6 @@ import { basename, join, normalize } from 'path';
 import { argv } from 'process';
 import { ForEachDescendantTraversalControl, Node, Project, PropertyAssignment, PropertyAssignmentStructure, StructureKind } from 'ts-morph';
 import { parseArgs } from './lib/command-line';
-import { Dictionary } from './lib/linq';
 
 /** ensures a string is string encoded and quoted correctly  */
 function singleQuote(text: string) {
@@ -17,6 +16,10 @@ function singleQuote(text: string) {
 /** removes backtick quotes from a string */
 function unquote(text: string) {
   return (text.startsWith('`') && text.endsWith('`')) ? text = text.substr(1, text.length - 2) : text;
+}
+
+interface Dictionary<T> {
+  [key: string]: T;
 }
 
 type templateStringParameter = { name: string, type: string };
