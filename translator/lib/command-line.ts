@@ -46,12 +46,16 @@ export function parseArgs(args: Array<string>) {
   const cli = new CommandLine();
 
   for (const each of args) {
+    // --name
+    // --name:value
+    // --name=value
     const [, name, value] = /^--([^=:]+)[=:]?(.+)?$/g.exec(each) || [];
     if (name) {
       cli.switches[name] = cli.switches[name] === undefined ? [] : cli.switches[name];
       cli.switches[name].push(value);
       continue;
     }
+
     cli.inputs.push(each);
   }
   return cli;
