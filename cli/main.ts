@@ -1,5 +1,8 @@
 #!/bin/env node
 
-import { Version } from '@microsoft/twisp.core';
+import { i, setLocale, Version } from '@microsoft/twisp.core';
 
-console.log(`core version: ${Version}`);
+// try to set the locale based on the users's settings.
+setLocale(Intl.DateTimeFormat().resolvedOptions().locale, `${__dirname}/i18n/`);
+
+console.log(i`core version: ${Version}`);
