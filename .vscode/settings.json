@@ -70,10 +70,6 @@
     {
       "changeProcessCWD": true,
       "directory": "./test",
-    },
-    {
-      "changeProcessCWD": true,
-      "directory": "./translator",
     }
   ],
   "git.ignoreLimitWarning": true,

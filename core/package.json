@@ -46,7 +46,7 @@
     "ts-morph": "9.1.0",
     "shx": "0.3.3",
     "chalk": "4.1.0",
-    "translate-strings": "1.0.0"
+    "translate-strings": "1.0.1"
   },
   "dependencies": {
     "vscode-uri": "3.0.2",
