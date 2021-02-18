@@ -18,7 +18,7 @@
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
     "watch-test": "mocha dist/test --timeout 200000 --watch",
-    "translate": "ts-node ./.scripts/translate.ts"
+    "translate": "translate-strings ."
   },
   "repository": {
     "type": "git",
@@ -45,7 +45,8 @@
     "ts-node": "9.1.1",
     "ts-morph": "9.1.0",
     "shx": "0.3.3",
-    "chalk": "4.1.0"
+    "chalk": "4.1.0",
+    "translate-strings": "1.0.0"
   },
   "dependencies": {
     "vscode-uri": "3.0.2",

@@ -2,7 +2,7 @@
   "name": "twisp",
   "version": "0.1.0",
   "description": "Twisp CLI",
-  "main": "dist/entrypoint.js",
+  "main": "dist/main.js",
   "directories": {
     "doc": "docs"
   },
@@ -16,7 +16,8 @@
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "prepare": "npm run build",
-    "watch-test": "mocha dist/test --timeout 200000 --watch"
+    "watch-test": "mocha dist/test --timeout 200000 --watch",
+    "translate": "translate-strings ."
   },
   "repository": {
     "type": "git",
@@ -39,7 +40,8 @@
     "eslint": "~7.18.0",
     "@types/semver": "~7.3.4",
     "typescript": "4.2.0-beta",
-    "shx": "0.3.3"
+    "shx": "0.3.3",
+    "translate-strings": "1.0.0"
   },
   "dependencies": {
     "yaml": "~1.10.0",

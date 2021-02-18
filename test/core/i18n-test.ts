@@ -12,7 +12,7 @@ import { strict } from 'assert';
   @test 'try translations'() {
     setLocale('de');
     const uri = 'hello://world';
-    strict.equal(i`uri ${uri} has no scheme`, `Die URL ${uri} hat kein Schema`, 'Translation did not work correctly');
+
+    strict.equal(i`uri ${uri} has no scheme`, `uri ${uri} hat kein Schema`, 'Translation did not work correctly');
   }
 }
-

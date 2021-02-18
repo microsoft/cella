@@ -61,12 +61,6 @@
       "projectFolder": "./test",
       "reviewCategory": "production",
       "shouldPublish": false
-    },
-    {
-      "packageName": "translator",
-      "projectFolder": "./translator",
-      "reviewCategory": "production",
-      "shouldPublish": false
     }
   ]
 }
