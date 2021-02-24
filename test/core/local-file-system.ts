@@ -74,7 +74,7 @@ function uniqueTempFolder(): string {
     const files = await fs.readDirectory(thisFolder);
 
     // find this file
-    const found = files.find(each => each[0].fsPath === __filename);
+    const found = files.find(each => each[0].fsPath.indexOf('local-file-system') > -1);
 
     // should be a file, right?
     strict.ok(found?.[1] && FileType.File, `${__filename} should be a path`);
