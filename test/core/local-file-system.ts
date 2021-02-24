@@ -1,11 +1,11 @@
-import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/twisp.core';
+import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
 import { skip, suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 
 function uniqueTempFolder(): string {
-  return mkdtempSync(`${tmpdir()}/twisp-temp$`);
+  return mkdtempSync(`${tmpdir()}/cella-temp$`);
 }
 
 @suite class LocalFileSystemTests {

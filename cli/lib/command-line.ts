@@ -22,15 +22,15 @@ export class CommandLine {
 
 
   get force() {
-    return !!this.switches.force;
+    return !!this.switches['force'];
   }
 
   get debug() {
-    return !!this.switches.debug;
+    return !!this.switches['debug'];
   }
 
   get lang() {
-    return onlyOne(this.switches.language, '--lang specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
+    return onlyOne(this.switches['language'], '--lang specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
 }

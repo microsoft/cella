@@ -1,4 +1,4 @@
-import { Channels, Session } from '@microsoft/twisp.core';
+import { Channels, Session } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strictEqual } from 'assert';
 

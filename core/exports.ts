@@ -1,3 +1,4 @@
+export * from './lib/amf';
 export * from './lib/channels';
 export * from './lib/filesystem';
 export * from './lib/http-filesystem';

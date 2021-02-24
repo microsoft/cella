@@ -1,4 +1,4 @@
-import { i, setLocale } from '@microsoft/twisp.core';
+import { i, setLocale } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 
