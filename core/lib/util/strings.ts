@@ -2,7 +2,6 @@ import { Scalar, YAMLMap } from 'yaml/types';
 import { isPrimitive } from './checks';
 import { createNode } from './yaml';
 
-
 export class Strings {
   #parent: YAMLMap;
   #property: string;
