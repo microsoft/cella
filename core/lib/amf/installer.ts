@@ -1,11 +1,11 @@
 import { fail } from 'assert';
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
-import { Git, Installer, NuGet, UnTar, UnZip } from '../metadata-format';
+import { Git, Installer, NuGet, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 
-
+/** @internal */
 export function createInstallerNode(node: YAMLMap, name: string): Installer {
   const n = getOrCreateMap(node, name);
   if (n.has('unzip')) {
@@ -24,7 +24,9 @@ export function createInstallerNode(node: YAMLMap, name: string): Installer {
 }
 
 class InstallerNode extends NodeBase {
-
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
 
 }
 
@@ -57,36 +59,57 @@ class FileInstallerNode extends InstallerNode {
   get transform() {
     return this.strings('transform');
   }
+
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }
 
 class UnzipNode extends FileInstallerNode implements UnZip {
+  readonly kind = 'unzip';
+
   get [Symbol.toStringTag]() {
     return this.node.get('UnzipNode');
   }
 
-  get unzip() {
+  get location() {
     return this.strings('unzip');
   }
 }
 
 class NugetNode extends FileInstallerNode implements NuGet {
-  get nuget() {
+  readonly kind = 'nuget';
+
+  get location() {
     return this.getString('nuget')!;
   }
 
-  set nuget(value: string) {
+  set location(value: string) {
     this.setString('nuget', value);
   }
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }
 
 class UnTarNode extends FileInstallerNode implements UnTar {
-  get untar() {
+  readonly kind = 'untar';
+
+  get location() {
     return this.strings('untar');
   }
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }
 
 class GitCloneNode extends InstallerNode implements Git {
-  get git() {
+  readonly kind = 'git';
+
+  get location() {
     return this.strings('git');
   }
 
@@ -112,5 +135,9 @@ class GitCloneNode extends InstallerNode implements Git {
   set recurse(value: boolean | undefined) {
     this.setBoolean('recurse', value);
   }
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 
 }

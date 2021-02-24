@@ -1,7 +1,8 @@
 import { fail } from 'assert';
 import { Document } from 'yaml';
 import { YAMLMap } from 'yaml/types';
-import { ArtifactSource, Contact, Demands, DictionaryOf, Info, Installer, ProfileBase, Settings, StringOrStrings, VersionReference } from '../metadata-format';
+import { i } from '../i18n';
+import { ArtifactSource, Contact, Demands, DictionaryOf, ErrorKind, Info, Installer, ProfileBase, Settings, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
@@ -34,7 +35,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   }
 
   #sources!: DictionaryOf<ArtifactSource>;
-  get sources(): DictionaryOf<ArtifactSource> | undefined {
+  get sources(): DictionaryOf<ArtifactSource> {
     return this.#sources || (this.#sources = proxyDictionary(getOrCreateMap(this.document, 'sources'), createArtifactSourceNode, () => { fail('Can not set entries directly.'); }));
   }
 
@@ -88,4 +89,78 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   get use(): DictionaryOf<StringOrStrings> | undefined {
     throw new Error('not implemented');
   }
+  get demands(): Array<string> {
+    return this.keys;
+  }
+  get isValidYaml(): boolean {
+    return this.document.errors.length === 0;
+  }
+
+  #errors!: Array<string>;
+  get yamlErrors(): Array<string> {
+    return this.#errors || (this.#errors = this.document.errors.map(each => {
+      const message = each.message;
+      each.makePretty();
+      const line = each.linePos?.start.line || 1;
+      const column = each.linePos?.start.col || 1;
+      return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
+    }));
+  }
+
+  get isValid(): boolean {
+    return this.validationErrors.length === 0;
+  }
+
+  #validationErrors!: Array<string>;
+  get validationErrors(): Array<string> {
+    if (this.#validationErrors) {
+      return this.#validationErrors;
+    }
+    this.#validationErrors = new Array<string>();
+    for (const { message, line, column, category } of this.validate()) {
+      if (line) {
+        this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
+      } else {
+        this.#validationErrors.push(`${this.filename}: ${category}, ${message}`);
+      }
+    }
+    return this.#validationErrors;
+  }
+
+
+  *validate(): Iterable<ValidationError> {
+    // verify that we have info
+    if (!this.document.has('info')) {
+      yield { message: i`Missing section '${'info'}'`, line: 0, column: 0, category: ErrorKind.SectionNotFound };
+    } else {
+      yield* this.info.validate();
+    }
+
+    if (this.document.has('settings')) {
+      yield* this.settings.validate();
+    }
+
+    if (this.document.has('requires')) {
+      for (const each of this.requires.keys) {
+        yield* this.requires[each].validate();
+      }
+    }
+    if (this.document.has('sources')) {
+      for (const each of this.sources.keys) {
+        yield* this.sources[each].validate();
+      }
+    }
+
+    if (this.document.has('contacts')) {
+      for (const each of this.contacts.keys) {
+        yield* this.contacts[each].validate();
+      }
+    }
+    if (this.document.has('see-also')) {
+      for (const each of this.#seeAlso.keys) {
+        yield* this.#seeAlso[each].validate();
+      }
+    }
+  }
 }
+

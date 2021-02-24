@@ -1,4 +1,3 @@
-import { strict } from 'assert';
 import { Document, parseDocument } from 'yaml';
 import { Collection, YAMLMap, YAMLSeq } from 'yaml/types';
 import { StringOrStrings } from '../metadata-format';
@@ -10,10 +9,12 @@ export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors
 /** @internal */
 export function getOrCreateMap(node: Document.Parsed | Collection, name: string): YAMLMap {
   let m = node.get(name);
-  if (m instanceof YAMLMap) {
+  if (m) {
     return m;
   }
-  strict.ok(!m, 'node is not a map');
+  // these should be picked up in validate()
+  // strict.ok(m instanceof YAMLMap, 'node is not a map');
+
   node.set(name, m = new YAMLMap());
   return m;
 }

@@ -1,5 +1,5 @@
 import { YAMLMap } from 'yaml/types';
-import { DictionaryOf, Paths, Settings, StringOrStrings } from '../metadata-format';
+import { DictionaryOf, Paths, Settings, StringOrStrings, ValidationError } from '../metadata-format';
 import { getOrCreateMap, getStrings, setStrings } from '../util/yaml';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
 
@@ -29,4 +29,9 @@ export class SettingsNode extends DictionaryImpl<any> implements Settings {
   get defines(): DictionaryOf<string> {
     return this.#defines || (this.#defines = proxyDictionary(getOrCreateMap(this.node, 'defines'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
+
+  *validate(): Iterable<ValidationError> {
+    //
+  }
+
 }

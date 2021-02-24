@@ -1,27 +1,20 @@
-import { parse } from '@microsoft/cella.core';
+import { isNuGet, parse } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import * as s from '../sequence-equal';
 
-// I like my collections to be easier to compare.
-declare module 'assert' {
-  namespace assert {
-    function sequenceEqual(actual: Iterable<any>, expected: Iterable<any>, message?: string | Error): void;
-    function throws(block: () => any, message?: string | Error): void;
-  }
-}
-
-(<any>strict).sequenceEqual = (a: Iterable<any>, e: Iterable<any>, message: string) => {
-  return strict.deepEqual([...a], [...e], message);
-};
-
+// don't move this. I need this.
+s;
 
 // sample test using decorators.
 @suite class Amf {
   @test async 'readProfile'() {
     const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
+    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+
     strict.equal(doc.info.id, 'sample1', 'identity incorrect');
     strict.equal(doc.info.version, '1.2.3', 'version incorrect');
 
@@ -30,10 +23,10 @@ declare module 'assert' {
   @test async 'profile checks'() {
     const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
+    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+
     strict.throws(() => doc.info.version = '4.1', 'Setting invalid version should throw');
     strict.equal(doc.info.version = '4.1.0', '4.1.0', 'Version should set correctly');
-
-    console.log(doc.contacts['Bob Smith'].roles.toString());
 
     strict.sequenceEqual(doc.contacts['Bob Smith'].roles, ['fallguy', 'otherguy'], 'Should return the two roles');
     doc.contacts['Bob Smith'].roles.remove('fallguy');
@@ -97,10 +90,36 @@ declare module 'assert' {
     doc.settings.paths.bin = [...doc.settings.paths.bin, 'hello/there'];
     strict.deepEqual(doc.settings.paths.bin.length, 3, 'there should be three paths in bin now.');
 
-    console.log(doc.keys);
+    strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
-    console.log(doc['windows and arm'].install);
+    const install = doc['windows and arm'].install!;
+    strict.ok(isNuGet(install), 'the install type should be NuGet');
+    strict.equal(install.location, 'floobaloo/1.2.3', 'should have correct location');
 
     console.log(doc.toString());
+  }
+
+  @test async 'read invalid yaml file'() {
+    const content = await (await readFile(join(__dirname, 'resources', 'errors.yaml'))).toString('utf-8');
+    const doc = parse('errors.yaml', content);
+
+    strict.equal(doc.isValidYaml, false, 'this document should have errors');
+    strict.equal(doc.yamlErrors.length, 2, 'This document should have one error');
+    strict.equal(doc.yamlErrors[1], 'errors.yaml:2:1 YAMLSemanticError, Map keys must be unique; "top" is repeated', 'Message is not correct');
+
+    strict.equal(doc.info.id, 'bob', 'identity incorrect');
+    strict.equal(doc.info.version, '1.0.2', 'version incorrect');
+  }
+
+  @test async 'read empty yaml file'() {
+    const content = await (await readFile(join(__dirname, 'resources', 'empty.yaml'))).toString('utf-8');
+    const doc = parse('empty.yaml', content);
+
+    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+
+    console.log(doc.validationErrors);
+
+    strict.equal(doc.isValid, false, 'Should have some validation errors');
+    strict.equal(doc.validationErrors[0], 'empty.yaml: SectionMessing, Missing section \'info\'', 'Should have an error about info');
   }
 }

@@ -1,4 +1,4 @@
-import { Contact } from '../metadata-format';
+import { Contact, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';
 import { NodeBase } from './base';
 
@@ -15,4 +15,8 @@ export class ContactNode extends NodeBase implements Contact {
   get roles(): Strings {
     return this.strings('role');
   }
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }

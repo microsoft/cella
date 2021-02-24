@@ -1,5 +1,5 @@
 import { fail } from 'assert';
-import { DictionaryOf, Installer, StringOrStrings, VersionReference } from '../metadata-format';
+import { DictionaryOf, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 import { proxyDictionary } from './dictionary';
@@ -54,4 +54,9 @@ export class DemandNode extends NodeBase {
   get use(): DictionaryOf<StringOrStrings> | undefined {
     throw new Error('not implemented');
   }
+
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }

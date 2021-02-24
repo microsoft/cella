@@ -1,7 +1,7 @@
 import { Range, SemVer } from 'semver';
 import { Document } from 'yaml';
 import { Collection, YAMLMap } from 'yaml/types';
-import { VersionReference } from '../metadata-format';
+import { ValidationError, VersionReference } from '../metadata-format';
 import { createNode } from '../util/yaml';
 
 // nuget-semver parser doesn't have a ts typings package
@@ -103,4 +103,10 @@ export class VRef implements VersionReference {
   toString() {
     return this.node.get(this.prop);
   }
+
+
+  *validate(): Iterable<ValidationError> {
+    //
+  }
+
 }

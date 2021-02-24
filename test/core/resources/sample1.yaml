@@ -39,4 +39,4 @@ settings:
       
 windows and arm:
   install: 
-    nuget: xxx/yyy
+    nuget: floobaloo/1.2.3

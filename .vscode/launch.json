@@ -14,6 +14,10 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
+      "outFiles": [
+        "${workspaceFolder}/**/*.js",
+        "!**/node_modules/**"
+      ]
     }
   ]
 }

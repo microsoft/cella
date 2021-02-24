@@ -1,5 +1,5 @@
 import { YAMLMap } from 'yaml/types';
-import { StringOrStrings } from '../metadata-format';
+import { StringOrStrings, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';
 import { createNode, getStrings } from '../util/yaml';
 
@@ -93,6 +93,10 @@ export class NodeBase {
       return this.node.set(property, createNode(value, true));
     }
     this.node.set(property, value);
+  }
+
+  *validate(): Iterable<ValidationError> {
+    //
   }
 
 

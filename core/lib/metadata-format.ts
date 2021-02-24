@@ -13,7 +13,7 @@ export { Range, SemVer };
 export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
 
 export function parse(filename: string, content: string) {
-  const doc = parseDocument(content, { prettyErrors: true });
+  const doc = parseDocument(content, { prettyErrors: false, keepCstNodes: true });
 
   return <MetadataFile><Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
 }
@@ -39,6 +39,21 @@ export interface ProfileBase extends Demands {
 
   /** mark an artifact as supporting insert (either allowed or only) */
   insert?: 'allowed' | 'only';
+
+  /** all the conditional demands */
+  demands: Array<string>;
+
+  /** is this document valid */
+  readonly isValidYaml: boolean;
+
+  /** YAML errors in this document */
+  readonly yamlErrors: Array<string>;
+
+  /** does the document pass validation checks? */
+  readonly isValid: boolean;
+
+  /** what are the valiation check errors? */
+  readonly validationErrors: Array<string>;
 }
 
 /**
@@ -54,7 +69,7 @@ export type Profile = ProfileBase & {
   [key: string]: Demands;
 }
 
-export interface VersionReference {
+export interface VersionReference extends Validation {
   range: Range;
   resolved?: SemVer;
   readonly raw: string;
@@ -63,7 +78,7 @@ export interface VersionReference {
 /**
  * These are the things that are necessary to install/set/depend-on/etc for a given 'artifact'
  */
-export interface Demands {
+export interface Demands extends Validation {
   /** set of required artifacts */
   requires: DictionaryOf<VersionReference>;
 
@@ -102,8 +117,32 @@ export interface Demands {
 
 }
 
+/** @internal */
+export interface ValidationError {
+  message: string;
+  line: number;
+  column: number;
+  category: ErrorKind;
+}
+
+/** @internal */
+export enum ErrorKind {
+  SectionNotFound = 'SectionMessing',
+  FieldMissing = 'FieldMissing',
+  IncorrectType = 'IncorrectType',
+}
+
+export interface Validation {
+  /**
+   * @internal
+   *
+   * actively validate this node.
+  */
+  validate(): Iterable<ValidationError>;
+}
+
 /** Canonical Information about this artifact */
-export interface Info {
+export interface Info extends Validation {
   /** Artifact identity
    *
    * this should be the 'path' to the artifact (following the guidelines)
@@ -125,7 +164,7 @@ export interface Info {
 }
 
 /** A person/organization/etc who either has contributed or is connected to the artifact */
-export interface Contact {
+export interface Contact extends Validation {
   name: string;
   email?: string;
 
@@ -134,7 +173,7 @@ export interface Contact {
 
 export type ArtifactSource = NuGetArtifactSource | LocalArtifactSource | GitArtifactSource;
 
-interface ArtifactSourceBase {
+interface ArtifactSourceBase extends Validation {
   /** the uri to the artifact source location */
   readonly location: Strings;
 }
@@ -200,7 +239,7 @@ export interface Paths extends DictionaryImpl<StringOrStrings> {
 }
 
 /** settings that should be applied to the context */
-export interface Settings extends DictionaryOf<any> {
+export interface Settings extends DictionaryOf<any>, Validation {
   /** a map of path categories to one or more values */
   paths: Paths;
 
@@ -233,6 +272,21 @@ export interface Verifiable {
   md5?: string; // example, MD5 might not be a good idea
 }
 
+/**
+   * defines what should be physically laid out on disk for this artifact
+   *
+   * Note: once the host/environment queries have been completed, there should
+   *       only be one single package/file/repo/etc that gets downloaded and
+   *       installed for this artifact.  If there needs to be more than one,
+   *       then there would need to be a 'requires' that refers to the additional
+   *       package.
+   *
+   * More types to follow.
+   */
+export interface Installer {
+  readonly kind: string;
+}
+
 export interface UnpackSettings {
   /** a number of levels of directories to strip off the front of the file names in the archive when restoring (think tar --strip 1) */
   strip?: number;
@@ -246,20 +300,20 @@ export interface UnpackSettings {
  *
  * combined with Verifyable, the checksum should be matched before proceeding
  */
-export interface UnZip extends Verifiable, UnpackSettings {
+export interface UnZip extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip */
-  unzip: ResourceLocation;
+  location: ResourceLocation;
 }
 
 
 /**
- * a file that can be unzipp'd
+ * a file that can be untar'd
  *
  * combined with Verifyable, the checksum should be matched before proceeding
  */
-export interface UnTar extends Verifiable, UnpackSettings {
+export interface UnTar extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to untar */
-  untar: ResourceLocation;
+  location: ResourceLocation;
 }
 
 
@@ -274,9 +328,9 @@ export interface UnTar extends Verifiable, UnpackSettings {
  *
  * combined with Verifyable, the checksum should be matched before proceeding
  */
-export interface NuGet extends Verifiable, UnpackSettings {
+export interface NuGet extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip/untar/unrar/etc */
-  nuget: string;
+  location: string;
 }
 
 /**
@@ -284,9 +338,9 @@ export interface NuGet extends Verifiable, UnpackSettings {
  *
  * combined with Verifyable, the checksum should be matched before proceeding
  */
-export interface Git {
+export interface Git extends Installer {
   /** the git repository location to be cloned */
-  git: ResourceLocation;
+  location: ResourceLocation;
 
   /** optionally, a tag/branch to be checked out */
   tag?: string;
@@ -310,21 +364,15 @@ export interface Git {
   recurse?: boolean;
 }
 
-/** a package would be referenced as a source, plus any source-specific settings */
-export interface Package {
-  [key: string]: any;
+export function isNuGet(installer: Installer): installer is NuGet {
+  return installer.kind === 'nuget';
 }
-
-/**
-   * defines what should be physically laid out on disk for this artifact
-   *
-   * Note: once the host/environment queries have been completed, there should
-   *       only be one single package/file/repo/etc that gets downloaded and
-   *       installed for this artifact.  If there needs to be more than one,
-   *       then there would need to be a 'requires' that refers to the additional
-   *       package.
-   *
-   * More types to follow.
-   */
-export type Installer = UnZip | UnTar | NuGet | Git;
-
+export function isUnZip(installer: Installer): installer is UnZip {
+  return installer.kind === 'unzip';
+}
+export function isUnTar(installer: Installer): installer is UnTar {
+  return installer.kind === 'untar';
+}
+export function isGit(installer: Installer): installer is Git {
+  return installer.kind === 'git';
+}

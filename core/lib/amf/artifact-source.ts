@@ -1,7 +1,7 @@
 import { fail } from 'assert';
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
-import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource } from '../metadata-format';
+import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
@@ -16,6 +16,7 @@ export class SourceNode extends NodeBase {
   get location(): Strings {
     return this.strings('location');
   }
+
 }
 
 
@@ -23,18 +24,29 @@ class NugetSourceNode extends SourceNode implements NuGetArtifactSource {
   constructor(node: YAMLMap, name: string) {
     super(node, name, 'nuget');
   }
+  *validate(): Iterable<ValidationError> {
+    //
+  }
 }
 
 class LocalSourceNode extends SourceNode implements LocalArtifactSource {
   constructor(node: YAMLMap, name: string) {
     super(node, name, 'path');
   }
+  *validate(): Iterable<ValidationError> {
+    //
+  }
+
 }
 
 class GitSourceNode extends SourceNode implements GitArtifactSource {
   constructor(node: YAMLMap, name: string) {
     super(node, name, 'git');
   }
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+  }
+
 }
 
 /** internal */
