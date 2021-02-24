@@ -7,7 +7,7 @@ import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
 import { InfoNode } from './info';
-import { createInstallerNode } from './installer-nodes';
+import { createInstallerNode } from './installer';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 

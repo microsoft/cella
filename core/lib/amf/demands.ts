@@ -3,7 +3,7 @@ import { DictionaryOf, Installer, StringOrStrings, VersionReference } from '../m
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 import { proxyDictionary } from './dictionary';
-import { createInstallerNode } from './installer-nodes';
+import { createInstallerNode } from './installer';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 
