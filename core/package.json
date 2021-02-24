@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/twisp.core",
+  "name": "@microsoft/cella.core",
   "version": "0.1.0",
-  "description": "Twisp core library",
+  "description": "Cella core library",
   "main": "dist/exports.js",
   "typings": "dist/exports.d.ts",
   "directories": {
@@ -21,18 +21,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/twisp.git"
+    "url": "git+https://github.com/Microsoft/cella.git"
   },
   "keywords": [
-    "twisp"
+    "cella"
   ],
   "author": "Microsoft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Microsoft/twisp/issues"
+    "url": "https://github.com/Microsoft/cella/issues"
   },
-  "homepage": "https://github.com/Microsoft/twisp#readme",
-  "readme": "https://github.com/Microsoft/twisp/blob/master/readme.md",
+  "homepage": "https://github.com/Microsoft/cella#readme",
+  "readme": "https://github.com/Microsoft/cella/blob/master/readme.md",
   "devDependencies": {
     "@types/node": "~14.14.22",
     "@typescript-eslint/eslint-plugin": "~4.14.1",

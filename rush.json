@@ -16,7 +16,7 @@
   "projectFolderMaxDepth": 5,
   "gitPolicy": {},
   "repository": {
-    "url": "https://github.com/microsoft/twisp"
+    "url": "https://github.com/microsoft/cella"
   },
   /**
    * Event hooks are customized script actions that Rush executes when specific events occur
@@ -45,19 +45,19 @@
   "telemetryEnabled": false,
   "projects": [
     {
-      "packageName": "@microsoft/twisp.core",
+      "packageName": "@microsoft/cella.core",
       "projectFolder": "./core",
       "reviewCategory": "production",
       "shouldPublish": false
     },
     {
-      "packageName": "twisp",
+      "packageName": "cella",
       "projectFolder": "./cli",
       "reviewCategory": "production",
       "shouldPublish": false
     },
     {
-      "packageName": "twisp.test",
+      "packageName": "cella.test",
       "projectFolder": "./test",
       "reviewCategory": "production",
       "shouldPublish": false

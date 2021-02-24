@@ -1,4 +1,4 @@
-import { length, linq } from '@microsoft/twisp.core';
+import { length, linq } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import * as assert from 'assert';
 
