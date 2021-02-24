@@ -1,6 +1,6 @@
 {
   // FYI: if the TS version that vscode needs to be set, the path will be something like this (with whatever version instead of 3.9.5)
-  // "typescript.tsdk": "common/temp/node_modules/.registry.npmjs.org/typescript/3.9.5/node_modules/typescript/lib",
+  "typescript.tsdk": "common/temp/node_modules/typescript/lib",
   "files.eol": "\n",
   "files.exclude": {
     "**/common/temp/**": true,

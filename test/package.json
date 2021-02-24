@@ -1,7 +1,7 @@
 {
-  "name": "twisp.test",
+  "name": "cella.test",
   "version": "0.1.0",
-  "description": "Twisp test project",
+  "description": "Cella test project",
   "directories": {
     "doc": "docs"
   },
@@ -21,20 +21,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/twisp.git"
+    "url": "git+https://github.com/Microsoft/cella.git"
   },
   "keywords": [
-    "twisp"
+    "cella"
   ],
   "author": "Microsoft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Microsoft/twisp/issues"
+    "url": "https://github.com/Microsoft/cella/issues"
   },
-  "homepage": "https://github.com/Microsoft/twisp#readme",
-  "readme": "https://github.com/Microsoft/twisp/blob/master/readme.md",
+  "homepage": "https://github.com/Microsoft/cella#readme",
+  "readme": "https://github.com/Microsoft/cella/blob/master/readme.md",
   "devDependencies": {
-    "@types/node": "~14.14.22",
+    "@types/node": "14.14.22",
     "mocha": "~8.2.1",
     "@types/mocha": "~8.2.0",
     "@typescript-eslint/eslint-plugin": "~4.14.1",
@@ -48,8 +48,8 @@
     "shx": "0.3.3"
   },
   "dependencies": {
-    "@microsoft/twisp.core": "~0.1.0",
-    "yaml": "~1.10.0",
+    "@microsoft/cella.core": "~0.1.0",
+    "yaml": "2.0.0-3",
     "semver": "~7.3.4"
   }
 }

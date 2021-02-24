@@ -1,6 +1,4 @@
-# Project 'Twisp'
-
-Twisp is a town in Okanogan County in north central Washington, United States, which sits at the confluence of the Twisp and Methow rivers.
+# Project 'Cella'
 
 In this case however, it's a tool for installing development tools, compilers, libraries, frameworks and board support profiles. 
 

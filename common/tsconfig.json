@@ -5,6 +5,7 @@
     "module": "commonjs",
     "noImplicitAny": true,
     "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noImplicitThis": true,
     "sourceMap": true,
     "declarationMap": true,
