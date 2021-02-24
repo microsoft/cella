@@ -2,7 +2,7 @@ import { Document } from 'yaml';
 import { Scalar, YAMLMap } from 'yaml/types';
 import { DictionaryOf } from '../metadata-format';
 
-export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode: YAMLMap, prop: string) => T, onSet: (thisNode: YAMLMap, prop: string, value: T) => void, instance: any = new Dictionary(thisNode)): DictionaryOf<T> {
+export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode: YAMLMap, prop: string) => T, onSet: (thisNode: YAMLMap, prop: string, value: T) => void, instance: any = new DictionaryImpl(thisNode)): DictionaryOf<T> {
   const prototype = Object.getPrototypeOf(instance);
   return new Proxy<DictionaryOf<T>>(instance, {
 
@@ -49,8 +49,7 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
   });
 }
 
-/** @internal */
-export class Dictionary<T> implements DictionaryOf<T> {
+export class DictionaryImpl<T> implements DictionaryOf<T> {
 
   constructor(protected readonly node: YAMLMap | Document.Parsed) {
   }

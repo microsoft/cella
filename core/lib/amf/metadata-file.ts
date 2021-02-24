@@ -5,14 +5,14 @@ import { ArtifactSource, Contact, Demands, DictionaryOf, Info, Installer, Profil
 import { getOrCreateMap } from '../util/yaml';
 import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
-import { InfoNode } from './InfoNode';
+import { DictionaryImpl, proxyDictionary } from './dictionary';
+import { InfoNode } from './info';
 import { createInstallerNode } from './installer-nodes';
-import { Dictionary, proxyDictionary } from './KeyedNode';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 
 /** @internal */
-export class Amf extends Dictionary<Demands> implements ProfileBase, DictionaryOf<Demands> {
+export class Amf extends DictionaryImpl<Demands> implements ProfileBase, DictionaryOf<Demands> {
   /** @internal */
   constructor(protected readonly document: Document.Parsed, public readonly filename: string) {
     super(<YAMLMap>document.contents);

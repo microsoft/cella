@@ -3,7 +3,7 @@ import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
 import { Git, Installer, NuGet, UnTar, UnZip } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
-import { NodeBase } from './NodeBase';
+import { NodeBase } from './base';
 
 
 export function createInstallerNode(node: YAMLMap, name: string): Installer {

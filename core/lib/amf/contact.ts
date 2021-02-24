@@ -1,6 +1,6 @@
 import { Contact } from '../metadata-format';
 import { Strings } from '../util/strings';
-import { NodeBase } from './NodeBase';
+import { NodeBase } from './base';
 
 /** @internal */
 export class ContactNode extends NodeBase implements Contact {

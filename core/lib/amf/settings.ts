@@ -1,10 +1,10 @@
 import { YAMLMap } from 'yaml/types';
 import { DictionaryOf, Paths, Settings, StringOrStrings } from '../metadata-format';
 import { getOrCreateMap, getStrings, setStrings } from '../util/yaml';
-import { Dictionary, proxyDictionary } from './KeyedNode';
+import { DictionaryImpl, proxyDictionary } from './dictionary';
 
 
-export class SettingsNode extends Dictionary<any> implements Settings {
+export class SettingsNode extends DictionaryImpl<any> implements Settings {
   /** @internal */
   constructor(node: YAMLMap) {
     super(node);

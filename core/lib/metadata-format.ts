@@ -2,18 +2,20 @@ import { fail } from 'assert';
 import { Range, SemVer } from 'semver';
 import { parseDocument } from 'yaml';
 import { YAMLMap } from 'yaml/types';
-import { DemandNode } from './amf/DemandNode';
-import { Dictionary, proxyDictionary } from './amf/KeyedNode';
+import { DemandNode } from './amf/demands';
+import { DictionaryImpl, proxyDictionary } from './amf/dictionary';
 import { Amf } from './amf/metadata-file';
 import { Strings } from './util/strings';
 import { getOrCreateMap } from './util/yaml';
 
 export { Range, SemVer };
 
+export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
+
 export function parse(filename: string, content: string) {
   const doc = parseDocument(content, { prettyErrors: true });
 
-  return <ProfileBase & DictionaryOf<Demands>><Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
+  return <MetadataFile><Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
 }
 
 /**
@@ -180,7 +182,7 @@ export type DictionaryOf<T> = {
  *
  * Paths has a well-known list of path types that we handle, but we make it a dictionary anyway.
  */
-export interface Paths extends Dictionary<StringOrStrings> {
+export interface Paths extends DictionaryImpl<StringOrStrings> {
   /** entries that should be added to the PATH environment variable */
   bin: StringOrStrings;
 

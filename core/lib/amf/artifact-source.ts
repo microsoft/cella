@@ -4,7 +4,7 @@ import { i } from '../i18n';
 import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource } from '../metadata-format';
 import { Strings } from '../util/strings';
 import { getOrCreateMap } from '../util/yaml';
-import { NodeBase } from './NodeBase';
+import { NodeBase } from './base';
 
 
 export class SourceNode extends NodeBase {

@@ -1,9 +1,9 @@
 import { fail } from 'assert';
 import { DictionaryOf, Installer, StringOrStrings, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
+import { NodeBase } from './base';
+import { proxyDictionary } from './dictionary';
 import { createInstallerNode } from './installer-nodes';
-import { proxyDictionary } from './KeyedNode';
-import { NodeBase } from './NodeBase';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 
