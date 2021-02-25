@@ -14,7 +14,5 @@ type StreamBuffer = AsyncIterable<Buffer> & ReadStream;
     for await (const chunk of <StreamBuffer>rs) {
       // console.log(chunk.toString());
     }
-
-
   }
 }
