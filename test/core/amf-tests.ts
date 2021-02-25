@@ -13,7 +13,11 @@ s;
   @test async 'readProfile'() {
     const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
+    console.log(doc.validationErrors);
+
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isValid, 'Is it valid?');
+
 
     strict.equal(doc.info.id, 'sample1', 'identity incorrect');
     strict.equal(doc.info.version, '1.2.3', 'version incorrect');
@@ -24,6 +28,7 @@ s;
     const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
     strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isValid, 'better be valid!');
 
     strict.throws(() => doc.info.version = '4.1', 'Setting invalid version should throw');
     strict.equal(doc.info.version = '4.1.0', '4.1.0', 'Version should set correctly');
@@ -121,5 +126,14 @@ s;
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
     strict.equal(doc.validationErrors[0], 'empty.yaml: SectionMessing, Missing section \'info\'', 'Should have an error about info');
+  }
+
+  @test async 'validation errors'() {
+    const content = await (await readFile(join(__dirname, 'resources', 'validation-errors.yaml'))).toString('utf-8');
+    const doc = parse('validation-errors.yaml', content);
+
+    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+
+    strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
   }
 }

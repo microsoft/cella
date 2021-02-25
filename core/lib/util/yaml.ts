@@ -1,10 +1,11 @@
 import { Document, parseDocument } from 'yaml';
-import { Collection, YAMLMap, YAMLSeq } from 'yaml/types';
+import { Collection, Node, Pair, Scalar, YAMLMap, YAMLSeq } from 'yaml/types';
+import { Type } from 'yaml/util';
 import { StringOrStrings } from '../metadata-format';
 
 
 /** @internal */
-export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: true }).createNode(v, { wrapScalars: b });
+export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false, keepCstNodes: true }).createNode(v, { wrapScalars: b });
 
 /** @internal */
 export function getOrCreateMap(node: Document.Parsed | Collection, name: string): YAMLMap {
@@ -46,3 +47,24 @@ export function setStrings(node: Document.Parsed | Collection, name: string, val
   node.set(name, value);
 }
 
+
+/** @internal */
+export function isMap(item: Node): item is YAMLMap {
+  return item && item.type === Type.MAP;
+}
+
+/** @internal */
+export function isSequence(item: Node): item is YAMLSeq {
+  return item && item.type === Type.SEQ;
+}
+
+export function getPair(from: Collection, name: string): Pair | undefined {
+  return from.items.find(each => (<Scalar>each.key).value === name);
+}
+
+export function column(node: Node, addOffset?: number | { column: number }) {
+  return (node.cstNode?.rangeAsLinePos?.start.col || 0) + (Number(addOffset) || Number((<any>addOffset)?.column) || 0);
+}
+export function line(node: Node, addOffset?: number | { line: number }) {
+  return (node.cstNode?.rangeAsLinePos?.start.line || 0) + (Number(addOffset) || Number((<any>addOffset)?.line) || 0);
+}

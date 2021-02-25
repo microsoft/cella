@@ -1,4 +1,5 @@
 import { fail } from 'assert';
+import { YAMLMap } from 'yaml/types';
 import { DictionaryOf, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
@@ -57,6 +58,27 @@ export class DemandNode extends NodeBase {
 
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
+    if (this.node instanceof YAMLMap) {
+
+      if (this.node.has('settings')) {
+        yield* this.settings.validate();
+      }
+
+      if (this.node.has('install')) {
+        yield* this.install.validate();
+      }
+
+      if (this.node.has('requires')) {
+        for (const each of this.requires.keys) {
+          yield* this.requires[each].validate();
+        }
+      }
+      if (this.node.has('see-also')) {
+        for (const each of this.#seeAlso.keys) {
+          yield* this.#seeAlso[each].validate();
+        }
+      }
+    }
   }
 
 }

@@ -54,7 +54,6 @@
     "ee-ts": "2.0.0-rc.6",
     "yaml": "2.0.0-3",
     "semver": "~7.3.4",
-    "css-mediaquery": "0.1.2",
     "tar-stream": "2.2.0"
   }
 }

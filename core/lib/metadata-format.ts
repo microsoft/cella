@@ -12,10 +12,10 @@ export { Range, SemVer };
 
 export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
 
-export function parse(filename: string, content: string) {
+export function parse(filename: string, content: string): MetadataFile {
   const doc = parseDocument(content, { prettyErrors: false, keepCstNodes: true });
 
-  return <MetadataFile><Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
+  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
 }
 
 /**
@@ -130,6 +130,7 @@ export enum ErrorKind {
   SectionNotFound = 'SectionMessing',
   FieldMissing = 'FieldMissing',
   IncorrectType = 'IncorrectType',
+  ParseError = 'ParseError'
 }
 
 export interface Validation {
@@ -283,7 +284,7 @@ export interface Verifiable {
    *
    * More types to follow.
    */
-export interface Installer {
+export interface Installer extends Validation {
   readonly kind: string;
 }
 

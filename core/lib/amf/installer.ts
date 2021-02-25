@@ -1,33 +1,42 @@
-import { fail } from 'assert';
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
-import { Git, Installer, NuGet, UnTar, UnZip, ValidationError } from '../metadata-format';
-import { getOrCreateMap } from '../util/yaml';
+import { ErrorKind, Git, Installer, NuGet, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { getOrCreateMap, getPair, isMap } from '../util/yaml';
 import { NodeBase } from './base';
 
 /** @internal */
 export function createInstallerNode(node: YAMLMap, name: string): Installer {
   const n = getOrCreateMap(node, name);
-  if (n.has('unzip')) {
-    return new UnzipNode(n, name);
+  if (isMap(n)) {
+    if (n.has('unzip')) {
+      return new UnzipNode(n, name);
+    }
+    if (n.has('nuget')) {
+      return new NugetNode(n, name);
+    }
+    if (n.has('untar')) {
+      return new UnTarNode(n, name);
+    }
+    if (n.has('git')) {
+      return new GitCloneNode(n, name);
+    }
   }
-  if (n.has('nuget')) {
-    return new NugetNode(n, name);
-  }
-  if (n.has('untar')) {
-    return new UnTarNode(n, name);
-  }
-  if (n.has('git')) {
-    return new GitCloneNode(n, name);
-  }
-  fail(i`unknown install type`);
+  return new InvalidInstallerNode(getPair(node, name)!.key, name);
 }
+
 
 class InstallerNode extends NodeBase {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
+}
 
+class InvalidInstallerNode extends InstallerNode {
+  readonly kind = 'invalid';
+
+  *validate(): Iterable<ValidationError> {
+    yield { message: i`Install node is not a valid installation declaration`, line: this.line, column: this.column, category: ErrorKind.IncorrectType };
+  }
 }
 
 class FileInstallerNode extends InstallerNode {

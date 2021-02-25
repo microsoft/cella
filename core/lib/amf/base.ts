@@ -1,7 +1,7 @@
 import { YAMLMap } from 'yaml/types';
 import { StringOrStrings, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';
-import { createNode, getStrings } from '../util/yaml';
+import { column, createNode, getStrings, line } from '../util/yaml';
 
 /** @internal */
 export class NodeBase {
@@ -97,6 +97,13 @@ export class NodeBase {
 
   *validate(): Iterable<ValidationError> {
     //
+  }
+
+  protected get line(): number {
+    return line(this.node);
+  }
+  protected get column(): number {
+    return column(this.node);
   }
 
 

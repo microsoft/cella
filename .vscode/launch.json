@@ -15,7 +15,7 @@
         "<node_internals>/**"
       ],
       "outFiles": [
-        "${workspaceFolder}/**/*.js",
+        "${workspaceFolder}/*/dist/**/*.js",
         "!**/node_modules/**"
       ]
     }

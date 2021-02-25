@@ -2,8 +2,9 @@ import { fail } from 'assert';
 import { Document } from 'yaml';
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
-import { ArtifactSource, Contact, Demands, DictionaryOf, ErrorKind, Info, Installer, ProfileBase, Settings, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
-import { getOrCreateMap } from '../util/yaml';
+import { parseQuery } from '../mediaquery/media-query';
+import { ArtifactSource, Contact, Demands, DictionaryOf, ErrorKind, Info, Installer, MetadataFile, ProfileBase, Settings, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
+import { column, getOrCreateMap, getPair, isMap, line } from '../util/yaml';
 import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
@@ -12,12 +13,18 @@ import { createInstallerNode } from './installer';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 
+
 /** @internal */
 export class Amf extends DictionaryImpl<Demands> implements ProfileBase, DictionaryOf<Demands> {
   /** @internal */
   constructor(protected readonly document: Document.Parsed, public readonly filename: string) {
     super(<YAMLMap>document.contents);
   }
+  setProxy(proxy: MetadataFile) {
+    this.#proxy = proxy;
+  }
+
+  #proxy!: MetadataFile;
 
   toString(): string {
     return this.document.toString();
@@ -44,7 +51,6 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   }
 
   /* Demands */
-
   #requires!: DictionaryOf<VersionReference>
   get requires(): DictionaryOf<VersionReference> {
     return this.#requires || (this.#requires = proxyDictionary(getOrCreateMap(<YAMLMap>this.document.contents, 'requires'), getVersionRef, setVersionRef));
@@ -127,13 +133,16 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#validationErrors;
   }
 
-
   *validate(): Iterable<ValidationError> {
     // verify that we have info
     if (!this.document.has('info')) {
       yield { message: i`Missing section '${'info'}'`, line: 0, column: 0, category: ErrorKind.SectionNotFound };
     } else {
       yield* this.info.validate();
+    }
+
+    if (this.document.has('install')) {
+      yield* this.install.validate();
     }
 
     if (this.document.has('settings')) {
@@ -160,6 +169,24 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       for (const each of this.#seeAlso.keys) {
         yield* this.#seeAlso[each].validate();
       }
+    }
+
+    for (const each of this.demands) {
+      // first, validate that the query is a valid query
+      const { key, value } = getPair(this.node, each)!;
+
+      if (!isMap(value)) {
+        yield { message: i`Conditional demand '${each}' is not an object`, line: line(key), column: column(key), category: ErrorKind.IncorrectType };
+        continue;
+      }
+
+      const query = parseQuery(each);
+      if (!query.isValid) {
+        yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, line: line(key, query.error), column: column(key, query.error), category: ErrorKind.ParseError };
+        continue;
+      }
+
+      yield* this.#proxy[each].validate();
     }
   }
 }

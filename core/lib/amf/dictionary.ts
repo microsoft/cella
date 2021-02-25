@@ -4,7 +4,7 @@ import { DictionaryOf } from '../metadata-format';
 
 export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode: YAMLMap, prop: string) => T, onSet: (thisNode: YAMLMap, prop: string, value: T) => void, instance: any = new DictionaryImpl(thisNode)): DictionaryOf<T> {
   const prototype = Object.getPrototypeOf(instance);
-  return new Proxy<DictionaryOf<T>>(instance, {
+  const proxy = new Proxy<DictionaryOf<T>>(instance, {
 
     // allows you to delete a property
     deleteProperty: (dummy: DictionaryOf<T>, property: string | symbol) => {
@@ -47,11 +47,19 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
       return true;
     }
   });
+  // if we want to track the proxy from the object, set the wrapper
+  try {
+    instance.setProxy(proxy);
+  } catch {
+    // shh!
+  }
+  return proxy;
 }
 
 export class DictionaryImpl<T> implements DictionaryOf<T> {
 
   constructor(protected readonly node: YAMLMap | Document.Parsed) {
+
   }
 
   [key: string]: any;
@@ -59,11 +67,11 @@ export class DictionaryImpl<T> implements DictionaryOf<T> {
   get keys(): Array<string> {
     const filter = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
 
-    return this.node.items.map((each: any) => {
+    return this.node ? this.node.items.map((each: any) => {
 
       const k = each.key;
       return (k instanceof Scalar) ? k.value : k;
-    }).filter(each => filter.indexOf(each) === -1); // filter out actual known property names from the dictionary.
+    }).filter(each => filter.indexOf(each) === -1) : []; // filter out actual known property names from the dictionary.
   }
 
   remove(key: string): void {
