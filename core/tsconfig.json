@@ -12,6 +12,7 @@
     "./**/*.ts"
   ],
   "exclude": [
+    ".scripts/**",
     "**/dist/**",
     "test/scenarios/**",
     "resources",
