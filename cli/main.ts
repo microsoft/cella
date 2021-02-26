@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
-import { i, setLocale, Version } from '@microsoft/cella.core';
+import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
+import { initStyling, log } from './lib/styling';
+
+
 // parse the command line
 const commandline = parseArgs(argv.slice(2));
+
 
 // try to set the locale based on the users's settings.
 setLocale(commandline.lang, `${__dirname}/i18n/`);
@@ -20,5 +24,13 @@ function header() {
   console.log('');
 }
 
+// create our session for this process.
+const session = new Session(process.cwd(), commandline.environment);
+
+initStyling(commandline, session);
+
 // dump out the version information
 header();
+console.log('---------');
+log(JSON.stringify(commandline.environment, null, 2));
+

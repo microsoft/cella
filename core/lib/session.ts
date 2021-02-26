@@ -15,11 +15,14 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
 
-  constructor() {
+  constructor(protected currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
     this.fileSystem = new UnifiedFileSystem(this);
     this.channels = new Channels(this);
 
     this.setupLogging();
+
+    // load global configuration
+
   }
 
   setupLogging() {

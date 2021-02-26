@@ -7,7 +7,7 @@ import { strictEqual } from 'assert';
     const expected = ['a', 'b', 'c', 'd'];
     let i = 0;
 
-    const session = new Session();
+    const session = new Session('', {});
     const m = new Channels(session);
     m.on('message', (message, context, msec) => {
       // check that each message comes in order

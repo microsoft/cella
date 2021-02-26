@@ -2,6 +2,7 @@ export * from './lib/channels';
 export * from './lib/filesystem';
 export * from './lib/http-filesystem';
 export * from './lib/i18n';
+export * from './lib/intersect';
 export * from './lib/linq';
 export * from './lib/local-filesystem';
 export * from './lib/mediaquery/media-query';

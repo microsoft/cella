@@ -14,7 +14,7 @@ function uniqueTempFolder(): string {
   static fs: LocalFileSystem;
 
   static before() {
-    const session = new Session();
+    const session = new Session('', {});
     this.tempFolder = uniqueTempFolder();
     this.fs = new LocalFileSystem(session);
     this.tempFolderUrl = this.fs.file(LocalFileSystemTests.tempFolder);

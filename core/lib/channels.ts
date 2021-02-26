@@ -2,7 +2,7 @@ import { EventEmitter } from 'ee-ts';
 import { Session } from './session';
 
 /** Event defintions for channel events */
-interface ChannelEvents {
+export interface ChannelEvents {
   warning(text: string, context: any, msec: number): void;
   error(text: string, context: any, msec: number): void;
   message(text: string, context: any, msec: number): void;
