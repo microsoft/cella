@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';

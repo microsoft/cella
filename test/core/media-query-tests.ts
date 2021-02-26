@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { parseQuery } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
