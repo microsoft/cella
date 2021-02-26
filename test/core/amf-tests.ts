@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isNuGet, parse } from '@microsoft/cella.core';
+import { isNuGet, parseConfiguration as parse } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
@@ -23,10 +23,8 @@ s;
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
-
     strict.equal(doc.info.id, 'sample1', 'identity incorrect');
     strict.equal(doc.info.version, '1.2.3', 'version incorrect');
-
   }
 
   @test async 'profile checks'() {

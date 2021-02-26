@@ -31,6 +31,7 @@ export class UnifiedFileSystem extends FileSystem {
   register(scheme: string, fileSystem: FileSystem) {
     strict.ok(!this.filesystems[scheme], i`scheme '${scheme}' already registered.`);
     this.filesystems[scheme] = fileSystem;
+    return this;
   }
 
   /**
@@ -40,9 +41,9 @@ export class UnifiedFileSystem extends FileSystem {
    *
    * @returns the filesystem. Will throw if no filesystem is valid.
    */
-  protected filesystem(uri: string) {
+  protected filesystem(uri: string | Uri) {
     const scheme = schemeOf(uri.toString());
-    strict.ok(scheme, i`uri ${uri} has no scheme`);
+    strict.ok(scheme, i`uri ${uri.toString()} has no scheme`);
 
     const filesystem = this.filesystems[scheme];
     strict.ok(filesystem, i`scheme ${scheme} has no filesystem associated with it`);
@@ -61,35 +62,36 @@ export class UnifiedFileSystem extends FileSystem {
   }
 
   stat(uri: Uri): Promise<FileStat> {
-    return uri.fileSystem.stat(uri);
+    return this.filesystem(uri).stat(uri);
   }
 
   async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
-    return uri.fileSystem.readDirectory(uri);
+    return this.filesystem(uri).readDirectory(uri);
   }
 
   createDirectory(uri: Uri): Promise<void> {
-    return uri.fileSystem.createDirectory(uri);
+
+    return this.filesystem(uri).createDirectory(uri);
   }
 
   readFile(uri: Uri): Promise<Uint8Array> {
-    return uri.fileSystem.readFile(uri);
+    return this.filesystem(uri).readFile(uri);
   }
 
   writeFile(uri: Uri, content: Uint8Array): Promise<void> {
-    return uri.fileSystem.writeFile(uri, content);
+    return this.filesystem(uri).writeFile(uri, content);
   }
 
   readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
-    return uri.fileSystem.readStream(uri);
+    return this.filesystem(uri).readStream(uri);
   }
 
   writeStream(uri: Uri): Promise<EnhancedWritable> {
-    return uri.fileSystem.writeStream(uri);
+    return this.filesystem(uri).writeStream(uri);
   }
 
   delete(uri: Uri, options?: { recursive?: boolean | undefined; useTrash?: boolean | undefined; }): Promise<void> {
-    return uri.fileSystem.delete(uri, options);
+    return this.filesystem(uri).delete(uri, options);
   }
 
   rename(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {

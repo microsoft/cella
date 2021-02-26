@@ -17,7 +17,7 @@ export { Range, SemVer };
 
 export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
 
-export function parse(filename: string, content: string): MetadataFile {
+export function parseConfiguration(filename: string, content: string): MetadataFile {
   const doc = parseDocument(content, { prettyErrors: false, keepCstNodes: true });
 
   return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));

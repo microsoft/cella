@@ -10,12 +10,10 @@ import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
-import { initStyling, log } from './lib/styling';
-
+import { initStyling } from './lib/styling';
 
 // parse the command line
 const commandline = parseArgs(argv.slice(2));
-
 
 // try to set the locale based on the users's settings.
 setLocale(commandline.lang, `${__dirname}/i18n/`);
@@ -29,13 +27,21 @@ function header() {
   console.log('');
 }
 
-// create our session for this process.
-const session = new Session(process.cwd(), commandline.environment);
+async function main() {
+  // create our session for this process.
+  const session = new Session(process.cwd(), commandline.environment);
 
-initStyling(commandline, session);
+  initStyling(commandline, session);
 
-// dump out the version information
-header();
-console.log('---------');
-log(JSON.stringify(commandline.environment, null, 2));
+  // dump out the version information
+  header();
+
+  // start up the session and init the channel listeners.
+  await session.init();
+
+  console.log((await session.findProjectProfile())?.fsPath);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+main();
 
