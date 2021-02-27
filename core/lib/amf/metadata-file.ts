@@ -107,6 +107,12 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.document.errors.length === 0;
   }
 
+
+  #globalSettings!: DictionaryOf<string>;
+  get globalSettings(): DictionaryOf<string> {
+    return this.#globalSettings || (this.#globalSettings = proxyDictionary(getOrCreateMap(this.node, 'global'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
+  }
+
   #errors!: Array<string>;
   get yamlErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {

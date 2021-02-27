@@ -10,7 +10,7 @@ import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
-import { initStyling } from './lib/styling';
+import { debug, initStyling } from './lib/styling';
 
 // parse the command line
 const commandline = parseArgs(argv.slice(2));
@@ -39,7 +39,9 @@ async function main() {
   // start up the session and init the channel listeners.
   await session.init();
 
-  console.log((await session.findProjectProfile())?.fsPath);
+  debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
+  // find a project profile.
+  // console.log((await session.findProjectProfile())?.fsPath);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises

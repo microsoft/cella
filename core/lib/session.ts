@@ -53,6 +53,10 @@ export class Session {
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }
 
+  get telemetryEnabled() {
+    return !!this.configuration.globalSettings['send-anonymous-telemetry'];
+  }
+
   async init() {
     // load global configuration
     if (!await this.fileSystem.isDirectory(this.cellaRoot)) {

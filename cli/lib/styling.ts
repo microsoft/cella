@@ -54,6 +54,7 @@ export function initStyling(commandline: CommandLine, session: Session) {
   session.channels.on('debug', (text: string, context: any, msec: number) => {
     debug(`${cyan.bold(`[${formatTime(msec)}]`)} ${md(text)}`);
   });
+
   session.channels.on('warning', (text: string, context: any, msec: number) => {
     warning(text);
   });

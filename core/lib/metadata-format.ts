@@ -48,6 +48,9 @@ export interface ProfileBase extends Demands {
   /** all the conditional demands */
   demands: Array<string>;
 
+  /** global settings */
+  globalSettings: DictionaryOf<string>;
+
   /** is this document valid */
   readonly isValidYaml: boolean;
 
