@@ -12,9 +12,7 @@ type StreamBuffer = AsyncIterable<Buffer> & ReadStream;
     // ReadStream is iterable, but it doesn't know that it's an iterable of Buffer
     // so I cast it to an AsyncIterable<Buffer>
     for await (const chunk of <StreamBuffer>rs) {
-      console.log(chunk.toString());
+      // console.log(chunk.toString());
     }
-
-
   }
 }

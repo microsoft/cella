@@ -34,19 +34,19 @@
   "homepage": "https://github.com/Microsoft/cella#readme",
   "readme": "https://github.com/Microsoft/cella/blob/master/readme.md",
   "devDependencies": {
-    "@types/node": "~14.14.22",
+    "@types/node": "14.14.22",
     "@typescript-eslint/eslint-plugin": "~4.14.1",
     "@typescript-eslint/parser": "~4.14.1",
     "eslint": "~7.18.0",
     "@types/semver": "~7.3.4",
-    "typescript": "4.2.0-beta",
+    "typescript": "~4.2.2",
     "shx": "0.3.3",
     "translate-strings": "1.0.5"
   },
   "dependencies": {
-    "yaml": "~1.10.0",
+    "yaml": "2.0.0-3",
     "semver": "~7.3.4",
-    "chalk": "~4.1.0",
+    "chalk": "4.1.0",
     "@microsoft/cella.core": "~0.1.0"
   }
 }
