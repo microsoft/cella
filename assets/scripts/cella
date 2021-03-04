@@ -222,7 +222,7 @@ cella_bootstrap_cella() {
   command mkdir -p $CELLA_HOME/node_modules
 
   cd $CELLA_HOME
-  $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile /mnt/c/tmp/cella-0.0.1.tgz  > /dev/null 2>&1
+  $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile https://aka.ms/cella.tgz  > /dev/null 2>&1
   
   # go back where we were
   cd $CELLA_PWD
