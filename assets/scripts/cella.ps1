@@ -36,13 +36,15 @@ function resolve {
     if (-not($name)) { return $_err[0].TargetObject }
     return $name
 }
-$SCRIPT:DEBUG=$true
+
+$SCRIPT:DEBUG=$false
+
 if( $argz.indexOf('--debug') -gt -1 ) {
   $SCRIPT:DEBUG=$true
 }
 
 function cella-debug() {
-  if( $DEBUG ) { 
+  if($SCRIPT:DEBUG) { 
     $t = [int32]((get-date).Subtract(($CELLA_START_TIME)).ticks/10000)
     write-host -fore green "[$t msec] " -nonewline
     write-host -fore gray $args
@@ -186,10 +188,9 @@ function bootstrap-cella {
   pushd $CELLA_HOME
 
   if( isWindows ) {
-    $shh = & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile c:\tmp\cella-0.0.1.tgz  
+    $shh = & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile https://aka.ms/cella.tgz  2>&1
   } else {
-    cella-debug  $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile /mnt/c/tmp/cella-0.0.1.tgz  
-    $shh = & $CELLA_NODE $CELLA_NPM  install --force --no-save --no-lockfile  /mnt/c/tmp/cella-0.0.1.tgz  
+    $shh = & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile  https://aka.ms/cella.tgz 2>&1
   }
 
   popd
@@ -224,11 +225,15 @@ $shh = New-Module -name cella -ArgumentList @($CELLA_NODE,$CELLA_MODULE,$CELLA_H
   }
 
   function cella() { 
+    if( -not (test-path $CELLA_MODULE )) {
+      write-error "Cella is not installed."
+      write-host -nonewline "You can reinstall cella by running "
+      write-host -fore green "iex (iwr -useb aka.ms/cella.ps1)"
+      return
+    }
     # setup the postscript file
     # Generate 31 bits of randomness, to avoid clashing with concurrent executions.
     $env:CELLA_POSTSCRIPT = resolve "${CELLA_HOME}/cella_tmp_${(Get-Random -SetSeed $PID)}.ps1"
-    # write-host PS: $ENV:CELLA_POSTSCRIPT
-    # write-host ARGS: $argz
 
     & $CELLA_NODE $CELLA_MODULE @args  
 
@@ -310,7 +315,9 @@ goto fin:
 :BOOTSTRAP
 :: start with a strange character that gets encoded funny
 set ARGZ=⌂
+
 :LOOP
+
 if "%1" NEQ "" (
   :: append all the parameters to the string
   set ARGZ=%ARGZ%, ⌂%1⌂

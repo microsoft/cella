@@ -5,7 +5,7 @@
 
 import { Session } from '@microsoft/cella.core';
 import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
-import * as md from 'marked';
+import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
 import { CommandLine } from './command-line';
 
@@ -17,7 +17,7 @@ function formatTime(t: number) {
 }
 
 // setup markdown renderer
-md.setOptions({
+markdown.setOptions({
   renderer: new renderer({
     tab: 2,
     emoji: true,
@@ -32,16 +32,24 @@ md.setOptions({
   gfm: true,
 });
 
+function md(text: string, session?: Session) {
+  text = (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => {
+    return yellow.dim(session.fileSystem.parse(a).fsPath);
+  }) : text;
+
+  return markdown(text);
+}
+
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;
 export let error: (message?: any, ...optionalParams: Array<any>) => void = console.error;
 export let warning: (message?: any, ...optionalParams: Array<any>) => void = console.error;
 export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => { console.log(`${cyan.bold('debug: ')}${text}`); };
 
 export function initStyling(commandline: CommandLine, session: Session) {
-  log = (text) => console.log((md(text).trim()));
-  error = (text) => console.log(`${red.bold('ERROR:')}${md(text).trim()}`);
-  warning = (text) => console.log(`${yellow.bold('WARNING:')}${md(text).trim()}`);
-  debug = (text) => { if (commandline.debug) { console.log(`${cyan.bold('DEBUG:')}${md(text).trim()}`); } };
+  log = (text) => console.log((md(text, session).trim()));
+  error = (text) => console.log(`${red.bold('ERROR:')}${md(text, session).trim()}`);
+  warning = (text) => console.log(`${yellow.bold('WARNING:')}${md(text, session).trim()}`);
+  debug = (text) => { if (commandline.debug) { console.log(`${cyan.bold('DEBUG:')}${md(text, session).trim()}`); } };
 
   session.channels.on('message', (text: string, context: any, msec: number) => {
     log(text);
@@ -52,11 +60,10 @@ export function initStyling(commandline: CommandLine, session: Session) {
   });
 
   session.channels.on('debug', (text: string, context: any, msec: number) => {
-    debug(`${cyan.bold(`[${formatTime(msec)}]`)} ${md(text)}`);
+    debug(`${cyan.bold(`[${formatTime(msec)}]`)} ${md(text, session)}`);
   });
 
   session.channels.on('warning', (text: string, context: any, msec: number) => {
     warning(text);
   });
-
 }

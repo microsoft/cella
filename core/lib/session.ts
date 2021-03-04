@@ -60,7 +60,7 @@ export class Session {
 
   #postscriptFile!: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.fileSystem.file(this.environment['CELLA_POSTSCRIPT']!));
+    return this.#postscriptFile || (this.#postscriptFile = this.fileSystem.file(this.environment['CELLA_POSTSCRIPT'] || 'c:/tmp/psf'));
   }
 
   async init() {
