@@ -1,0 +1,310 @@
+#!/bin/sh 
+# wrapper script for cella.
+# this is intended to be dot-sourced and then you can use the cella() function
+
+# GLOBALS
+CELLA_NODE_LATEST=14.16.0
+CELLA_NODE_REMOTE=https://nodejs.org/dist/
+CELLA_PWD=`pwd`
+
+# echo CELLA INSTALLATION/RUN SCRIPT
+CELLA_START_TIME=$(($(date +%s%N)/1000000))
+
+# check to see if we've been dot-sourced (should work for most POSIX shells)
+sourced=0
+
+if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
+  case $ZSH_EVAL_CONTEXT in *:file) sourced=1;; esac
+elif [ -n "$KSH_VERSION" ]; then
+  [ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ] && sourced=1
+elif [ -n "$BASH_VERSION" ]; then
+  (return 0 2>/dev/null) && sourced=1 
+else # All other shells: examine $0 for known shell binary filenames
+  # Detects `sh` and `dash`; add additional shell filenames as needed.
+  case ${0##*/} in sh|dash) sourced=1;; esac
+fi
+
+if [ $sourced -eq 0 ]; then
+  echo 'This script is expected to be dot-sourced so that it may load cella into the'
+  echo 'current environment and not require permanent changes to the system when you activate.'
+  echo ''
+  echo "You should instead run '. $(basename $0)' first to import cella into the current session."
+  exit
+fi
+
+# at this point, we're pretty sure we've been dot-sourced 
+# Try to locate the $CELLA_HOME folder, where the cella is installed.
+if [ -n "$CELLA_HOME" ]; then 
+  # specify it on the command line if you like, we'll export it 
+  export CELLA_HOME=$CELLA_HOME
+else 
+  # default is off the home folder
+  export CELLA_HOME=~/.cella
+fi;
+
+mkdir -p $CELLA_HOME
+
+CELLA_NODE=${CELLA_HOME}/cache/bin/node
+CELLA_NPM=${CELLA_HOME}/cache/bin/npm
+
+cella_debug() {
+  if [ ! -z "$CELLA_DEBUG" ]; then
+    local NOW=$(($(date +%s%N)/1000000))
+    local OFFSET=$(( $NOW - $CELLA_START_TIME ))
+    if [ -n "$CELLA_NESTED" ]; then
+      echo "[NESTED $OFFSET msec] $*"
+    else
+      echo "[$OFFSET msec] $*"
+    fi  
+  fi 
+}
+
+if [ "${1}" = "--reset-cella" ]; then
+  if [ -d $CELLA_HOME/node_modules ]; then 
+    cella_debug forcing reinstall of cella package
+    rm -rf $CELLA_HOME/node_modules
+  fi
+
+  if [ -d $CELLA_HOME/cache/bin ]; then 
+    rm -rf $CELLA_HOME/cache/bin
+  fi 
+
+  if [ -d $CELLA_HOME/cache/lib ]; then 
+    rm -rf $CELLA_HOME/cache/lib
+  fi
+
+  shift
+fi
+
+if [ "${1}" = "--debug" ]; then
+  CELLA_DEBUG=TRUE
+fi
+
+cella_cleanup() {
+  cella_debug unsetting variables
+  # clear things that we're not going to need for the long term
+  unset CELLA_NODE_LATEST
+  unset CELLA_NODE_REMOTE
+  unset CELLA_PWD
+  unset CELLA_NPM
+  unset CELLA_NESTED
+  unset CELLA_OS
+  unset CELLA_DEBUG
+  unset cella_bootstrap_node
+  unset cella_bootstrap_cella
+  unset cella_cleanup
+  unset CELLA_START_TIME
+  if [ -f "${CELLA_POSTSCRIPT}" ]; then
+    command rm "${CELLA_POSTSCRIPT}"
+  fi
+	unset CELLA_POSTSCRIPT
+}
+
+cella_bootstrap_node() {
+  cella_debug starting cella_bootstrap_node
+
+  local NODE_EXE="node"
+  if [ "${NODE_OS}" = "win" ]; then
+    NODE_EXE="node.exe"
+  fi
+
+  local N=`which $NODE_EXE`
+  
+  if [ ! -z $N ]; then
+    if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 16)"` -gt 0 ]; then
+       CELLA_NODE=$N
+       CELLA_NPM=`which npm`
+       cella_debug using node in path
+       return 0
+    fi
+  fi 
+
+  # we don't have a good node in the path
+  # we would install one here if we tried 
+  # before
+  CELLA_NODE=`which ${CELLA_HOME}/cache/bin/node`
+  
+  if [ ! -z $CELLA_NODE ]; then
+    if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 12)"` -gt 0 ]; then
+       # looks good, lets grab NPM in case we need it, and get out.
+       CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
+       cella_debug using node from cella cache
+       return 0
+    fi
+  fi 
+  
+  # we don't seem to have a suitable nodejs on the path
+  # let's grab a well-known one, cache it and use it.
+
+  # Parse the OS name and architecture from `uname`.
+  local NODE_OS="$(uname | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
+
+  # When running inside Git bash on Windows, `uname` reports "MINGW64_NT".
+  case $NODE_OS in mingw64_nt* | msys_nt*)
+    NODE_OS="win"
+  esac
+
+  local NODE_ARCH="$(uname -m | sed -e 's/x86_64/x64/;s/i86pc/x64/;s/i686/x86/;s/aarch64/arm64/')"
+  # On AIX `uname -m` reports the machine ID number of the hardware running the system.
+  if [ "${NODE_OS}" = "aix" ]; then
+    NODE_ARCH="ppc64"
+  fi
+
+  local NODE_ARCHIVE_EXT=".tar.gz"
+	local TAR_FLAGS="-zxvf"
+	if [ "${NODE_OS}" = "win" ]; then
+	  NODE_ARCHIVE_EXT=".zip"
+  fi
+
+  local NODE_FULLNAME="node-v${CELLA_NODE_LATEST}-${NODE_OS}-${NODE_ARCH}"
+  local NODE_URI="${CELLA_NODE_REMOTE}v${CELLA_NODE_LATEST}/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
+  local NODE_ARCHIVE="${CELLA_HOME}/cache/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
+  
+  if [ ! -d "${CELLA_HOME}/cache" ]; then
+    command mkdir -p "${CELLA_HOME}/cache"
+  fi
+
+  echo "Downloading bootstrap node from ${NODE_URI}"
+  if type noglob > /dev/null 2>&1; then
+    noglob curl -L -# "${NODE_URI}" -o "${NODE_ARCHIVE}"
+  else
+    curl -L -# "${NODE_URI}" -o "${NODE_ARCHIVE}"
+  fi
+
+   if [ ! -f "${NODE_ARCHIVE}" ]; then
+    echo "Failed to download node binary."
+    return 1
+  fi
+    
+  # UNPACK IT
+  if [ "${CELLA_OS}" = "aix" ]; then
+    gunzip "${NODE_ARCHIVE}" | tar -xvC "${CELLA_HOME}/cache" "${NODE_FULLNAME}/bin/${NODE_EXE}" > /dev/null 2>&1
+  else
+    tar $TAR_FLAGS "${NODE_ARCHIVE}" -C "${CELLA_HOME}/cache"  > /dev/null 2>&1
+  fi
+  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/bin" "${CELLA_HOME}/cache/" > /dev/null 2>& 1
+  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/lib" "${CELLA_HOME}/cache/" > /dev/null 2>& 1
+  rm -r "${CELLA_HOME}/cache/${NODE_FULLNAME}" > /dev/null 2>& 1
+
+  # OK, we good?
+  CELLA_NODE=${CELLA_HOME}/cache/bin/node
+  CELLA_NPM=${CELLA_HOME}/cache/bin/npm
+
+  if [ ! -f $CELLA_NODE ]; then
+    echo "ERROR! Unable to find/get nodejs."
+    return 1;
+  fi
+
+  if [ ! -f $CELLA_NPM ]; then
+    echo "ERROR! Unable to find/get npm"
+    return 1;
+  fi
+
+  cella_debug installed node in cache
+  return 0
+}
+
+CELLA_SCRIPT=${CELLA_HOME}/node_modules/.bin/cella
+CELLA_MAIN=${CELLA_HOME}/node_modules/cella
+
+cella_bootstrap_cella() {
+  cella_debug checking for installed cella $CELLA_SCRIPT
+
+  if [ -f $CELLA_SCRIPT ]; then
+    cella_debug cella is installed.
+    return 0
+  fi
+
+  # it's not there!
+  # let's install it where we want it
+
+  # ensure we have a node_modules here, so npm won't search for one up the tree.
+  command mkdir -p $CELLA_HOME/node_modules
+
+  cd $CELLA_HOME
+  $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile /mnt/c/tmp/cella-0.0.1.tgz # > /dev/null 2>&1
+  
+  # go back where we were
+  cd $CELLA_PWD
+  
+  if [  ! -f $CELLA_SCRIPT ]; then
+    echo "ERROR! Unable to find/get cella script command $CELLA_SCRIPT"
+    return 1;
+  fi
+
+  cella_debug cella is installed
+  return 0;
+}
+
+# first, let's make sure we have a good copy of node
+cella_bootstrap_node
+
+if [ $? -eq 1 ]; then
+  cella_debug failed to acquire node.js
+  cella_cleanup
+  return 1;
+fi
+
+cella_bootstrap_cella
+
+# is cella installed?
+if [ $? -eq 1 ]; then
+  cella_debug failed to bootstrap cella.js
+  cella_cleanup
+  return 1;
+fi
+
+if [ -z $CELLA_NESTED ]; then
+  cella_debug executing final script: $CELLA_SCRIPT
+  CELLA_NESTED=TRUE
+  . $CELLA_SCRIPT $* 
+  return # let the real script take over from here. 
+fi
+
+# So, we're the real script then.
+cella_debug 'real cella adding function'
+
+cella() {
+  local cst=$CELLA_START_TIME
+
+  CELLA_START_TIME=$(($(date +%s%N)/1000000))
+
+  if [ ! -f $CELLA_NODE ]; then
+    echo The installation of nodejs $CELLA_NODE that cella is using is missing
+    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh)'
+    echo or fix your nodejs installation.
+  fi
+
+  if [ ! -d $CELLA_MAIN ]; then
+    echo The installation of cella is corrupted. $CELLA_MAIN
+    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh)'
+  fi
+
+  # set the response file
+	# Generate 32 bits of randomness, to avoid clashing with concurrent executions.
+	export CELLA_POSTSCRIPT="${CELLA_HOME}/cella_tmp_$(dd if=/dev/urandom count=1 2> /dev/null | cksum | cut -f1 -d" ").sh"
+
+  # call cella.js
+  # it picks up the CELLA_POSTSCRIPT environment variable to know where to dump the postscript
+  $CELLA_NODE $CELLA_MAIN $*
+  
+  cella_debug called cella.js
+  # modify the environment 
+
+  # Call the post-invocation script if it is present, then delete it.
+	# This allows the invocation to potentially modify the caller's environment (e.g. PATH)
+	if [ -f "${CELLA_POSTSCRIPT}" ]; then
+		. "${CELLA_POSTSCRIPT}"
+		command rm "${CELLA_POSTSCRIPT}"
+		unset CELLA_POSTSCRIPT
+	fi
+
+  CELLA_START_TIME=$cst
+}
+
+# did they dotsource and have args go ahead and run it then!
+if [ -n "$*" ]; then 
+  cella $*
+fi
+
+cella_cleanup

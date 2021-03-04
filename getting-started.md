@@ -68,3 +68,17 @@ This will set the `x.x.build` verison for each project based on the commit numbe
 This will ensure that all the projects have consistent versions for all dependencies, and ensures that cross-project version references are set correctly
 
 
+
+
+# Building a release
+
+To create the final npm tgz file we're going to statically include our dependencies so that we're not having to pull them down dynamically.
+
+using `rush deploy` will generate this in `./common/deploy` which will copy all the necessary runtime components, and the contents of the `./assets/` folder (which contains the `package.json` and scripts to build/install the cli correctly. )
+
+``` bash
+npx rush update                 # install the packages for the project
+npx rush rebuild                # build the typescript files
+npx rush deploy --overwrite     # create the common/deploy folder with all the contents includeing ./assets
+npm pack ./common/deploy        # pack it up
+```

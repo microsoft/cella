@@ -42,6 +42,12 @@ async function main() {
   debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
   // find a project profile.
   // console.log((await session.findProjectProfile())?.fsPath);
+
+  debug(`Postscript file ${session.postscriptFile}`);
+
+  await session.addPostscript('cella_time', new Date().toString());
+
+  await session.writePostscript();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
