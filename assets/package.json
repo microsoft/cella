@@ -15,7 +15,7 @@
   "scripts": {
     "postinstall": "node ./create-links create && node ./wrapper-scripts create",
     "uninstall": "node ./create-links remove && node ./wrapper-scripts remove",
-    "prepack": "npx rimraf ./common/temp/node_modules/typescript && npx shx mv ./common/temp/node_modules/chalk/node_modules/* ./common/temp/node_modules/"
+    "prepack": "npx rimraf ./common/temp/node_modules/.pnpm/typescript"
   },
   "repository": {
     "type": "git",
