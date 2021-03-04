@@ -1,7 +1,12 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 export * from './lib/channels';
 export * from './lib/filesystem';
 export * from './lib/http-filesystem';
 export * from './lib/i18n';
+export * from './lib/intersect';
 export * from './lib/linq';
 export * from './lib/local-filesystem';
 export * from './lib/mediaquery/media-query';

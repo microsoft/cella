@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { fail } from 'assert';
 import { Range, SemVer } from 'semver';
 import { parseDocument } from 'yaml';
@@ -12,7 +17,7 @@ export { Range, SemVer };
 
 export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
 
-export function parse(filename: string, content: string): MetadataFile {
+export function parseConfiguration(filename: string, content: string): MetadataFile {
   const doc = parseDocument(content, { prettyErrors: false, keepCstNodes: true });
 
   return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
@@ -42,6 +47,9 @@ export interface ProfileBase extends Demands {
 
   /** all the conditional demands */
   demands: Array<string>;
+
+  /** global settings */
+  globalSettings: DictionaryOf<string>;
 
   /** is this document valid */
   readonly isValidYaml: boolean;

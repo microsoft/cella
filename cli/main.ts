@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 
-import { i, setLocale, Version } from '@microsoft/cella.core';
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
+import { debug, initStyling } from './lib/styling';
+
 // parse the command line
 const commandline = parseArgs(argv.slice(2));
 
@@ -20,5 +27,23 @@ function header() {
   console.log('');
 }
 
-// dump out the version information
-header();
+async function main() {
+  // create our session for this process.
+  const session = new Session(process.cwd(), commandline.environment);
+
+  initStyling(commandline, session);
+
+  // dump out the version information
+  header();
+
+  // start up the session and init the channel listeners.
+  await session.init();
+
+  debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
+  // find a project profile.
+  // console.log((await session.findProjectProfile())?.fsPath);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+main();
+

@@ -1,3 +1,12 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import { intersect } from '@microsoft/cella.core';
+import { tmpdir } from 'os';
+import { join } from 'path';
+
 export type switches = {
   [key: string]: Array<string>;
 }
@@ -20,6 +29,18 @@ export class CommandLine {
     return onlyOne(this.switches[name], errorMessage);
   }
 
+  #root?: string;
+  get cellaRoot() {
+    // root folder is determined by
+    // command line (--cella-root, --cella_root)
+    // environment (CELLA_ROOT)
+    // default 1 $HOME/.cella
+    // default 2 <tmpdir>/.cella
+
+    // note, this does not create the folder, that would happen when the session is initialized.
+
+    return this.#root || (this.#root = this.switches['cella-root']?.[0] || this.switches['cella_root']?.[0] || process.env['CELLA_ROOT'] || join(process.env['HOME'] || tmpdir(), '.cella'));
+  }
 
   get force() {
     return !!this.switches['force'];
@@ -31,6 +52,11 @@ export class CommandLine {
 
   get lang() {
     return onlyOne(this.switches['language'], '--lang specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
+  }
+
+  #environment?: { [key: string]: string | undefined; };
+  get environment(): { [key: string]: string | undefined; } {
+    return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
   }
 
 }

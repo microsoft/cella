@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
 import { skip, suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
@@ -14,7 +19,7 @@ function uniqueTempFolder(): string {
   static fs: LocalFileSystem;
 
   static before() {
-    const session = new Session();
+    const session = new Session('', {});
     this.tempFolder = uniqueTempFolder();
     this.fs = new LocalFileSystem(session);
     this.tempFolderUrl = this.fs.file(LocalFileSystemTests.tempFolder);

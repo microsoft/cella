@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { Channels, Session } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strictEqual } from 'assert';
@@ -7,7 +12,7 @@ import { strictEqual } from 'assert';
     const expected = ['a', 'b', 'c', 'd'];
     let i = 0;
 
-    const session = new Session();
+    const session = new Session('', {});
     const m = new Channels(session);
     m.on('message', (message, context, msec) => {
       // check that each message comes in order

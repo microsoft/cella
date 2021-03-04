@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { fail } from 'assert';
 import { Document } from 'yaml';
 import { YAMLMap } from 'yaml/types';
@@ -100,6 +105,12 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   }
   get isValidYaml(): boolean {
     return this.document.errors.length === 0;
+  }
+
+
+  #globalSettings!: DictionaryOf<string>;
+  get globalSettings(): DictionaryOf<string> {
+    return this.#globalSettings || (this.#globalSettings = proxyDictionary(getOrCreateMap(this.node, 'global'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
   #errors!: Array<string>;

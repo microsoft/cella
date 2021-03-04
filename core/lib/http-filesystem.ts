@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { FileStat, FileSystem, FileType } from './filesystem';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 import { Uri } from './uri';

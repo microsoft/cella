@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, NuGet, UnTar, UnZip, ValidationError } from '../metadata-format';

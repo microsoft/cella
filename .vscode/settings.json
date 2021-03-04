@@ -37,7 +37,7 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "editor.tabSize": 2,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
   },
   "[csharp]": {
     "editor.tabSize": 4,
@@ -95,5 +95,6 @@
     "ts-node/register"
   ],
   "mochaExplorer.monkeyPatch": true,
-  "mochaExplorer.debuggerConfig": "MochaTest"
+  "mochaExplorer.debuggerConfig": "MochaTest",
+  "eslint.debug": true,
 }

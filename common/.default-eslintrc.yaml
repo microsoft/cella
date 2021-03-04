@@ -2,6 +2,8 @@
 parser: "@typescript-eslint/parser"
 plugins:
 - "@typescript-eslint"
+- "notice"
+
 env:
   es6: true
   node: true
@@ -17,6 +19,7 @@ parserOptions:
   warnOnUnsupportedTypeScriptVersion : false
   project: tsconfig.json
 rules:
+
   "no-trailing-spaces" : "error"
   "space-in-parens": "error"
   "no-cond-assign" : 'off'
@@ -72,5 +75,7 @@ rules:
   - max: 2
     maxBOF: 0
     maxEOF: 1
-
   
+  "notice/notice": 
+    - "error"
+    - { "templateFile": "../common/header.txt"  } 

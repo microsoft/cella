@@ -1,8 +1,13 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { EventEmitter } from 'ee-ts';
 import { Session } from './session';
 
 /** Event defintions for channel events */
-interface ChannelEvents {
+export interface ChannelEvents {
   warning(text: string, context: any, msec: number): void;
   error(text: string, context: any, msec: number): void;
   message(text: string, context: any, msec: number): void;
