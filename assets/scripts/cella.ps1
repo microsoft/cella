@@ -1,25 +1,18 @@
 @(echo off) > $null 
-if #ftw NEQ '' goto :CMDSTART
-($true){}
-$Error.clear();
-
-# powershell script starts here 
-
-# unpack arguments if they cam from CMD
-if( ($ENV:ARGZ) -and ($ENV:ARGZ.length -gt 1)  ) {
-  $Q=$ENV:ARGZ -replace "^(.*?),.*", '$1'
-  if( $ENV:ARGZ.length -gt $q.length) {
-    $tmp=(($ENV:ARGZ.substring($q.length+1) -replace '"', '`"' ) -replace $Q,'"')
-    $argz=[System.Collections.ArrayList]@(invoke-expression "@($tmp,'')") # turn it into an array
-  } else {
-    $argz = [System.Collections.ArrayList]@()
-  }
-} else {
-  $argz=[System.Collections.ArrayList]$args
-}
+if #ftw NEQ '' goto :init
+($true){ $Error.clear(); }
 
 # wrapper script for cella.
 # this is intended to be dot-sourced and then you can use the cella() function
+
+# unpack arguments if they came from CMD
+$hash=@{}; 
+get-item env:argz* |% { $hash[$_.name] = $_.value }
+if ($hash.count -gt 0) { 
+  $args=for ($i=0; $i -lt $hash.count;$i++) { $hash["ARGZ[$i]"] }
+}
+# force the array to be an arraylist since we like to mutate it.
+$args=[System.Collections.ArrayList][System.Array]$args
 
 # GLOBALS
 $CELLA_NODE_LATEST='14.16.0'
@@ -27,9 +20,6 @@ $CELLA_NODE_REMOTE='https://nodejs.org/dist/'
 $CELLA_PWD=$pwd
 
 $CELLA_START_TIME=get-date
-
-# seconds since start
-# (get-date).Subtract(($CELLA_START_TIME)).ticks/10000000
 
 function resolve { 
     param ( [string] $name )
@@ -41,7 +31,7 @@ function resolve {
 
 $SCRIPT:DEBUG=$false
 
-if( $argz.indexOf('--debug') -gt -1 ) {
+if( $args.indexOf('--debug') -gt -1 ) {
   $SCRIPT:DEBUG=$true
 }
 
@@ -64,12 +54,12 @@ if( $ENV:CELLA_HOME ) {
   $ENV:CELLA_HOME=$CELLA_HOME
 }
 
-$reset = $argz -and $argz.IndexOf('--reset-cella') -gt -1 
-$remove = $argz -and $argz.IndexOf('--remove-cella') -gt -1 
+$reset = $args.IndexOf('--reset-cella') -gt -1 
+$remove = $args.IndexOf('--remove-cella') -gt -1 
 
 if( $reset -or -$remove ) {
-  $argz.remove('--reset-cella');
-  $argz.remove('--remove-cella');
+  $args.remove('--reset-cella');
+  $args.remove('--remove-cella');
 
   if( $reset ) {
     write-host "Resetting Cella"
@@ -291,13 +281,21 @@ $shh = New-Module -name cella -ArgumentList @($CELLA_NODE,$CELLA_MODULE,$CELLA_H
 }
 
 # finally, if this was run with some arguments, then let's just pass it
-if( $argz ) {
-  cella @argz
+if( $args.length -gt 0 ) {
+  cella @args
 }
 
 return 
 <# 
-:CMDSTART
+:set 
+set ARGZ[%i%]=%1&set /a i+=1 & goto :eof
+
+:unset 
+set %1=& goto :eof
+
+:init
+if exist $null erase $null
+
 :: do anything we need to before calling into powershell
 if exist $null erase $null 
 
@@ -316,7 +314,6 @@ if "%1" EQU "--remove-cella" (
 
 :: do we even have it installed?
 if NOT exist "%CELLA_CMD%" goto BOOTSTRAP
-
 
 :: if this is the actual installed cella, let's get to the invocation
 if "%~dfp0" == "%CELLA_CMD%" goto INVOKE
@@ -358,17 +355,8 @@ echo "Unable to find the nodejs for cella to run."
 goto fin:
 
 :BOOTSTRAP
-:: start with a strange character that gets encoded funny
-set ARGZ=⌂
-
-:LOOP
-
-if "%1" NEQ "" (
-  :: append all the parameters to the string
-  set ARGZ=%ARGZ%, ⌂%1⌂
-  shift /1
-  goto :LOOP
-)
+:: add the cmdline args to the environment so powershell can use them
+set /a i=0 & for %%a in (%*) do call :set %%a 
 
 set POWERSHELL_EXE=
 for %%i in (pwsh.exe powershell.exe) do (
@@ -376,9 +364,11 @@ for %%i in (pwsh.exe powershell.exe) do (
 )
 :gotpwsh
 
-%POWERSHELL_EXE% -noprofile -executionpolicy unrestricted -command "iex (get-content %~dfp0 -raw)#" &&  set REMOVE_CELLA=
-:: endlocal 
+"%POWERSHELL_EXE%" -noprofile -executionpolicy unrestricted -command "iex (get-content %~dfp0 -raw)#" &&  set REMOVE_CELLA=
 set CELLA_EXITCODE=%ERRORLEVEL%
+
+:: clear out the argz
+@for /f "delims==" %%_ in ('set ^|  findstr -i argz') do call :unset %%_
 
 :: if we're being asked to remove it,we're done.
 if "%REMOVE_CELLA%" EQU "TRUE" ( 
