@@ -2,13 +2,42 @@
 # wrapper script for cella.
 # this is intended to be dot-sourced and then you can use the cella() function
 
+# DEBUGGING :
+# set | grep -i ^CELLA
+
 # GLOBALS
 CELLA_NODE_LATEST=14.16.0
 CELLA_NODE_REMOTE=https://nodejs.org/dist/
 CELLA_PWD=`pwd`
 
-# echo CELLA INSTALLATION/RUN SCRIPT
-CELLA_START_TIME=$(($(date +%s%N)/1000000))
+cella_init() {
+  CELLA_OS="$(uname | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
+  CELLA_ARCH="$(uname -m | sed -e 's/x86_64/x64/;s/i86pc/x64/;s/i686/x86/;s/aarch64/arm64/')"
+
+  case $CELLA_OS in 
+    ( mingw64_nt* | msys_nt* ) CELLA_OS="win";;
+    ( darwin*|bsd) CELLA_IS_THIS_BSD=TRUE;;
+    ( aix ) CELLA_ARCH="ppc64" ;;
+  esac
+
+  if [ ! -z "$CELLA_IS_THIS_BSD" ]; then
+    CELLA_START_TIME=$(date +%s)
+  else 
+    CELLA_START_TIME=$(($(date +%s%N)/1000000))
+  fi
+
+  # find important cmdline args
+  CELLA_ARGS=()
+  for each in "$@"; do case $each in
+    --reset-cella) CELLA_RESET=TRUE;;
+    --remove-cella) CELLA_REMOVE=TRUE;;
+    --debug) CELLA_DEBUG=TRUE && CELLA_ARGS+=("$each");;
+    *) CELLA_ARGS+=("$each");;
+  esac ;done
+}
+
+cella_init "$@"
+shift $#
 
 # check to see if we've been dot-sourced (should work for most POSIX shells)
 sourced=0
@@ -48,20 +77,47 @@ CELLA_NODE=${CELLA_HOME}/cache/bin/node
 CELLA_NPM=${CELLA_HOME}/cache/bin/npm
 
 cella_debug() {
-  if [ ! -z "$CELLA_DEBUG" ]; then
+  if [ ! -z "$CELLA_IS_THIS_BSD" ]; then
+    local NOW=$(date +%s)
+    local OFFSET="$(( $NOW - $CELLA_START_TIME )) sec"
+  else
     local NOW=$(($(date +%s%N)/1000000))
-    local OFFSET=$(( $NOW - $CELLA_START_TIME ))
+    local OFFSET="$(( $NOW - $CELLA_START_TIME )) msec"
+  fi
+
+  if [ ! -z "$CELLA_DEBUG" ]; then
     if [ -n "$CELLA_NESTED" ]; then
-      echo "[NESTED $OFFSET msec] $*"
+      echo "[NESTED $OFFSET] $*"
     else
-      echo "[$OFFSET msec] $*"
+      echo "[$OFFSET] $*"
     fi  
-  fi 
+  fi
+
+  if [ -n "$CELLA_NESTED" ]; then
+    echo "[NESTED $OFFSET] $*" >> $CELLA_HOME/log.txt
+  else
+    echo "[$OFFSET] $*" >> $CELLA_HOME/log.txt
+  fi      
 }
 
-if [ "${1}" = "--reset-cella" ]; then
+if [ ! -z "$CELLA_RESET" ]; then
   if [ -d $CELLA_HOME/node_modules ]; then 
-    cella_debug forcing reinstall of cella package
+    echo Forcing reinstall of Cella package
+    rm -rf $CELLA_HOME/node_modules
+  fi
+
+  if [ -d $CELLA_HOME/cache/bin ]; then 
+    rm -rf $CELLA_HOME/cache/bin
+  fi 
+
+  if [ -d $CELLA_HOME/cache/lib ]; then 
+    rm -rf $CELLA_HOME/cache/lib
+  fi
+fi
+
+if [ ! -z "$CELLA_REMOVE" ]; then
+  if [ -d $CELLA_HOME/node_modules ]; then 
+    echo Removing Cella package
     rm -rf $CELLA_HOME/node_modules
   fi
 
@@ -73,11 +129,19 @@ if [ "${1}" = "--reset-cella" ]; then
     rm -rf $CELLA_HOME/cache/lib
   fi
 
-  shift
-fi
+  if [ -f $CELLA_HOME/cella.ps1 ]; then 
+    rm -f $CELLA_HOME/cella.ps1
+  fi
 
-if [ "${1}" = "--debug" ]; then
-  CELLA_DEBUG=TRUE
+  if [ -f $CELLA_HOME/cella ]; then 
+    rm -f $CELLA_HOME/cella
+  fi
+  # cleanup environment.
+  . <(set | grep -i ^CELLA | sed -e 's/\W.*//;s/^/unset /')
+  
+  # remove functions (zsh)
+  which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/\W.*//;s/^/unset -f /';)
+  return
 fi
 
 cella_cleanup() {
@@ -89,11 +153,15 @@ cella_cleanup() {
   unset CELLA_NPM
   unset CELLA_NESTED
   unset CELLA_OS
+  unset CELLA_ARCH
+  unset CELLA_IS_THIS_BSD
   unset CELLA_DEBUG
-  unset cella_bootstrap_node
-  unset cella_bootstrap_cella
-  unset cella_cleanup
+  unset -f cella_bootstrap_node > /dev/null 2>&1
+  unset -f cella_bootstrap_cella > /dev/null 2>&1
+  unset CELLA_REMOVE
+  unset CELLA_RESET
   unset CELLA_START_TIME
+  unset CELLA_ARGS
   if [ -f "${CELLA_POSTSCRIPT}" ]; then
     command rm "${CELLA_POSTSCRIPT}"
   fi
@@ -104,61 +172,51 @@ cella_bootstrap_node() {
   cella_debug starting cella_bootstrap_node
 
   local NODE_EXE="node"
-  if [ "${NODE_OS}" = "win" ]; then
+  if [ "${CELLA_OS}" = "win" ]; then
     NODE_EXE="node.exe"
   fi
 
   local N=`which $NODE_EXE`
-  
-  if [ ! -z $N ]; then
-    if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 16)"` -gt 0 ]; then
-       CELLA_NODE=$N
-       CELLA_NPM=`which npm`
-       cella_debug using node in path
-       return 0
-    fi
-  fi 
+
+  if [ -f $N ]; then
+    if [ ! -z $N ]; then
+      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 16) )"` = "true" ]; then
+        CELLA_NODE=$N
+        CELLA_NPM=`which npm`
+        cella_debug using node in path
+        return 0
+      fi
+    fi 
+  fi
 
   # we don't have a good node in the path
   # we would install one here if we tried 
   # before
-  CELLA_NODE=`which ${CELLA_HOME}/cache/bin/node`
+  CELLA_NODE=${CELLA_HOME}/cache/bin/node
   
-  if [ ! -z $CELLA_NODE ]; then
-    if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 12)"` -gt 0 ]; then
-       # looks good, lets grab NPM in case we need it, and get out.
-       CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
-       cella_debug using node from cella cache
-       return 0
-    fi
-  fi 
+  if [ -f $CELLA_NODE ]; then 
+    if [ ! -z $CELLA_NODE ]; then
+      if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12))"` = "true" ]; then
+        # looks good, lets grab NPM in case we need it, and get out.
+        CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
+        cella_debug using node from cella cache
+        return 0
+      fi
+    fi 
+  fi
   
   # we don't seem to have a suitable nodejs on the path
   # let's grab a well-known one, cache it and use it.
 
-  # Parse the OS name and architecture from `uname`.
-  local NODE_OS="$(uname | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
-
-  # When running inside Git bash on Windows, `uname` reports "MINGW64_NT".
-  case $NODE_OS in mingw64_nt* | msys_nt*)
-    NODE_OS="win"
-  esac
-
-  local NODE_ARCH="$(uname -m | sed -e 's/x86_64/x64/;s/i86pc/x64/;s/i686/x86/;s/aarch64/arm64/')"
-  # On AIX `uname -m` reports the machine ID number of the hardware running the system.
-  if [ "${NODE_OS}" = "aix" ]; then
-    NODE_ARCH="ppc64"
-  fi
-
-  local NODE_ARCHIVE_EXT=".tar.gz"
+  local CELLA_ARCHIVE_EXT=".tar.gz"
 	local TAR_FLAGS="-zxvf"
-	if [ "${NODE_OS}" = "win" ]; then
-	  NODE_ARCHIVE_EXT=".zip"
+	if [ "${CELLA_OS}" = "win" ]; then
+	  CELLA_ARCHIVE_EXT=".zip"
   fi
 
-  local NODE_FULLNAME="node-v${CELLA_NODE_LATEST}-${NODE_OS}-${NODE_ARCH}"
-  local NODE_URI="${CELLA_NODE_REMOTE}v${CELLA_NODE_LATEST}/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
-  local NODE_ARCHIVE="${CELLA_HOME}/cache/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
+  local NODE_FULLNAME="node-v${CELLA_NODE_LATEST}-${CELLA_OS}-${CELLA_ARCH}"
+  local NODE_URI="${CELLA_NODE_REMOTE}v${CELLA_NODE_LATEST}/${NODE_FULLNAME}${CELLA_ARCHIVE_EXT}"
+  local CELLA_ARCHIVE="${CELLA_HOME}/cache/${NODE_FULLNAME}${CELLA_ARCHIVE_EXT}"
   
   if [ ! -d "${CELLA_HOME}/cache" ]; then
     command mkdir -p "${CELLA_HOME}/cache"
@@ -166,25 +224,25 @@ cella_bootstrap_node() {
 
   echo "Downloading bootstrap node from ${NODE_URI}"
   if type noglob > /dev/null 2>&1; then
-    noglob curl -L -# "${NODE_URI}" -o "${NODE_ARCHIVE}"
+    noglob curl -L -# "${NODE_URI}" -o "${CELLA_ARCHIVE}"
   else
-    curl -L -# "${NODE_URI}" -o "${NODE_ARCHIVE}"
+    curl -L -# "${NODE_URI}" -o "${CELLA_ARCHIVE}"
   fi
 
-   if [ ! -f "${NODE_ARCHIVE}" ]; then
+   if [ ! -f "${CELLA_ARCHIVE}" ]; then
     echo "Failed to download node binary."
     return 1
   fi
     
   # UNPACK IT
   if [ "${CELLA_OS}" = "aix" ]; then
-    gunzip "${NODE_ARCHIVE}" | tar -xvC "${CELLA_HOME}/cache" "${NODE_FULLNAME}/bin/${NODE_EXE}" > /dev/null 2>&1
+    gunzip "${CELLA_ARCHIVE}" | tar -xvC "${CELLA_HOME}/cache" "${NODE_FULLNAME}/bin/${NODE_EXE}" >> $CELLA_HOME/log.txt 2>&1
   else
-    tar $TAR_FLAGS "${NODE_ARCHIVE}" -C "${CELLA_HOME}/cache"  > /dev/null 2>&1
+    tar $TAR_FLAGS "${CELLA_ARCHIVE}" -C "${CELLA_HOME}/cache" >> $CELLA_HOME/log.txt 2>&1
   fi
-  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/bin" "${CELLA_HOME}/cache/" > /dev/null 2>& 1
-  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/lib" "${CELLA_HOME}/cache/" > /dev/null 2>& 1
-  rm -r "${CELLA_HOME}/cache/${NODE_FULLNAME}" > /dev/null 2>& 1
+  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/bin" "${CELLA_HOME}/cache/" >> $CELLA_HOME/log.txt 2>&1
+  mv "${CELLA_HOME}/cache/${NODE_FULLNAME}/lib" "${CELLA_HOME}/cache/" >> $CELLA_HOME/log.txt 2>&1
+  rm -r "${CELLA_HOME}/cache/${NODE_FULLNAME}" >> $CELLA_HOME/log.txt 2>&1
 
   # OK, we good?
   CELLA_NODE=${CELLA_HOME}/cache/bin/node
@@ -220,9 +278,24 @@ cella_bootstrap_cella() {
 
   # ensure we have a node_modules here, so npm won't search for one up the tree.
   command mkdir -p $CELLA_HOME/node_modules
+  
+  echo Installing Cella in $CELLA_HOME
+  unset CELLA_RESET
 
   cd $CELLA_HOME
-  $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile https://aka.ms/cella.tgz  > /dev/null 2>&1
+  $CELLA_NODE $CELLA_NPM cache clean --force >> $CELLA_HOME/log.txt 2>&1
+  local OLD_PATH=$PATH
+  PATH=`dirname $CELLA_NODE`:$PATH
+  if [ ! -z "$USE_LOCAL_CELLA_PKG" ]; then
+    echo USING LOCAL CELLA PACKAGE $USE_LOCAL_CELLA_PKG
+    $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true $USE_LOCAL_CELLA_PKG  >> $CELLA_HOME/log.txt 2>&1
+  else
+    $CELLA_NODE $CELLA_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/cella.tgz  >> $CELLA_HOME/log.txt 2>&1
+  fi
+
+  PATH=$OLD_PATH
+
+  cp $CELLA_HOME/node_modules/.bin/* .
   
   # go back where we were
   cd $CELLA_PWD
@@ -257,7 +330,7 @@ fi
 if [ -z $CELLA_NESTED ]; then
   cella_debug executing final script: $CELLA_SCRIPT
   CELLA_NESTED=TRUE
-  . $CELLA_SCRIPT $* 
+  . $CELLA_SCRIPT $CELLA_ARGS
   return # let the real script take over from here. 
 fi
 
@@ -265,9 +338,64 @@ fi
 cella_debug 'real cella adding function'
 
 cella() {
+  # set | grep -i ^CELLA
+
   local cst=$CELLA_START_TIME
 
-  CELLA_START_TIME=$(($(date +%s%N)/1000000))
+  cella_init "$@"
+
+  if [ ! -z "$CELLA_RESET" ]; then
+    if [ -d $CELLA_HOME/node_modules ]; then 
+      echo Forcing reinstall of Cella package
+      rm -rf $CELLA_HOME/node_modules
+    fi
+
+    if [ -d $CELLA_HOME/cache/bin ]; then 
+      rm -rf $CELLA_HOME/cache/bin
+    fi 
+
+    if [ -d $CELLA_HOME/cache/lib ]; then 
+      rm -rf $CELLA_HOME/cache/lib
+    fi
+    unset CELLA_RESET
+    
+    if [ ! -z "USE_LOCAL_CELLA_SCRIPT" ]; then
+      echo USING LOCAL CELLA SCRIPT $USE_LOCAL_CELLA_SCRIPT
+      . <(cat $USE_LOCAL_CELLA_SCRIPT) "${CELLA_ARGS[@]}"
+    else
+      . <(curl -L -# aka.ms/cella.sh) "${CELLA_ARGS[@]}"
+    fi
+
+    return 0
+  fi
+
+  if [ ! -z "$CELLA_REMOVE" ]; then
+    if [ -d $CELLA_HOME/node_modules ]; then 
+      unset CELLA_REMOVE
+      echo Removing Cella package
+      rm -rf $CELLA_HOME/node_modules
+    fi
+
+    if [ -d $CELLA_HOME/cache/bin ]; then 
+      rm -rf $CELLA_HOME/cache/bin
+    fi 
+
+    if [ -d $CELLA_HOME/cache/lib ]; then 
+      rm -rf $CELLA_HOME/cache/lib
+    fi
+
+    if [ -f $CELLA_HOME/cella.ps1 ]; then 
+      rm -f $CELLA_HOME/cella.ps1
+    fi
+
+    if [ -f $CELLA_HOME/cella ]; then 
+      rm -f $CELLA_HOME/cella
+    fi
+
+    . <(set | grep -i ^CELLA | sed -e 's/\W.*//;s/^/unset /')
+    which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/\W.*//;s/^/unset -f /';)
+    return 0
+  fi
 
   if [ ! -f $CELLA_NODE ]; then
     echo The installation of nodejs $CELLA_NODE that cella is using is missing
@@ -286,7 +414,7 @@ cella() {
 
   # call cella.js
   # it picks up the CELLA_POSTSCRIPT environment variable to know where to dump the postscript
-  $CELLA_NODE $CELLA_MAIN $*
+  $CELLA_NODE $CELLA_MAIN ${CELLA_ARGS[@]}
   
   cella_debug called cella.js
   # modify the environment 
@@ -299,12 +427,14 @@ cella() {
 		unset CELLA_POSTSCRIPT
 	fi
 
+  cella_cleanup
+
   CELLA_START_TIME=$cst
 }
 
 # did they dotsource and have args go ahead and run it then!
-if [ -n "$*" ]; then 
-  cella $*
+if [ -n "$CELLA_ARGS" ]; then 
+  cella "${CELLA_ARGS[@]}"
 fi
 
 cella_cleanup

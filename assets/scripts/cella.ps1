@@ -1,6 +1,7 @@
 @(echo off) > $null 
 if #ftw NEQ '' goto :CMDSTART
 ($true){}
+$Error.clear();
 
 # powershell script starts here 
 
@@ -9,12 +10,12 @@ if( ($ENV:ARGZ) -and ($ENV:ARGZ.length -gt 1)  ) {
   $Q=$ENV:ARGZ -replace "^(.*?),.*", '$1'
   if( $ENV:ARGZ.length -gt $q.length) {
     $tmp=(($ENV:ARGZ.substring($q.length+1) -replace '"', '`"' ) -replace $Q,'"')
-    $argz=invoke-expression "@($tmp)" # turn it into an array
+    $argz=[System.Collections.ArrayList]@(invoke-expression "@($tmp,'')") # turn it into an array
   } else {
-    $argz = @()
+    $argz = [System.Collections.ArrayList]@()
   }
 } else {
-  $argz=$args
+  $argz=[System.Collections.ArrayList]$args
 }
 
 # wrapper script for cella.
@@ -34,6 +35,7 @@ function resolve {
     param ( [string] $name )
     $name = Resolve-Path $name -ErrorAction 0 -ErrorVariable _err
     if (-not($name)) { return $_err[0].TargetObject }
+    $Error.clear()
     return $name
 }
 
@@ -44,11 +46,13 @@ if( $argz.indexOf('--debug') -gt -1 ) {
 }
 
 function cella-debug() {
+  $t = [int32]((get-date).Subtract(($CELLA_START_TIME)).ticks/10000)
   if($SCRIPT:DEBUG) { 
-    $t = [int32]((get-date).Subtract(($CELLA_START_TIME)).ticks/10000)
     write-host -fore green "[$t msec] " -nonewline
     write-host -fore gray $args
   }
+  
+  write-output "[$t msec] $args" >> $CELLA_HOME/log.txt
 }
 
 # set the home path. 
@@ -64,16 +68,23 @@ $reset = $argz -and $argz.IndexOf('--reset-cella') -gt -1
 $remove = $argz -and $argz.IndexOf('--remove-cella') -gt -1 
 
 if( $reset -or -$remove ) {
+  $argz.remove('--reset-cella');
+  $argz.remove('--remove-cella');
+
   if( $reset ) {
-    cella-debug "Resetting Cella"
+    write-host "Resetting Cella"
   }
 
   remove-item -recurse -force -ea 0 "${CELLA_HOME}/node_modules"
   remove-item -recurse -force -ea 0 "${CELLA_HOME}/bin"
   remove-item -recurse -force -ea 0 "${CELLA_HOME}/lib"
-  
+  remove-item -force -ea 0 "${CELLA_HOME}/cella.ps1"
+  remove-item -force -ea 0 "${CELLA_HOME}/cella.cmd"
+  remove-item -force -ea 0 "${CELLA_HOME}/cella"  
+  $error.clear();
+
   if( $remove ) { 
-    cella-debug "Removing Cella"
+    write-host "Removing Cella"
     exit
   }
 }
@@ -81,20 +92,24 @@ if( $reset -or -$remove ) {
 function verify-node() {
   param( $NODE ) 
 
-  if( get-command -ea 0 $NODE ) {
-    if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 15)") -gt 0 ) {
-      # good version of node
-      # set the variables 
+  if( $NODE ) {
+    if( get-command -ea 0 $NODE ) {
+      if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 15)") -gt 0 ) {
+        # good version of node
+        # set the variables 
 
-      $SCRIPT:CELLA_NODE=$NODE
-      if( isWindows ) {
-        $SCRIPT:CELLA_NPM=resolve "${CELLA_NODE}\..\node_modules\npm"
-      } else {
-        $SCRIPT:CELLA_NPM=resolve "${CELLA_NODE}\..\npm"
+        $SCRIPT:CELLA_NODE=$NODE
+        if( isWindows ) {
+          $SCRIPT:CELLA_NPM=resolve "${CELLA_NODE}\..\node_modules\npm"
+        } else {
+          $SCRIPT:CELLA_NPM=resolve "${CELLA_NODE}\..\npm"
+        }
+        $error.clear();
+        return $TRUE;  
       }
-      return $TRUE;  
     }
   }
+  $error.clear();
   return $FALSE
 }
 
@@ -106,17 +121,18 @@ function isWindows {
 }
 
 function bootstrap-node {
+  # if we have a custom cella node let's use that first
+  if( (verify-node (resolve "${CELLA_HOME}/cache/bin/node"))) {
+    cella-debug "Node: ${CELLA_NODE}"
+    return $TRUE;
+  }
+
   # check the node on the path.
   if( (verify-node ((get-command node -ea 0).source ))) {
     cella-debug "Node: ${CELLA_NODE}"
     return $TRUE;
   }
 
-  if( (verify-node (resolve "${CELLA_HOME}/cache/bin/node"))) {
-    cella-debug "Node: ${CELLA_NODE}"
-    return $TRUE;
-  }
-  
   # not there, or not good enough
 
   if( isWindows ) { 
@@ -146,7 +162,11 @@ function bootstrap-node {
 
   switch($NODE_OS){
     'win' { 
-      $shh= expand-archive -path $NODE_ARCHIVE -destinationpath "${CELLA_HOME}/cache" 
+      if( get-command -ea 0 tar.exe ) {
+        tar "-xvf" "${NODE_ARCHIVE}" -C "${CELLA_HOME}/cache"  2>&1  > $null
+      } else {
+        $shh= expand-archive -path $NODE_ARCHIVE -destinationpath "${CELLA_HOME}/cache" 
+      }
       move-item "${CELLA_HOME}/cache/${NODE_FULLNAME}" "${CELLA_HOME}/cache/bin" 
     }
     'aix' { 
@@ -186,12 +206,25 @@ function bootstrap-cella {
   # ensure we have a node_modules here, so npm won't search for one up the tree.
   $shh = new-item -type directory -ea 0 $CELLA_HOME/node_modules
   pushd $CELLA_HOME
+  
+  $shh = & $CELLA_NODE $CELLA_NPM cache clean --force 2>&1 
+  $error.clear();
+
+  write-host "Installing Cella to ${CELLA_HOME}"
 
   if( isWindows ) {
-    $shh = & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile https://aka.ms/cella.tgz  2>&1
+    & $CELLA_NODE $CELLA_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/cella.tgz  2>&1 >> $CELLA_HOME/log.txt
   } else {
-    $shh = & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile  https://aka.ms/cella.tgz 2>&1
+    & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/cella.tgz 2>&1 >> $CELLA_HOME/log.txt
   }
+  if( $error.count -gt 0 ) {
+    $error |% { add-content -encoding UTF8 $CELLA_HOME/log.txt $_ }
+    $Error.clear()
+  }
+
+
+  # we should also copy the .bin files into the $CELLA_HOME folder to make reactivation (without being on the PATH) easy
+  copy-item ./node_modules/.bin/cella.* 
 
   popd
 
@@ -221,26 +254,36 @@ $shh = New-Module -name cella -ArgumentList @($CELLA_NODE,$CELLA_MODULE,$CELLA_H
       param ( [string] $name )
       $name = Resolve-Path $name -ErrorAction 0 -ErrorVariable _err
       if (-not($name)) { return $_err[0].TargetObject }
+      $Error.clear()
       return $name
   }
 
   function cella() { 
+    if( ($args.indexOf('--remove-cella') -gt -1) -or ($args.indexOf('--reset-cella') -gt -1)) {
+      # we really want to do call the ps1 script to do this.
+      if( test-path "${CELLA_HOME}/cella.ps1" ) {
+        & "${CELLA_HOME}/cella.ps1" @args
+      }
+      return
+    }
+
     if( -not (test-path $CELLA_MODULE )) {
       write-error "Cella is not installed."
       write-host -nonewline "You can reinstall cella by running "
       write-host -fore green "iex (iwr -useb aka.ms/cella.ps1)"
       return
     }
+
     # setup the postscript file
     # Generate 31 bits of randomness, to avoid clashing with concurrent executions.
-    $env:CELLA_POSTSCRIPT = resolve "${CELLA_HOME}/cella_tmp_${(Get-Random -SetSeed $PID)}.ps1"
+    $env:CELLA_POSTSCRIPT = resolve "${CELLA_HOME}/cella_tmp_$(Get-Random -SetSeed $PID).ps1"
 
     & $CELLA_NODE $CELLA_MODULE @args  
 
     # dot-source the postscript file to modify the environment
     if ($env:CELLA_POSTSCRIPT -and (Test-Path $env:CELLA_POSTSCRIPT)) {
       # write-host (get-content -raw $env:CELLA_POSTSCRIPT)
-      . $env:CELLA_POSTSCRIPT
+      iex (get-content -raw $env:CELLA_POSTSCRIPT)
       Remove-Item -Force $env:CELLA_POSTSCRIPT
       remove-item -ea 0 -force env:CELLA_POSTSCRIPT
     }
@@ -267,6 +310,7 @@ if "%1" EQU "--reset-cella" goto BOOTSTRAP
 :: if we're being asked to remove the install, call bootstrap
 if "%1" EQU "--remove-cella" ( 
   set REMOVE_CELLA=TRUE
+  doskey cella=
   goto BOOTSTRAP
 )
 
@@ -288,7 +332,7 @@ SET /A CELLA_POSTSCRIPT=%RANDOM% * 32768 + %RANDOM%
 SET CELLA_POSTSCRIPT=%CELLA_HOME%\CELLA_tmp_%CELLA_POSTSCRIPT%.cmd
 
 :: find the right node
-if exist %CELLA_HOME%\bin\node.exe set CELLA_NODE=%CELLA_HOME%\bin\node.exe
+if exist %CELLA_HOME%\cache\bin\node.exe set CELLA_NODE=%CELLA_HOME%\cache\bin\node.exe
 if "%CELLA_NODE%" EQU "" ( 
   for %%i in (node.exe) do set CELLA_NODE=%%~$PATH:i      
 )
@@ -297,6 +341,7 @@ if "%CELLA_NODE%" EQU "" goto OHNONONODE:
 :: call the program
 "%CELLA_NODE%" "%CELLA_HOME%\node_modules\cella" %* 
 set CELLA_EXITCODE=%ERRORLEVEL%
+doskey cella="%CELLA_HOME%\node_modules\.bin\cella.cmd" $*
 
 :POSTSCRIPT
 :: Call the post-invocation script if it is present, then delete it.
@@ -325,21 +370,22 @@ if "%1" NEQ "" (
   goto :LOOP
 )
 
-powershell -noprofile -executionpolicy unrestricted "iex (get-content %~dfp0 -raw)#"
+set POWERSHELL_EXE=
+for %%i in (pwsh.exe powershell.exe) do (
+  if EXIST "%%~$PATH:i" set POWERSHELL_EXE=%%~$PATH:i & goto :gotpwsh
+)
+:gotpwsh
+
+%POWERSHELL_EXE% -noprofile -executionpolicy unrestricted -command "iex (get-content %~dfp0 -raw)#" &&  set REMOVE_CELLA=
 :: endlocal 
 set CELLA_EXITCODE=%ERRORLEVEL%
 
-:: if we're being asked to reset the install, call bootstrap
+:: if we're being asked to remove it,we're done.
 if "%REMOVE_CELLA%" EQU "TRUE" ( 
-  :: remove any aliases
-  set REMOVE_CELLA=
-  doskey cella=
   goto :fin
 )
 
 :CREATEALIAS
-:: doskey /m | findstr cella= 
-:: IF %ERRORLEVEL% NEQ 0 
 doskey cella="%CELLA_HOME%\node_modules\.bin\cella.cmd" $*
 
 :fin
