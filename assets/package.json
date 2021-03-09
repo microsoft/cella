@@ -1,0 +1,37 @@
+{
+  "name": "cella",
+  "version": "0.0.1",
+  "description": "Cella CLI",
+  "main": "cli/dist/main.js",
+  "bin": {
+    "cella_": "./cli/dist/main.js"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "engines": {
+    "node": ">=14.12.0"
+  },
+  "scripts": {
+    "postinstall": "node ./create-links create && node ./wrapper-scripts create",
+    "uninstall": "node ./create-links remove && node ./wrapper-scripts remove",
+    "prepack": "npx rimraf ./common/temp/node_modules/.pnpm/typescript*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Microsoft/cella.git"
+  },
+  "files": [
+    "**/*"
+  ],
+  "keywords": [
+    "cella"
+  ],
+  "author": "Microsoft",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Microsoft/cella/issues"
+  },
+  "homepage": "https://github.com/Microsoft/cella#readme",
+  "readme": "https://github.com/Microsoft/cella/blob/master/readme.md"
+}

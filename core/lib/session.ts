@@ -7,6 +7,7 @@ import { strict } from 'assert';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { i } from './i18n';
+import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
 import { MetadataFile, parseConfiguration } from './metadata-format';
 import { UnifiedFileSystem } from './unified-filesystem';
@@ -57,6 +58,11 @@ export class Session {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
   }
 
+  #postscriptFile!: Uri;
+  get postscriptFile() {
+    return this.#postscriptFile || (this.#postscriptFile = this.fileSystem.file(this.environment['CELLA_POSTSCRIPT'] || 'c:/tmp/psf'));
+  }
+
   async init() {
     // load global configuration
     if (!await this.fileSystem.isDirectory(this.cellaRoot)) {
@@ -100,6 +106,26 @@ export class Session {
     location = location.join('..');
 
     return (location.toString() === startLocation.toString()) ? undefined : this.findProjectProfile(location);
+  }
+
+  #postscript = new Dictionary<string>();
+  addPostscript(variableName: string, value: string) {
+    this.#postscript[variableName] = value;
+  }
+
+  async writePostscript() {
+    if (this.postscriptFile?.fsPath.endsWith('.ps1')) {
+      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+    }
+
+    if (this.postscriptFile?.fsPath.endsWith('.sh')) {
+      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
+    }
+
+    if (this.postscriptFile?.fsPath.endsWith('.cmd')) {
+      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
+    }
+
   }
 
   setupLogging() {
