@@ -16,7 +16,7 @@ cella_init() {
 
   case $CELLA_OS in 
     ( mingw64_nt* | msys_nt* ) CELLA_OS="win";;
-    ( darwin*|bsd) CELLA_IS_THIS_BSD=TRUE;;
+    ( darwin*|*bsd*) CELLA_IS_THIS_BSD=TRUE;;
     ( aix ) CELLA_ARCH="ppc64" ;;
   esac
 
@@ -137,15 +137,14 @@ if [ ! -z "$CELLA_REMOVE" ]; then
     rm -f $CELLA_HOME/cella
   fi
   # cleanup environment.
-  . <(set | grep -i ^CELLA | sed -e 's/\W.*//;s/^/unset /')
+  . <(set | grep -i ^CELLA | sed -e 's/[=| |\W].*//;s/^/unset /')
   
   # remove functions (zsh)
-  which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/\W.*//;s/^/unset -f /';)
+  which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/[=| |\W].*//;s/^/unset -f /')
   return
 fi
 
 cella_cleanup() {
-  cella_debug unsetting variables
   # clear things that we're not going to need for the long term
   unset CELLA_NODE_LATEST
   unset CELLA_NODE_REMOTE
@@ -177,17 +176,17 @@ cella_bootstrap_node() {
   fi
 
   local N=`which $NODE_EXE`
-
+  
   if [ -f $N ]; then
-    if [ ! -z $N ]; then
-      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 16) )"` = "true" ]; then
-        CELLA_NODE=$N
-        CELLA_NPM=`which npm`
-        cella_debug using node in path
-        return 0
-      fi
-    fi 
+    if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12) )"` = "true" ]; then
+      CELLA_NODE=$N
+      CELLA_NPM=`which npm`
+      cella_debug using node in path
+      return 0
+    fi
   fi
+
+
 
   # we don't have a good node in the path
   # we would install one here if we tried 
@@ -195,13 +194,11 @@ cella_bootstrap_node() {
   CELLA_NODE=${CELLA_HOME}/cache/bin/node
   
   if [ -f $CELLA_NODE ]; then 
-    if [ ! -z $CELLA_NODE ]; then
-      if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12))"` = "true" ]; then
-        # looks good, lets grab NPM in case we need it, and get out.
-        CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
-        cella_debug using node from cella cache
-        return 0
-      fi
+    if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12))"` = "true" ]; then
+      # looks good, lets grab NPM in case we need it, and get out.
+      CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
+      cella_debug using node from cella cache
+      return 0
     fi 
   fi
   
@@ -250,6 +247,14 @@ cella_bootstrap_node() {
 
   if [ ! -f $CELLA_NODE ]; then
     echo "ERROR! Unable to find/get nodejs."
+    if [ "$CELLA_OS" = "freebsd" ]; then
+      echo "NodeJS is not available for your OS as a binary drop."
+      echo "You appear to be running FreeBSD; You will need to install NodeJS manually"
+      echo ""
+      echo "run (as root): "
+      echo "   pkg install -y node14"
+      echo "   pkg install -y npm-node14" 
+    fi
     return 1;
   fi
 
@@ -359,7 +364,7 @@ cella() {
     fi
     unset CELLA_RESET
     
-    if [ ! -z "USE_LOCAL_CELLA_SCRIPT" ]; then
+    if [ ! -z "$USE_LOCAL_CELLA_SCRIPT" ]; then
       echo USING LOCAL CELLA SCRIPT $USE_LOCAL_CELLA_SCRIPT
       . <(cat $USE_LOCAL_CELLA_SCRIPT) "${CELLA_ARGS[@]}"
     else
@@ -392,8 +397,11 @@ cella() {
       rm -f $CELLA_HOME/cella
     fi
 
-    . <(set | grep -i ^CELLA | sed -e 's/\W.*//;s/^/unset /')
-    which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/\W.*//;s/^/unset -f /';)
+    # cleanup environment
+    . <(set | grep -i ^CELLA | sed -e 's/[=| |\W].*//;s/^/unset /')
+    
+    # remove functions (zsh)
+    which functions  > /dev/null 2>&1  && . <(functions | grep -i ^cella | sed -e 's/[=| |\W].*//;s/^/unset -f /')
     return 0
   fi
 
