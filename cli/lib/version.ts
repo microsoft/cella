@@ -7,9 +7,11 @@ import { strict } from 'assert';
 import { parse } from 'semver';
 import { Version as cliVersion } from '../exports';
 import { session } from '../main';
-import { cli, Command, Switch } from './command-line';
+import { Command } from './command';
+import { cli } from './constants';
+import { Debug } from './debug';
 import { debug, error, log } from './styling';
-
+import { Switch } from './switch';
 
 class Check extends Switch {
   switch = 'check';
@@ -36,6 +38,8 @@ export class VersionCommand extends Command {
   argumentsHelp = [];
   check = new Check(this);
   update = new Update(this);
+  debug = new Debug(this);
+
   versionUrl = session.fileSystem.parse('https://aka.ms/cella.version');
 
   get summary() {
@@ -48,7 +52,6 @@ export class VersionCommand extends Command {
       i`as well as checking if a new version is available, and can upgrade the current installation to the latest version.`,
     ];
   }
-
 
   private async getRemoteVersion() {
     const version = session.utf8(await session.fileSystem.readFile(this.versionUrl));
@@ -66,7 +69,9 @@ export class VersionCommand extends Command {
         const semver = await this.getRemoteVersion();
 
         if (semver.compare(cliVersion) > 0) {
-          log('Ther');
+          // we can update the tool.
+          debug('An update is available, we can install it. ');
+          debug('(we can not do it yet, waiting for download support');
         }
 
       } catch (err) {

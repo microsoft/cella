@@ -3,7 +3,10 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
-import { Argument, blank, cli, Command } from './command-line';
+import { Argument } from './argument';
+import { Command } from './command';
+import { blank, cli } from './constants';
+import { Debug } from './debug';
 import { error, indent, log } from './styling';
 
 class CommandName extends Argument {
@@ -22,11 +25,11 @@ export class HelpCommand extends Command {
   readonly command = 'help';
   seeAlso = [];
   commandName: CommandName = new CommandName(this);
+  debug = new Debug(this);
 
   get argumentsHelp() {
     return [indent(i` <${this.commandName.argument}> : ${this.commandName.help.join(' ')}`)];
   }
-
 
   get summary() {
     return i`get help on ${cli} or one of the commands`;

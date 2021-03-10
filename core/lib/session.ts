@@ -36,7 +36,7 @@ export class Session {
   readonly stopwatch = new Stopwatch();
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
-  readonly cellaRoot: Uri;
+  readonly cellaHome: Uri;
   readonly globalConfig: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
@@ -52,8 +52,8 @@ export class Session {
 
     this.setupLogging();
 
-    this.cellaRoot = this.fileSystem.file(environment['home']!);
-    this.globalConfig = this.cellaRoot.join('cella.config.yaml');
+    this.cellaHome = this.fileSystem.file(environment['cella_home']!);
+    this.globalConfig = this.cellaHome.join('cella.config.yaml');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }
@@ -69,10 +69,10 @@ export class Session {
 
   async init() {
     // load global configuration
-    if (!await this.fileSystem.isDirectory(this.cellaRoot)) {
+    if (!await this.fileSystem.isDirectory(this.cellaHome)) {
       // let's create the folder
       try {
-        await this.fileSystem.createDirectory(this.cellaRoot);
+        await this.fileSystem.createDirectory(this.cellaHome);
       } catch (error: any) {
         // if this throws, let it
         this.channels.debug(error?.message);
@@ -80,7 +80,7 @@ export class Session {
 
 
       // check if it got made, because at an absolute minimum, we need a folder, so failing this is catastrophic.
-      strict.ok(await this.fileSystem.isDirectory(this.cellaRoot), i`Fatal: The root folder '${this.cellaRoot.fsPath}' can not be created.`);
+      strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created.`);
     }
 
     if (!await this.fileSystem.isFile(this.globalConfig)) {

@@ -42,11 +42,10 @@ export function indent(text: string | Array<string>): string | Array<string> {
 }
 
 function md(text: string, session?: Session) {
-  text = (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => {
-    return yellow.dim(session.fileSystem.parse(a).fsPath);
-  }) : text;
+  text = markdown(text);
 
-  return markdown(text);
+  // rewrite file:// urls to be locl filesystem urls.
+  return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
 }
 
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;
