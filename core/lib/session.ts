@@ -4,8 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
+import { TextDecoder } from 'util';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
+import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
@@ -14,7 +16,7 @@ import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
 const defaultConfig =
-  `# Cella Global configuration 
+  `# Global configuration 
 
 global:
   send-anonymous-telemetry: true
@@ -39,16 +41,18 @@ export class Session {
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
+  readonly utf8 = new TextDecoder('utf-8').decode;
+
   constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
-    this.fileSystem = new UnifiedFileSystem(this).register(
-      'file', new LocalFileSystem(this)
-    );
+    this.fileSystem = new UnifiedFileSystem(this).
+      register('file', new LocalFileSystem(this)).
+      register(['http', 'https'], new HttpFileSystem(this));
 
     this.channels = new Channels(this);
 
     this.setupLogging();
 
-    this.cellaRoot = this.fileSystem.file(environment['cellaRoot']!);
+    this.cellaRoot = this.fileSystem.file(environment['home']!);
     this.globalConfig = this.cellaRoot.join('cella.config.yaml');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
