@@ -113,9 +113,9 @@ export class LocalFileSystem extends FileSystem {
     throw new Error('cross filesystem copynot implemented yet.');
   }
 
-  async readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+  async readStream(uri: Uri, start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
     this.read(uri);
-    return enhanceReadable(createReadStream(uri.fsPath));
+    return enhanceReadable(createReadStream(uri.fsPath, { start, end }));
   }
 
   async writeStream(uri: Uri): Promise<EnhancedWritable> {

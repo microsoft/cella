@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
-import { Stopwatch } from './channels';
 import { Session } from './session';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 import { Uri } from './uri';
@@ -69,6 +68,9 @@ export enum FileType {
 
 
 export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
+
+  protected baseUri?: Uri;
+
   /**
  * Creates a new URI from a file system path, e.g. `c:\my\files`,
  * `/usr/home`, or `\\server\share\some\path`.
@@ -142,7 +144,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return a Readable stream
    */
-  abstract readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable>;
+  abstract readStream(uri: Uri, start?: number, end?: number): Promise<AsyncIterable<Buffer> & EnhancedReadable>;
 
   /**
    * Write data to a file, replacing its entire contents.
@@ -226,41 +228,40 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
     return false;
   }
 
-  private readonly stopwatch: Stopwatch;
 
-  constructor(session: Session) {
+  constructor(protected session: Session) {
     super();
-    this.stopwatch = session.stopwatch;
+
   }
 
   /** EventEmitter for when files are read */
   protected read(path: Uri, context?: any) {
-    this.emit('read', path, context, this.stopwatch.total);
+    this.emit('read', path, context, this.session.stopwatch.total);
   }
 
   /** EventEmitter for when files are written */
   protected write(path: Uri, context?: any) {
-    this.emit('write', path, context, this.stopwatch.total);
+    this.emit('write', path, context, this.session.stopwatch.total);
   }
 
   /** EventEmitter for when files are deleted */
   protected deleted(path: Uri, context?: any) {
-    this.emit('deleted', path, context, this.stopwatch.total);
+    this.emit('deleted', path, context, this.session.stopwatch.total);
   }
 
   /** EventEmitter for when files are renamed */
   protected renamed(path: Uri, context?: any) {
-    this.emit('renamed', path, context, this.stopwatch.total);
+    this.emit('renamed', path, context, this.session.stopwatch.total);
   }
 
   /** EventEmitter for when directories are read */
   protected directoryRead(path: Uri, contents?: Promise<Array<[Uri, FileType]>>) {
-    this.emit('directoryRead', path, contents, this.stopwatch.total);
+    this.emit('directoryRead', path, contents, this.session.stopwatch.total);
   }
 
   /** EventEmitter for when direcotries are created */
   protected directoryCreated(path: Uri, context?: any) {
-    this.emit('directoryCreated', path, context, this.stopwatch.total);
+    this.emit('directoryCreated', path, context, this.session.stopwatch.total);
   }
 }
 

@@ -76,7 +76,6 @@ export class UnifiedFileSystem extends FileSystem {
   }
 
   createDirectory(uri: Uri): Promise<void> {
-
     return this.filesystem(uri).createDirectory(uri);
   }
 
@@ -88,8 +87,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).writeFile(uri, content);
   }
 
-  readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
-    return this.filesystem(uri).readStream(uri);
+  readStream(uri: Uri, start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    return this.filesystem(uri).readStream(uri, start, end);
   }
 
   writeStream(uri: Uri): Promise<EnhancedWritable> {

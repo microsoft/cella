@@ -5,7 +5,7 @@
 
 import { YAMLMap } from 'yaml/types';
 import { i } from '../i18n';
-import { ErrorKind, Git, Installer, NuGet, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { getOrCreateMap, getPair, isMap } from '../util/yaml';
 import { NodeBase } from './base';
 
@@ -16,8 +16,8 @@ export function createInstallerNode(node: YAMLMap, name: string): Installer {
     if (n.has('unzip')) {
       return new UnzipNode(n, name);
     }
-    if (n.has('nuget')) {
-      return new NugetNode(n, name);
+    if (n.has('nupkg')) {
+      return new NupkgNode(n, name);
     }
     if (n.has('untar')) {
       return new UnTarNode(n, name);
@@ -92,15 +92,15 @@ class UnzipNode extends FileInstallerNode implements UnZip {
   }
 }
 
-class NugetNode extends FileInstallerNode implements NuGet {
-  readonly kind = 'nuget';
+class NupkgNode extends FileInstallerNode implements Nupkg {
+  readonly kind = 'nupkg';
 
   get location() {
-    return this.getString('nuget')!;
+    return this.getString('nupkg')!;
   }
 
   set location(value: string) {
-    this.setString('nuget', value);
+    this.setString('nupkg', value);
   }
   *validate(): Iterable<ValidationError> {
     yield* super.validate();

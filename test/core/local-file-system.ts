@@ -3,36 +3,19 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
+import { FileType, hash } from '@microsoft/cella.core';
 import { skip, suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
-import { mkdtempSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-
-function uniqueTempFolder(): string {
-  return mkdtempSync(`${tmpdir()}/cella-temp$`);
-}
+import { join } from 'path';
+import { SuiteLocal } from './SuiteLocal';
 
 @suite class LocalFileSystemTests {
-  static tempFolder: string;
-  static tempFolderUrl: Uri;
-  static fs: LocalFileSystem;
 
-  static before() {
-    const session = new Session('', {});
-    this.tempFolder = uniqueTempFolder();
-    this.fs = new LocalFileSystem(session);
-    this.tempFolderUrl = this.fs.file(LocalFileSystemTests.tempFolder);
-  }
-
-
-  before() {
-    //
-  }
 
   @test async 'create/delete folder'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
 
     // create a path to a folder
     const someFolder = tmp.join('someFolder');
@@ -48,11 +31,13 @@ function uniqueTempFolder(): string {
 
     // make sure it's gone!
     strict.ok(!(await fs.isDirectory(someFolder)), `the directory ${someFolder.fsPath} should not exist`);
+    await local.after();
   }
 
   @test async 'create/read file'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
 
     const file = tmp.join('hello.txt');
     const expectedText = 'hello world';
@@ -68,11 +53,13 @@ function uniqueTempFolder(): string {
     strict.deepEqual(expectedBuffer, actualBuffer, 'contents should be the same');
     const actualText = actualBuffer.toString();
     strict.equal(expectedText, actualText, 'text should be equal too.');
+    await local.after();
   }
 
   @test async 'readDirectory'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
     const thisFolder = fs.file(__dirname);
 
     // look in the current folder
@@ -83,11 +70,13 @@ function uniqueTempFolder(): string {
 
     // should be a file, right?
     strict.ok(found?.[1] && FileType.File, `${__filename} should be a path`);
+    await local.after();
   }
 
   @test async 'read/write stream'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output.txt');
@@ -106,11 +95,27 @@ function uniqueTempFolder(): string {
 
     strict.equal((await fs.stat(outputFile)).size, (await fs.stat(thisFile)).size, 'outputFile should be the same length as the input file');
     strict.equal((await fs.stat(thisFile)).size, text.length, 'buffer should be the same size as the input file');
+    await local.after();
+  }
+
+  @test async 'calculate checksums'() {
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
+    const path = fs.file(join(__dirname, 'resources', 'small-file.txt'));
+
+    strict.equal(await hash(fs.readStream(path)), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'md5'), 'c82b854702262508e9210c678282d5a4', 'Checksum should match');
+
+    await local.after();
   }
 
   @test async 'read/write stream with pipe '() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const local = new SuiteLocal();
+    const fs = local.fs;
+    const tmp = local.tempFolderUrl;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output2.txt');
@@ -130,18 +135,11 @@ function uniqueTempFolder(): string {
 
     // make sure it's gone!
     strict.ok(!(await fs.isFile(outputFile)), `the file ${outputFile.fsPath} should not exist`);
+
+    await local.after();
+    console.log('gone!');
   }
   @test @skip async 'copy '() {
     // tbw
   }
-
-  public after() {
-    //
-  }
-
-  public static after() {
-    // drop the whole temp folder
-    rmSync(LocalFileSystemTests.tempFolder, { recursive: true });
-  }
 }
-

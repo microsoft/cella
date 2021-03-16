@@ -5,6 +5,7 @@ require:
 monkeyPatch: true
 spec: ./**/*.ts
 ignore: 
+  - "./**/*.js"
   - "./**/*.d.ts"
   - "./node_modules/**"
   - "../common/**/node_modules/**"
@@ -15,3 +16,4 @@ watch-ignore:
   - "./**/*.d.ts"
   - "./node_modules/**"
   - "../common/**/node_modules/**"
+  - "./**/*.js"

@@ -39,4 +39,4 @@ settings:
       
 windows and arm:
   install: 
-    nuget: floobaloo/1.2.3
+    nupkg: floobaloo/1.2.3

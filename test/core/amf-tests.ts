@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isNuGet, parseConfiguration as parse } from '@microsoft/cella.core';
+import { isNupkg, parseConfiguration as parse } from '@microsoft/cella.core';
 import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
@@ -101,7 +101,7 @@ s;
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
     const install = doc['windows and arm'].install!;
-    strict.ok(isNuGet(install), 'the install type should be NuGet');
+    strict.ok(isNupkg(install), 'the install type should be nupkg');
     strict.equal(install.location, 'floobaloo/1.2.3', 'should have correct location');
 
     console.log(doc.toString());

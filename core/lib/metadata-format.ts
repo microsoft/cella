@@ -328,7 +328,7 @@ export interface UnTar extends Verifiable, UnpackSettings, Installer {
 
 /**
  * a special version of UnZip, this assumes the nuget.org package repository
- * the 'nuget' value is the package id (ie, 'Microsoft.Windows.SDK.CPP.x64/10.0.19041.5')
+ * the 'nupkg' value is the package id (ie, 'Microsoft.Windows.SDK.CPP.x64/10.0.19041.5')
  *
  * and that is appended to the known-url https://www.nuget.org/api/v2/package/ to get
  * the final url.
@@ -337,7 +337,7 @@ export interface UnTar extends Verifiable, UnpackSettings, Installer {
  *
  * combined with Verifyable, the checksum should be matched before proceeding
  */
-export interface NuGet extends Verifiable, UnpackSettings, Installer {
+export interface Nupkg extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip/untar/unrar/etc */
   location: string;
 }
@@ -373,8 +373,8 @@ export interface Git extends Installer {
   recurse?: boolean;
 }
 
-export function isNuGet(installer: Installer): installer is NuGet {
-  return installer.kind === 'nuget';
+export function isNupkg(installer: Installer): installer is Nupkg {
+  return installer.kind === 'nupkg';
 }
 export function isUnZip(installer: Installer): installer is UnZip {
   return installer.kind === 'unzip';

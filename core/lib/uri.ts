@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { join } from 'path';
+import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
 import { FileSystem } from './filesystem';
@@ -170,5 +171,9 @@ bad.fragment === '/project1';
   /** returns a JSON object with the components of the Uri */
   toJSON(): UriComponents {
     return this.uri.toJSON();
+  }
+
+  toUrl(): URL {
+    return new URL(this.uri.toString());
   }
 }

@@ -57,7 +57,7 @@ export function createArtifactSourceNode(node: YAMLMap, name: string) {
   if (node.has('path')) {
     return new LocalSourceNode(getOrCreateMap(node, name), name);
   }
-  if (node.has('nuget')) {
+  if (node.has('nupkg')) {
     return new NugetSourceNode(getOrCreateMap(node, name), name);
   }
   if (node.has('git')) {

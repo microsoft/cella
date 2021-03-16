@@ -5,6 +5,7 @@
 
 import { strict } from 'assert';
 import { TextDecoder } from 'util';
+import { Cache } from './cache';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
@@ -38,6 +39,7 @@ export class Session {
   readonly channels: Channels;
   readonly cellaHome: Uri;
   readonly globalConfig: Uri;
+  readonly cache: Cache;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
@@ -46,13 +48,15 @@ export class Session {
   constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
     this.fileSystem = new UnifiedFileSystem(this).
       register('file', new LocalFileSystem(this)).
-      register(['http', 'https'], new HttpFileSystem(this));
+      register(['http', 'https'], new HttpFileSystem(this)
+      );
 
     this.channels = new Channels(this);
 
     this.setupLogging();
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
+    this.cache = new Cache(this);
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
@@ -62,9 +66,9 @@ export class Session {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
   }
 
-  #postscriptFile!: Uri;
+  #postscriptFile?: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.fileSystem.file(this.environment['CELLA_POSTSCRIPT'] || 'c:/tmp/psf'));
+    return this.#postscriptFile || (this.#postscriptFile = this.environment['CELLA_POSTSCRIPT'] ? this.fileSystem.file(this.environment['CELLA_POSTSCRIPT']) : undefined);
   }
 
   async init() {
@@ -118,18 +122,15 @@ export class Session {
   }
 
   async writePostscript() {
-    if (this.postscriptFile?.fsPath.endsWith('.ps1')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+    const psf = this.postscriptFile;
+    switch (psf?.fsPath.substr(-3)) {
+      case 'ps1':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+      case 'cmd':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
+      case '.sh':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
     }
-
-    if (this.postscriptFile?.fsPath.endsWith('.sh')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
-    }
-
-    if (this.postscriptFile?.fsPath.endsWith('.cmd')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
-    }
-
   }
 
   setupLogging() {
