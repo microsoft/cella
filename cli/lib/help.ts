@@ -50,6 +50,7 @@ export class HelpCommand extends Command {
       const target = this.commandLine.commands.find(each => each.command === cmd);
       if (target) {
         log(target.help.join('\n'));
+        log(blank);
         return true;
       }
 

@@ -23,6 +23,21 @@
       }
     },
     {
+      "label": "pack",
+      "type": "shell",
+      "command": "pwsh ${workspaceFolder}/pack.ps1",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "test core",
       "type": "shell",
       "options": {

@@ -20,7 +20,6 @@ class Check extends Switch {
       i`check to see if a newer version of ${cli} is available`
     ];
   }
-
 }
 
 class Update extends Switch {

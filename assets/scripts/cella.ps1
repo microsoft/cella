@@ -203,7 +203,13 @@ function bootstrap-cella {
   write-host "Installing Cella to ${CELLA_HOME}"
 
   if( isWindows ) {
-    & $CELLA_NODE $CELLA_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/cella.tgz  2>&1 >> $CELLA_HOME/log.txt
+    if( $USE_LOCAL_CELLA_PKG ) {
+      write-host -fore cyan Using Local Package: $USE_LOCAL_CELLA_PKG
+      & $CELLA_NODE $CELLA_NPM install --force --no-save --scripts-prepend-node-path=true $USE_LOCAL_CELLA_PKG  2>&1 >> $CELLA_HOME/log.txt
+    } else {
+      & $CELLA_NODE $CELLA_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/cella.tgz  2>&1 >> $CELLA_HOME/log.txt
+    }
+    
   } else {
     & $CELLA_NODE $CELLA_NPM install --force --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/cella.tgz 2>&1 >> $CELLA_HOME/log.txt
   }
@@ -273,7 +279,10 @@ $shh = New-Module -name cella -ArgumentList @($CELLA_NODE,$CELLA_MODULE,$CELLA_H
     # dot-source the postscript file to modify the environment
     if ($env:CELLA_POSTSCRIPT -and (Test-Path $env:CELLA_POSTSCRIPT)) {
       # write-host (get-content -raw $env:CELLA_POSTSCRIPT)
-      iex (get-content -raw $env:CELLA_POSTSCRIPT)
+      $postscr = get-content -raw $env:CELLA_POSTSCRIPT
+      if( $postscr ) {
+        iex $postscr
+      }
       Remove-Item -Force $env:CELLA_POSTSCRIPT
       remove-item -ea 0 -force env:CELLA_POSTSCRIPT
     }

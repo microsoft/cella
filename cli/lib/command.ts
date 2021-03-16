@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
+import { dim } from 'chalk';
 import { Argument } from './argument';
 import { CommandLine, Help } from './command-line';
 import { blank, cli } from './constants';
@@ -26,7 +27,7 @@ export abstract class Command implements Help {
   get synopsis(): Array<string> {
     return [
       i`## Synopsis`,
-      ` \`${cli} ${this.command} ${this.arguments.map(each => `<${each.argument}>`).join(' ')}\` `,
+      ` \`${cli} ${this.command} ${this.arguments.map(each => `<${each.argument}>`).join(' ')}\`${this.switches.flatMap(each => dim(`[--${each.switch}]`)).join(' ')}`,
     ];
   }
 
