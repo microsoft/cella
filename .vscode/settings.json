@@ -89,13 +89,11 @@
   ],
   "mochaExplorer.cwd": "./test",
   "mochaExplorer.mochaPath": "./test/node_modules/mocha",
-  //"mochaExplorer.nodePath": "C:\\Users\\garre\\AppData\\Local\\nvs\\node\\15.11.0\\x64\\node.exe", //"--harmony-promise-any",
   "mochaExplorer.timeout": 500000,
   "mochaExplorer.require": [
     "source-map-support/register",
   ],
   "mochaExplorer.monkeyPatch": true,
   "mochaExplorer.debuggerConfig": "MochaTest",
-  "eslint.debug": true,
-  "mochaExplorer.logfile": "c:/tmp/mocha.txt"
+  "eslint.debug": true
 }
