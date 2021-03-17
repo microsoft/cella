@@ -42,12 +42,10 @@ describe('Acquire', () => {
 
     await outputFile.delete();
     await outputFile.writeFile(halfFile);
-    console.log(await outputFile.size());
 
     acq = http(local.session, [remoteFile], 'readme.md');
     pcount = 0;
     acq.on('progress', (p, b, m) => {
-      console.log(` ${p} / ${b} / ${m}`);
       pcount++;
     });
     await acq;
@@ -85,7 +83,6 @@ describe('Acquire', () => {
     acq = http(local.session, [remoteFile], 'xyz.png');
     let pcount = 0;
     acq.on('progress', (p, b, m) => {
-      console.log(` ${p} / ${b} / ${m}`);
       pcount++;
     });
     await acq;

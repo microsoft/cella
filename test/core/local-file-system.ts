@@ -112,9 +112,11 @@ describe('LocalFileSystemTests', () => {
 
     const inputStream = await fs.readStream(thisFile);
 
+    let pcount = 0;
     inputStream.on('progress', (p, t, m) => {
-      console.log(`p: ${p}/${t}/${m}`);
+      pcount++;
     });
+
 
     const outStream = await fs.writeStream(outputFile);
     inputStream.pipe(outStream);
@@ -128,7 +130,7 @@ describe('LocalFileSystemTests', () => {
     // (this will ensure that the stream is destroyed. )
     await outStream.is.done;
 
-
+    strict.ok(pcount > 1, 'We should get at least two progress events');
     strict.ok(fs.isFile(outputFile), `there should be a file at ${outputFile.fsPath}`);
 
     // this will throw if it fails.

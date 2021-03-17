@@ -46,14 +46,8 @@ class LocalFileStats implements FileStat {
 export class LocalFileSystem extends FileSystem {
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
-    try {
-      const s = await stat(path);
-      return new LocalFileStats(s);
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
-
+    const s = await stat(path);
+    return new LocalFileStats(s);
   }
 
   async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
