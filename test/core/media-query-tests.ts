@@ -4,42 +4,41 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { parseQuery } from '@microsoft/cella.core';
-import { suite, test } from '@testdeck/mocha';
 import { strict } from 'assert';
 
-@suite class MediaQuery {
-  @test async 'windows'() {
+describe('MediaQuery', () => {
+  it('windows', async () => {
     const queryList = parseQuery('windows');
     strict.equal(queryList.length, 1, 'should be just one query');
     strict.equal(queryList.queries[0].expressions.length, 1, 'should be just one expression');
     strict.equal(queryList.queries[0].expressions[0].feature, 'windows');
-  }
+  });
 
-  @test async 'windows and arm'() {
+  it('windows and arm', async () => {
     const queryList = parseQuery('windows and arm');
     strict.equal(queryList.length, 1, 'should be just one query');
     strict.equal(queryList.queries[0].expressions.length, 2, 'should be two expressions');
     strict.sequenceEqual(queryList.queries[0].expressions.map(each => each.feature), ['windows', 'arm']);
-  }
+  });
 
-  @test async 'target:x64'() {
+  it('target:x64', async () => {
     const queryList = parseQuery('target:x64');
     strict.equal(queryList.length, 1, 'should be just one query');
     strict.equal(queryList.queries[0].expressions.length, 1, 'should be one expression');
     strict.equal(queryList.queries[0].expressions[0].feature, 'target', `feature should say target (got ${queryList.queries[0].expressions[0].feature})`);
     strict.equal(queryList.queries[0].expressions[0].constant, 'x64', 'constant should say x64');
-  }
+  });
 
-  @test async 'just test the parser for good queries'() {
+  it('just test the parser for good queries', async () => {
     parseQuery('foo and bar');
     parseQuery('foo and (bar)');
     parseQuery('foo and (bar:100)');
     parseQuery('foo and (bar:"hello")');
     parseQuery('foo and (bar:"hello") and buzz');
     parseQuery('not foo and not bar');
-  }
+  });
 
-  @test async 'test for known bad query strings'() {
+  it('test for known bad query strings', async () => {
 
     strict.equal(parseQuery('!').error?.message, 'Expected expression, found "!"');
     strict.equal(parseQuery('foo and !').error?.message, 'Expected expression, found "!"');
@@ -50,9 +49,9 @@ import { strict } from 'assert';
     strict.equal(parseQuery('"').error?.message, 'Unexpected end of file while searching for \'"\'');
     strict.equal(parseQuery('foo:0x01fz').error?.message, 'Expected comma, found "z"');
     strict.equal(parseQuery('foo:?100').error?.message, 'Expected one of {Number, Boolean, Identifier, String}, found token "?"');
-  }
+  });
 
-  @test async 'test for matches'() {
+  it('test for matches', async () => {
     strict.ok(parseQuery('foo').match({ foo: true }), 'foo was present, it should match!');
     strict.ok(parseQuery('foo').match({ foo: null }), 'foo was present, it should match!');
     strict.ok(parseQuery('foo').match({ foo: false }), 'foo was present, it should match!');
@@ -67,5 +66,5 @@ import { strict } from 'assert';
     strict.ok(parseQuery('windows and x64 and target:amd64, osx').match({ osx: true }), 'should match');
     strict.ok(!parseQuery('windows and x64 and target:amd64, osx').match({ linux: true }), 'should not match');
 
-  }
-}
+  });
+});

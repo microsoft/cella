@@ -3,35 +3,21 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Channels, LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
-import { suite, test } from '@testdeck/mocha';
+import { Channels } from '@microsoft/cella.core';
 import { strictEqual } from 'assert';
-import { rmSync } from 'fs';
-import { join } from 'path';
-import { uniqueTempFolder } from './uniqueTempFolder';
+import { SuiteLocal } from './SuiteLocal';
 
-@suite class StreamTests {
+describe('StreamTests', () => {
+  const local = new SuiteLocal();
 
-  static tempFolder: string;
-  static tempFolderUrl: Uri;
-  static fs: LocalFileSystem;
-  static session: Session;
+  after(async () => local.after());
 
-  static before() {
-    this.tempFolder = uniqueTempFolder();
-    this.session = new Session(StreamTests.tempFolder, {
-      cella_home: join(StreamTests.tempFolder, 'cella_home')
-    });
+  it('event emitter works', async () => {
 
-    this.fs = new LocalFileSystem(this.session);
-    this.tempFolderUrl = this.fs.file(StreamTests.tempFolder);
-  }
-
-  @test 'event emitter works'() {
     const expected = ['a', 'b', 'c', 'd'];
     let i = 0;
 
-    const session = StreamTests.session;
+    const session = local.session;
     const m = new Channels(session);
     m.on('message', (message, context, msec) => {
       // check that each message comes in order
@@ -44,10 +30,7 @@ import { uniqueTempFolder } from './uniqueTempFolder';
     }
 
     strictEqual(expected.length, i, 'should have got the right number of messages');
-  }
 
-  public static after() {
-    // drop the whole temp folder
-    rmSync(StreamTests.tempFolder, { recursive: true });
-  }
-}
+
+  });
+});

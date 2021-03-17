@@ -4,66 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { default as got, Headers } from 'got';
+import { anyWhere } from './promise';
+import { enhanceReadable } from './streams';
 import { Uri } from './uri';
-
-async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value: T) => boolean) {
-  const waiting = Promise.reject(0xDEFACED);
-
-  let unfulfilled = new Array<Promise<T>>();
-  const failed = new Array<Promise<T>>();
-  const completed = new Array<T>();
-
-  // wait for something to succeed. if nothing suceeds, then this will throw.
-  const first = await Promise.any(from);
-  let success: T | undefined;
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-
-    //
-    for (const each of from) {
-      // if we had a winner, return now.
-      await Promise.any([each, waiting]).then(antecedent => {
-        if (predicate(antecedent)) {
-          success = antecedent;
-          return antecedent;
-        }
-        completed.push(antecedent);
-        return undefined;
-      }).catch(r => {
-        if (r === 0xDEFACED) {
-          // it's not done yet.
-          unfulfilled.push(each);
-        } else {
-          // oh, it returned and it was a failure.
-          failed.push(each);
-        }
-        return undefined;
-      });
-    }
-    // we found one that passes muster!
-    if (success) {
-      return success;
-    }
-
-    if (unfulfilled.length) {
-      // something completed successfully, but nothing passed the predicate yet.
-      // so hope remains eternal, lets rerun whats left with the unfulfilled.
-      from = unfulfilled;
-      unfulfilled = [];
-      continue;
-    }
-
-    // they all finished
-    // but nothing hit the happy path.
-    break;
-  }
-
-  // if we get here, then we're
-  // everything completed, but nothing passed the predicate
-  // give them the first to suceed
-  return first;
-}
 
 export function head(location: Uri, headers: Headers = {}) {
   return got.head(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers });
@@ -71,9 +14,9 @@ export function head(location: Uri, headers: Headers = {}) {
 
 export function get(location: Uri, options?: { start?: number, end?: number }) {
   let headers: Headers | undefined = undefined;
-  headers = setRange(headers, options?.start, undefined);
+  headers = setRange(headers, options?.start, options?.end);
 
-  return got.get(location.toUrl());
+  return got.get(location.toUrl(), { headers });
 }
 
 function setRange(headers: Headers | undefined, start?: number, end?: number) {
@@ -88,7 +31,7 @@ export function getStream(location: Uri, options?: { start?: number, end?: numbe
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, undefined);
 
-  return got.get(location.toUrl(), { isStream: true, retry: 3, headers });
+  return enhanceReadable(got.get(location.toUrl(), { isStream: true, retry: 3, headers }), options?.start, options?.end);
 }
 
 export interface Info {
@@ -120,11 +63,14 @@ function digest(headers: Headers) {
   return { checksum: undefined, algorithm: undefined };
 }
 
-export class MirroredContent {
+export class RemoteFile {
   info: Array<Promise<Info>>;
   constructor(protected locations: Array<Uri>) {
     this.info = locations.map(location => {
-      return head(location, { 'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3' }).then(data => {
+      return head(location, {
+        'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
+        'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding
+      }).then(data => {
         if (data.statusCode === 200) {
           const { checksum, algorithm } = digest(data.headers);
           return {
@@ -145,9 +91,7 @@ export class MirroredContent {
     });
 
     // lazy properties
-    const resumelocations = new Array<Uri>();
-
-    this.available = Promise.any(this.info).then(success => true, fail => false);
+    this.availableLocation = Promise.any(this.info).then(success => success.location, fail => undefined);
     this.resumable = anyWhere(this.info, each => each.resumeable).then(success => true, fail => false);
     this.resumableLocation = anyWhere(this.info, each => each.resumeable).then(success => success.location, fail => undefined);
     this.contentLength = anyWhere(this.info, each => !!each.contentLength).then(success => success.contentLength, fail => -2);
@@ -156,12 +100,11 @@ export class MirroredContent {
 
   }
 
-  available: Promise<boolean>;
   resumable: Promise<boolean>;
   contentLength: Promise<number>;
   checksum: Promise<string | undefined>;
   algorithm: Promise<string | undefined>;
-
+  availableLocation: Promise<Uri | undefined>;
   resumableLocation: Promise<Uri | undefined>;
 }
 
@@ -186,4 +129,3 @@ function hashAlgorithm(digest: string | Array<string> | undefined, algorithm: 's
   }
   return undefined;
 }
-

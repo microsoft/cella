@@ -7,7 +7,7 @@
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitThis": true,
-    "sourceMap": true,
+    "inlineSourceMap": true,
     "declarationMap": true,
     "strict": true,
     "declaration": true,
@@ -21,6 +21,7 @@
       "ESNext"
     ],
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "newLine": "LF"
   },
   "exclude": [

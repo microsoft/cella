@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /*---------------------------------------------------------------------------------------------
  *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
@@ -110,7 +111,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file to retrieve metadata about.
    * @return The file metadata about the file.
    */
-  abstract stat(uri: Uri): Promise<FileStat>;
+  abstract stat(uri: Uri, options?: {}): Promise<FileStat>;
 
   /**
    * Retrieve all entries of a [directory](#FileType.Directory).
@@ -118,7 +119,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the folder.
    * @return An array of name/type-tuples or a Promise that resolves to such.
    */
-  abstract readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>>;
+  abstract readDirectory(uri: Uri, options?: {}): Promise<Array<[Uri, FileType]>>;
 
   /**
    * Create a new directory (Note, that new files are created via `write`-calls).
@@ -128,7 +129,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    *
    * @param uri The uri of the new folder.
    */
-  abstract createDirectory(uri: Uri): Promise<void>;
+  abstract createDirectory(uri: Uri, options?: {}): Promise<void>;
 
   /**
    * Read the entire contents of a file.
@@ -136,7 +137,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return An array of bytes or a Promise that resolves to such.
    */
-  abstract readFile(uri: Uri): Promise<Uint8Array>;
+  abstract readFile(uri: Uri, options?: {}): Promise<Uint8Array>;
 
   /**
    * Creates a stream to read a file from the filesystem
@@ -144,7 +145,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return a Readable stream
    */
-  abstract readStream(uri: Uri, start?: number, end?: number): Promise<AsyncIterable<Buffer> & EnhancedReadable>;
+  abstract readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable>;
 
   /**
    * Write data to a file, replacing its entire contents.
@@ -152,7 +153,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @param content The new content of the file.
    */
-  abstract writeFile(uri: Uri, content: Uint8Array): Promise<void>;
+  abstract writeFile(uri: Uri, content: Uint8Array, options?: {}): Promise<void>;
 
   /**
    * Creates a stream to write a file to the filesystem
@@ -160,7 +161,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return a Writeable stream
    */
-  abstract writeStream(uri: Uri): Promise<EnhancedWritable>;
+  abstract writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable>;
 
   /**
    * Delete a file.
@@ -192,7 +193,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
   async exists(uri: Uri) {
     try {
       return !!(await this.stat(uri));
-    } catch {
+    } catch (e) {
       // if this fails, we're assuming false
     }
     return false;

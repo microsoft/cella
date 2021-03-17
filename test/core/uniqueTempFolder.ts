@@ -4,7 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
+import { join } from 'path';
 
 export function uniqueTempFolder(): string {
-  return mkdtempSync(`${tmpdir()}/cella-temp$`);
+  return mkdtempSync(join(tmpdir(), '/cella-temp!'));
 }

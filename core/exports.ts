@@ -2,8 +2,10 @@
  *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+export * from './lib/acquire';
 export * from './lib/channels';
 export * from './lib/checksum';
+export * from './lib/events';
 export * from './lib/filesystem';
 export * from './lib/http-filesystem';
 export * from './lib/i18n';
@@ -16,6 +18,7 @@ export * from './lib/session';
 export * from './lib/unified-filesystem';
 export * from './lib/uri';
 export * from './lib/version';
+
 /** This adds the expected declarations to the Array type. */
 declare global {
   interface Array<T> {

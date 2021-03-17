@@ -87,8 +87,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).writeFile(uri, content);
   }
 
-  readStream(uri: Uri, start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
-    return this.filesystem(uri).readStream(uri, start, end);
+  readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    return this.filesystem(uri).readStream(uri, options);
   }
 
   writeStream(uri: Uri): Promise<EnhancedWritable> {

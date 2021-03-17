@@ -3,11 +3,15 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { strict } from 'assert';
+import { fail, strict } from 'assert';
 import { Checksum } from './checksum';
 import { Credentials } from './credentials';
-import { get, MirroredContent } from './https';
+import { Emitter, EventForwarder } from './events';
+import { get, getStream, RemoteFile } from './https';
+import { i } from './i18n';
+import { intersect } from './intersect';
 import { Session } from './session';
+import { EnhancedReadable, Progress } from './streams';
 import { Uri } from './uri';
 
 /* Downloading URLs
@@ -19,53 +23,77 @@ import { Uri } from './uri';
  Nuget Package Download (via HTTP)
  Write to local cache*/
 
+// is the file the correct one?
+// do we have a checksum to match it?
+// yes, does the checksum match?
+// yes; return
 
-export type Progress = (kind: string, context: string, value: number) => boolean;
+// get the expected file length;
+// is the file smaller than the expected length?
+// yes. do the first 16K and the last 16K of what we have match what is remote?
+// yes, let's try to resume the download
+// no, wipe it and start the download fresh
+
+// no checksum. is it resumable?
+
+
+// download one of the uris
+
+// save it to the cache
+
+const size32K = 1 << 15;
 
 export interface AcquireOptions extends Checksum {
   /** force a redownload even if it's in cache */
   force?: boolean;
-
-
   credentials: Credentials;
 }
 
-/** @internal */
-export async function http(session: Session, uris: Array<Uri>, outputFilename: string, progress: Progress, options?: AcquireOptions): Promise<boolean> {
-  let resumeAtOffset = 0;
+export interface AcquireEvents extends Progress {
+  complete(): void;
+}
 
-  const cachefolder = session.cellaHome.join('cache');
+/** */
+export function http(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
+  const fwd = new EventForwarder<EnhancedReadable>();
 
-  if (options?.force) {
-    // is force specified; delete the current file
-    await session.cache.delete(outputFilename);
-  }
+  const fn = async () => {
+    let resumeAtOffset = 0;
+    await session.cache.createDirectory();
+    const outputFile = session.cache.join(outputFilename);
 
-  // start this peeking at the target uris.
-  const locations = new MirroredContent(uris);
+    if (options?.force) {
+      // is force specified; delete the current file
+      await outputFile.delete();
+    }
 
-  // is there a file in the cache
-  if (session.cache.exists(outputFilename)) {
+    // start this peeking at the target uris.
+    const locations = new RemoteFile(uris);
+    let url: Uri | undefined;
 
-    if (options?.algorithm) {
-      // does it match a checksum that we have?
-      if (session.cache.match(outputFilename, options)) {
-        // yes it does. let's just return done.
-        return true;
+    // is there a file in the cache
+    if (await outputFile.exists()) {
+
+      if (options?.algorithm) {
+        // does it match a checksum that we have?
+        if (await outputFile.checksumValid(options)) {
+          // yes it does. let's just return done.
+          return outputFile;
+        }
       }
-
       // it doesn't match.
       // at best, this might be a resume.
       // well, *maybe*. Does the remote support resume?
 
       // first, make sure that there is a remote that is accesible.
-      strict.ok(await locations.available, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
+      strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
 
+      url = await locations.resumableLocation;
       // ok, does it support resume?
-      if (await locations.resumable) {
-
+      if (url) {
         // yes, let's check what the size is expected to be.
-        const onDiskSize = await session.cache.size(outputFilename);
+
+        const onDiskSize = await outputFile.size();
         if (onDiskSize > 1 << 16) {
           // it's bigger than 64k. Good. otherwise, we're just wasting time.
 
@@ -75,48 +103,56 @@ export async function http(session: Session, uris: Array<Uri>, outputFilename: s
             // looks like there could be more remotely than we have.
             // lets compare the first 32k and the last 32k of what we have
             // against what they have and see if they match.
-            const top = (await get((await locations.resumableLocation)!, { start: 0, end: 1 << 15 })).rawBody;
-            const bottom = (await get((await locations.resumableLocation)!, { start: onDiskSize - (1 << 15), end: onDiskSize })).rawBody;
+            const top = (await get(url, { start: 0, end: size32K - 1 })).rawBody;
+            const bottom = (await get(url, { start: onDiskSize - size32K, end: onDiskSize - 1 })).rawBody;
 
-            const onDiskTop = await session.cache.readBlock(outputFilename, 0, 1 << 15);
-            const onDiskBottom = await session.cache.readBlock(outputFilename, onDiskSize - (1 << 15), onDiskSize);
+            const onDiskTop = await outputFile.readBlock(0, size32K - 1);
+            const onDiskBottom = await outputFile.readBlock(onDiskSize - size32K, onDiskSize - 1);
 
             if (top.compare(onDiskTop) === 0 && bottom.compare(onDiskBottom) === 0) {
               // looks like we can continue from here.
-              resumeAtOffset = onDiskSize + 1;
+              resumeAtOffset = onDiskSize;
             }
           }
         }
       }
     }
-  }
 
-  if (resumeAtOffset === 0) {
-    // clearly we mean to not resume. clean any existing file.
-    await session.cache.delete(outputFilename);
-  }
+    if (resumeAtOffset === 0) {
+      // clearly we mean to not resume. clean any existing file.
+      await outputFile.delete();
+    }
+    url = url || await locations.availableLocation;
+    strict.ok(!!url, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
 
+    const length = await locations.contentLength;
 
-  // is the file the correct one?
-  // do we have a checksum to match it?
-  // yes, does the checksum match?
-  // yes; return
+    const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined });
+    const outputStream = await outputFile.appendStream();
 
-  // get the expected file length;
-  // is the file smaller than the expected length?
-  // yes. do the first 16K and the last 16K of what we have match what is remote?
-  // yes, let's try to resume the download
-  // no, wipe it and start the download fresh
+    // bubble up access to the events to the consumer if they want them
+    fwd.register(inputStream);
 
-  // no checksum. is it resumable?
+    // whoooosh. write out the file
+    inputStream.pipe(outputStream);
 
+    // this is when we know we're done.
+    await outputStream.is.done;
 
-  // download one of the uris
+    // we've downloaded the file, let's see if it matches the checksum we have.
+    if (options?.algorithm) {
 
-  // save it to the cache
+      // does it match the checksum that we have?
+      if (!await outputFile.checksumValid(options)) {
+        await outputFile.delete();
+        fail(i`Downloaded file '${outputFile.fsPath}' did not have the correct checksum (${options.algorithm}:${options.checksum}) `);
+      }
+    }
 
+    return outputFile;
+  };
 
-  return false;
+  return intersect(<Emitter<EnhancedReadable>>fwd, fn());
 }
 
 /** @internal */

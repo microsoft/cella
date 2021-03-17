@@ -46,7 +46,14 @@ class LocalFileStats implements FileStat {
 export class LocalFileSystem extends FileSystem {
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
-    return new LocalFileStats(await stat(path));
+    try {
+      const s = await stat(path);
+      return new LocalFileStats(s);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+
   }
 
   async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
@@ -54,7 +61,7 @@ export class LocalFileSystem extends FileSystem {
     try {
       const folder = uri.fsPath;
       const items = (await readdir(folder)).map(async each => {
-        const path = uri.fileSystem.file(join(folder, each));
+        const path = uri.join(each);
         return <[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(path.fsPath))];
       });
       return retval = Promise.all(items);
@@ -113,13 +120,14 @@ export class LocalFileSystem extends FileSystem {
     throw new Error('cross filesystem copynot implemented yet.');
   }
 
-  async readStream(uri: Uri, start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
     this.read(uri);
-    return enhanceReadable(createReadStream(uri.fsPath, { start, end }));
+
+    return enhanceReadable(createReadStream(uri.fsPath, options), options?.start ?? 0, options?.end ?? (await this.stat(uri)).size);
   }
 
-  async writeStream(uri: Uri): Promise<EnhancedWritable> {
+  async writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
     this.write(uri);
-    return enhanceWritable(createWriteStream(uri.fsPath));
+    return enhanceWritable(createWriteStream(uri.fsPath, { flags: 'a', autoClose: true }));
   }
 }

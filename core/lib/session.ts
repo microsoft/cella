@@ -5,7 +5,6 @@
 
 import { strict } from 'assert';
 import { TextDecoder } from 'util';
-import { Cache } from './cache';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
@@ -39,7 +38,7 @@ export class Session {
   readonly channels: Channels;
   readonly cellaHome: Uri;
   readonly globalConfig: Uri;
-  readonly cache: Cache;
+  readonly cache: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
@@ -56,7 +55,7 @@ export class Session {
     this.setupLogging();
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
-    this.cache = new Cache(this);
+    this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
@@ -81,8 +80,6 @@ export class Session {
         // if this throws, let it
         this.channels.debug(error?.message);
       }
-
-
       // check if it got made, because at an absolute minimum, we need a folder, so failing this is catastrophic.
       strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created.`);
     }
