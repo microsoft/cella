@@ -17,7 +17,6 @@ describe('Acquire', () => {
 
     const remoteFile = local.session.fileSystem.parse('https://raw.githubusercontent.com/microsoft/vscode/main/README.md');
 
-
     let acq = http(local.session, [remoteFile], 'readme.md');
 
     // let's make sure we get some progress back
@@ -43,6 +42,8 @@ describe('Acquire', () => {
     await outputFile.delete();
     await outputFile.writeFile(halfFile);
 
+    local.session.channels.debug('==== chopped the file in half, redownload');
+
     acq = http(local.session, [remoteFile], 'readme.md');
     pcount = 0;
     acq.on('progress', (p, b, m) => {
@@ -58,9 +59,7 @@ describe('Acquire', () => {
   it('larger file', async () => {
     const remoteFile = local.session.fileSystem.parse('https://user-images.githubusercontent.com/1487073/58344409-70473b80-7e0a-11e9-8570-b2efc6f8fa44.png');
 
-
     let acq = http(local.session, [remoteFile], 'xyz.png');
-
 
     const outputFile = await acq;
 
@@ -71,6 +70,13 @@ describe('Acquire', () => {
 
     const size = await outputFile.size();
 
+
+    // try getting the same file again (so, should hit the cache.)
+    local.session.channels.debug('==== get the same large file again. should hit cache.');
+    await http(local.session, [remoteFile], 'xyz.png');
+
+    local.session.channels.debug('==== was that ok?');
+
     // chopped file, big.
     // let's chop the file in half
     const fullFile = await outputFile.readFile();
@@ -79,8 +85,9 @@ describe('Acquire', () => {
     await outputFile.delete();
     await outputFile.writeFile(halfFile);
 
-
+    local.session.channels.debug('==== chopped the large file in half, should resume.');
     acq = http(local.session, [remoteFile], 'xyz.png');
+
     let pcount = 0;
     acq.on('progress', (p, b, m) => {
       pcount++;

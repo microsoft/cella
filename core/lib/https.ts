@@ -45,6 +45,8 @@ export interface Info {
 
 function digest(headers: Headers) {
   let checksum = hashAlgorithm(headers['digest'], 'sha-256');
+
+  // any of the sha* checksums..
   if (checksum) {
     return { checksum, algorithm: 'sha256' };
   }
@@ -56,10 +58,26 @@ function digest(headers: Headers) {
   if (checksum) {
     return { checksum, algorithm: 'sha512' };
   }
+
+  // an md5 (either in digest or content-md5)
   checksum = md5(headers['digest'], headers['content-md5']);
   if (checksum) {
-    return { checksum, algorithm: 'sha384' };
+    return { checksum, algorithm: 'md5' };
   }
+
+  // ok, last ditch effort.
+  //
+  // maybe if they had an etag, it'd be an md5 checksum perchance? (V) (°,,,,°) (V)
+  let etag = headers['etag'];
+  etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
+  if (etag) {
+    etag = etag.replace(/\W/g, '').toLowerCase();
+    if (etag.length === 32) {
+      // woop woop woop woop
+      return { checksum: etag, algorithm: 'md5' };
+    }
+  }
+
   return { checksum: undefined, algorithm: undefined };
 }
 

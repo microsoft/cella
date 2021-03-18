@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
-import { Checksum } from './checksum';
+import { Checksum, ChecksumAlgorithm } from './checksum';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
 import { get, getStream, RemoteFile } from './https';
@@ -42,6 +42,7 @@ import { Uri } from './uri';
 // save it to the cache
 
 const size32K = 1 << 15;
+const size64K = 1 << 16;
 
 export interface AcquireOptions extends Checksum {
   /** force a redownload even if it's in cache */
@@ -57,12 +58,15 @@ export interface AcquireEvents extends Progress {
 export function http(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
   const fwd = new EventForwarder<EnhancedReadable>();
 
+  session.channels.debug(`Attempting to download file '${outputFilename}' from [${uris.map(each => each.toString()).join(',')}]`);
+
   const fn = async () => {
     let resumeAtOffset = 0;
     await session.cache.createDirectory();
     const outputFile = session.cache.join(outputFilename);
 
     if (options?.force) {
+      session.channels.debug(`Acquire '${outputFilename}': force specified, forcing download.`);
       // is force specified; delete the current file
       await outputFile.delete();
     }
@@ -73,17 +77,19 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
     // is there a file in the cache
     if (await outputFile.exists()) {
-
+      session.channels.debug(`Acquire '${outputFilename}': local file exists.`);
       if (options?.algorithm) {
         // does it match a checksum that we have?
         if (await outputFile.checksumValid(options)) {
+          session.channels.debug(`Acquire '${outputFilename}': local file checksum matches metdata.`);
           // yes it does. let's just return done.
           return outputFile;
         }
       }
-      // it doesn't match.
-      // at best, this might be a resume.
-      // well, *maybe*. Does the remote support resume?
+      // it doesn't match a known checksum.
+
+      const contentLength = await locations.contentLength;
+      const onDiskSize = await outputFile.size();
 
       // first, make sure that there is a remote that is accesible.
       strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
@@ -93,13 +99,32 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
       if (url) {
         // yes, let's check what the size is expected to be.
 
-        const onDiskSize = await outputFile.size();
-        if (onDiskSize > 1 << 16) {
+        if (!options?.algorithm) {
+
+          if (contentLength === onDiskSize) {
+            session.channels.debug(`Acquire '${outputFilename}': on disk file matches length of remote file`);
+            const algorithm = <ChecksumAlgorithm>(await locations.algorithm);
+            const checksum = await locations.checksum;
+            session.channels.debug(`Acquire '${outputFilename}': remote alg/chk: '${algorithm}'/'${checksum}.`);
+            if (algorithm && checksum && outputFile.checksumValid({ algorithm, checksum })) {
+              session.channels.debug(`Acquire '${outputFilename}': on disk file checksum matches the server checksum.`);
+              // so *we* don't have the checksum, but ... if the server has a checksum, we could see if what we have is what they have?
+              // it does match what the server has.
+              // I call this an win.
+              return outputFile;
+            }
+
+            // we don't have a checksum, or what we have doesn't match.
+            // maybe we will get a match below (or resume)
+          }
+        }
+
+        if (onDiskSize > size64K) {
           // it's bigger than 64k. Good. otherwise, we're just wasting time.
 
           // so, how big is the remote
-          const contentLength = await locations.contentLength;
           if (contentLength >= onDiskSize) {
+            session.channels.debug(`Acquire '${outputFilename}': local file length is less than or equal to remote file length.`);
             // looks like there could be more remotely than we have.
             // lets compare the first 32k and the last 32k of what we have
             // against what they have and see if they match.
@@ -110,7 +135,16 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
             const onDiskBottom = await outputFile.readBlock(onDiskSize - size32K, onDiskSize - 1);
 
             if (top.compare(onDiskTop) === 0 && bottom.compare(onDiskBottom) === 0) {
+              session.channels.debug(`Acquire '${outputFilename}': first/last blocks are equal.`);
+              // the start and end of what we have does match what they have.
+              // is this file the same size?
+              if (contentLength === onDiskSize) {
+                // same file size, front and back match, let's accept this. begrudgingly
+                session.channels.debug(`Acquire '${outputFilename}': file size is identical. keeping this one.`);
+                return outputFile;
+              }
               // looks like we can continue from here.
+              session.channels.debug(`Acquire '${outputFilename}': ok to resume.`);
               resumeAtOffset = onDiskSize;
             }
           }
@@ -120,18 +154,20 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
     if (resumeAtOffset === 0) {
       // clearly we mean to not resume. clean any existing file.
+      session.channels.debug(`Acquire '${outputFilename}': not resuming file, full download.`);
       await outputFile.delete();
     }
+
     url = url || await locations.availableLocation;
     strict.ok(!!url, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
 
     const length = await locations.contentLength;
 
     const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined });
-    const outputStream = await outputFile.appendStream();
-
     // bubble up access to the events to the consumer if they want them
     fwd.register(inputStream);
+
+    const outputStream = await outputFile.appendStream();
 
     // whoooosh. write out the file
     inputStream.pipe(outputStream);
@@ -141,14 +177,16 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
     // we've downloaded the file, let's see if it matches the checksum we have.
     if (options?.algorithm) {
-
+      session.channels.debug(`Acquire '${outputFilename}': checking downloaded file checksum.`);
       // does it match the checksum that we have?
       if (!await outputFile.checksumValid(options)) {
         await outputFile.delete();
         fail(i`Downloaded file '${outputFile.fsPath}' did not have the correct checksum (${options.algorithm}:${options.checksum}) `);
       }
+      session.channels.debug(`Acquire '${outputFilename}': downloaded file checksum matches specified checksum.`);
     }
 
+    session.channels.debug(`Acquire '${outputFilename}': downloading file successful.`);
     return outputFile;
   };
 
