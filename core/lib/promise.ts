@@ -3,8 +3,17 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/** a precrafted failed Promise */
 const waiting = Promise.reject(0xDEFACED);
 waiting.catch(() => { /** */ });
+
+/**
+ * Does a Promise.any(), and accept the one that first matches the predicate, or if all resolve, and none match, the first.
+ *
+ * @remarks WARNING - this requires Node 15+ or node 14.12+ with --harmony
+ * @param from
+ * @param predicate
+ */
 export async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value: T) => boolean) {
   let unfulfilled = new Array<Promise<T>>();
   const failed = new Array<Promise<T>>();

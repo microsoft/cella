@@ -8,6 +8,8 @@ import { Readable, Writable } from 'stream';
 import { Stopwatch } from './channels';
 import { intersect } from './intersect';
 
+export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<AsyncIterable<Buffer> & EnhancedReadable>;
+
 /**
  * Adds Event to Promise mapping to Readable streams
  * */

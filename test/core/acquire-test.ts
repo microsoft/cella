@@ -30,8 +30,6 @@ describe('Acquire', () => {
     strict.ok(pcount > 1, 'We should get at least two progress events');
     strict.ok(await outputFile.exists(), 'File should exist!');
     const size = await outputFile.size();
-
-
     // let's try some resume scenarios
 
     // chopped file, very small.

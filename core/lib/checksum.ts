@@ -4,13 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 import { fail } from 'assert';
 import { createHash } from 'crypto';
-import { EnhancedReadable } from './streams';
-import { Uri } from './uri';
+import { ReadableStream } from './streams';
 
 // md5, sha1, sha256, sha512, sha384
 export type ChecksumAlgorithm = 'sha256' | 'sha384' | 'sha512' | 'md5'
 
-export async function hash(stream: AsyncIterable<Buffer> & EnhancedReadable | Promise<AsyncIterable<Buffer> & EnhancedReadable>, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256') {
+export async function hash(stream: ReadableStream, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256') {
   stream = await stream;
 
   try {
@@ -23,15 +22,6 @@ export async function hash(stream: AsyncIterable<Buffer> & EnhancedReadable | Pr
   }
   fail('Should have returned a chunk from the pipe.');
 }
-
-export async function match(file: Uri, matchOptions?: Checksum) {
-
-  if (await file.exists()) {
-    return matchOptions?.algorithm && matchOptions?.checksum?.toLowerCase() === await hash(await file.readStream());
-  }
-  return false;
-}
-
 
 export interface Checksum {
   checksum?: string;
