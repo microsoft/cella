@@ -4,9 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { join } from 'path';
+import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
-import { FileSystem } from './filesystem';
+import { Checksum, ChecksumAlgorithm, hash } from './checksum';
+import { FileStat, FileSystem, FileType } from './filesystem';
+import { EnhancedReadable, EnhancedWritable } from './streams';
 
 /**
  * This class is intended to be a drop-in replacement for the vscode uri
@@ -171,4 +174,101 @@ bad.fragment === '/project1';
   toJSON(): UriComponents {
     return this.uri.toJSON();
   }
+
+  toUrl(): URL {
+    return new URL(this.uri.toString());
+  }
+
+  /* Act on this uri */
+  protected resolve(uriOrRelativePath?: Uri | string) {
+    return typeof uriOrRelativePath === 'string' ? this.join(uriOrRelativePath) : uriOrRelativePath ?? this;
+  }
+
+  stat(uri?: Uri | string): Promise<FileStat> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.stat(uri);
+  }
+
+  readDirectory(uri?: Uri | string): Promise<Array<[Uri, FileType]>> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.readDirectory(uri);
+  }
+
+  async createDirectory(uri?: Uri | string): Promise<Uri> {
+    uri = this.resolve(uri);
+    await uri.fileSystem.createDirectory(uri);
+    return uri;
+  }
+
+  readFile(uri?: Uri | string): Promise<Uint8Array> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.readFile(uri);
+  }
+
+  readStream(): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    return this.fileSystem.readStream(this);
+  }
+
+  async readBlock(start = 0, end = Infinity): Promise<Buffer> {
+    const stream = await this.fileSystem.readStream(this, { start, end });
+
+    let block = Buffer.alloc(0);
+    for await (const chunk of stream) {
+      block = Buffer.concat([block, chunk]);
+    }
+    return block;
+  }
+
+  async writeFile(content: Uint8Array): Promise<Uri> {
+    await this.fileSystem.writeFile(this, content);
+    return this;
+  }
+
+  writeStream(): Promise<EnhancedWritable> {
+    return this.fileSystem.writeStream(this);
+  }
+
+  appendStream(): Promise<EnhancedWritable> {
+    return this.fileSystem.writeStream(this, { append: true });
+  }
+
+  delete(options?: { recursive?: boolean, useTrash?: boolean }): Promise<void> {
+    return this.fileSystem.delete(this, options);
+  }
+
+  exists(uri?: Uri | string): Promise<boolean> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.exists(uri);
+  }
+
+  isFile(uri?: Uri | string): Promise<boolean> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.isFile(uri);
+  }
+
+  isSymlink(uri?: Uri | string): Promise<boolean> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.isSymlink(uri);
+  }
+
+  async size(uri?: Uri | string): Promise<number> {
+    uri = this.resolve(uri);
+    return (await uri.fileSystem.stat(uri)).size;
+  }
+
+  async checksum(algorithm?: ChecksumAlgorithm): Promise<string | undefined> {
+    if (algorithm) {
+      return await hash(await this.fileSystem.readStream(this), algorithm);
+    }
+    return undefined;
+  }
+
+  async checksumValid(matchOptions?: Checksum) {
+    if (matchOptions?.algorithm && await this.exists()) {
+      return matchOptions.checksum?.toLowerCase() === await hash(await this.readStream(), matchOptions.algorithm);
+    }
+    return false;
+  }
+
+
 }

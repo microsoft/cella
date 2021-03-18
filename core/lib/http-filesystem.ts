@@ -4,7 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { FileStat, FileSystem, FileType } from './filesystem';
-import { EnhancedReadable, EnhancedWritable } from './streams';
+import { get, getStream, head } from './https';
+import { EnhancedReadable, EnhancedWritable, enhanceReadable } from './streams';
 import { Uri } from './uri';
 
 /**
@@ -12,8 +13,15 @@ import { Uri } from './uri';
  *
  */
 export class HttpFileSystem extends FileSystem {
-  stat(uri: Uri): Promise<FileStat> {
-    throw new Error('Method not implemented.');
+  async stat(uri: Uri): Promise<FileStat> {
+    const result = await head(uri);
+
+    return {
+      type: FileType.File,
+      mtime: Date.parse(result.headers.date || ''),
+      ctime: Date.parse(result.headers.date || ''),
+      size: Number.parseInt(result.headers['content-length'] || '0')
+    };
   }
   readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
     throw new Error('Method not implemented.');
@@ -21,8 +29,8 @@ export class HttpFileSystem extends FileSystem {
   createDirectory(uri: Uri): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  readFile(uri: Uri): Promise<Uint8Array> {
-    throw new Error('Method not implemented.');
+  async readFile(uri: Uri): Promise<Uint8Array> {
+    return (await get(uri)).rawBody;
   }
   writeFile(uri: Uri, content: Uint8Array): Promise<void> {
     throw new Error('Method not implemented.');
@@ -36,8 +44,8 @@ export class HttpFileSystem extends FileSystem {
   copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  readStream(uri: Uri): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
-    throw new Error('Method not implemented.');
+  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    return enhanceReadable(getStream(uri, options), options?.start, options?.end);
   }
   writeStream(uri: Uri): Promise<EnhancedWritable> {
     throw new Error('Method not implemented.');

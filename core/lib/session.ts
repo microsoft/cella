@@ -4,8 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
+import { TextDecoder } from 'util';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
+import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
@@ -14,7 +16,7 @@ import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
 const defaultConfig =
-  `# Cella Global configuration 
+  `# Global configuration 
 
 global:
   send-anonymous-telemetry: true
@@ -34,22 +36,27 @@ export class Session {
   readonly stopwatch = new Stopwatch();
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
-  readonly cellaRoot: Uri;
+  readonly cellaHome: Uri;
   readonly globalConfig: Uri;
+  readonly cache: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
+  readonly utf8 = new TextDecoder('utf-8').decode;
+
   constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
-    this.fileSystem = new UnifiedFileSystem(this).register(
-      'file', new LocalFileSystem(this)
-    );
+    this.fileSystem = new UnifiedFileSystem(this).
+      register('file', new LocalFileSystem(this)).
+      register(['http', 'https'], new HttpFileSystem(this)
+      );
 
     this.channels = new Channels(this);
 
     this.setupLogging();
 
-    this.cellaRoot = this.fileSystem.file(environment['cellaRoot']!);
-    this.globalConfig = this.cellaRoot.join('cella.config.yaml');
+    this.cellaHome = this.fileSystem.file(environment['cella_home']!);
+    this.cache = this.cellaHome.join('cache');
+    this.globalConfig = this.cellaHome.join('cella.config.yaml');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }
@@ -58,25 +65,23 @@ export class Session {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
   }
 
-  #postscriptFile!: Uri;
+  #postscriptFile?: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.fileSystem.file(this.environment['CELLA_POSTSCRIPT'] || 'c:/tmp/psf'));
+    return this.#postscriptFile || (this.#postscriptFile = this.environment['CELLA_POSTSCRIPT'] ? this.fileSystem.file(this.environment['CELLA_POSTSCRIPT']) : undefined);
   }
 
   async init() {
     // load global configuration
-    if (!await this.fileSystem.isDirectory(this.cellaRoot)) {
+    if (!await this.fileSystem.isDirectory(this.cellaHome)) {
       // let's create the folder
       try {
-        await this.fileSystem.createDirectory(this.cellaRoot);
+        await this.fileSystem.createDirectory(this.cellaHome);
       } catch (error: any) {
         // if this throws, let it
         this.channels.debug(error?.message);
       }
-
-
       // check if it got made, because at an absolute minimum, we need a folder, so failing this is catastrophic.
-      strict.ok(await this.fileSystem.isDirectory(this.cellaRoot), i`Fatal: The root folder '${this.cellaRoot.fsPath}' can not be created.`);
+      strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created.`);
     }
 
     if (!await this.fileSystem.isFile(this.globalConfig)) {
@@ -114,18 +119,15 @@ export class Session {
   }
 
   async writePostscript() {
-    if (this.postscriptFile?.fsPath.endsWith('.ps1')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+    const psf = this.postscriptFile;
+    switch (psf?.fsPath.substr(-3)) {
+      case 'ps1':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+      case 'cmd':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
+      case '.sh':
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
     }
-
-    if (this.postscriptFile?.fsPath.endsWith('.sh')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
-    }
-
-    if (this.postscriptFile?.fsPath.endsWith('.cmd')) {
-      await this.fileSystem.writeFile(this.#postscriptFile, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
-    }
-
   }
 
   setupLogging() {

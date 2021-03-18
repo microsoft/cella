@@ -3,16 +3,21 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Channels, Session } from '@microsoft/cella.core';
-import { suite, test } from '@testdeck/mocha';
+import { Channels } from '@microsoft/cella.core';
 import { strictEqual } from 'assert';
+import { SuiteLocal } from './SuiteLocal';
 
-@suite class StreamTests {
-  @test 'event emitter works'() {
+describe('StreamTests', () => {
+  const local = new SuiteLocal();
+
+  after(async () => local.after());
+
+  it('event emitter works', async () => {
+
     const expected = ['a', 'b', 'c', 'd'];
     let i = 0;
 
-    const session = new Session('', {});
+    const session = local.session;
     const m = new Channels(session);
     m.on('message', (message, context, msec) => {
       // check that each message comes in order
@@ -25,5 +30,7 @@ import { strictEqual } from 'assert';
     }
 
     strictEqual(expected.length, i, 'should have got the right number of messages');
-  }
-}
+
+
+  });
+});

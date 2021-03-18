@@ -3,15 +3,26 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { EventEmitter } from 'ee-ts';
 import { Readable, Writable } from 'stream';
+import { Stopwatch } from './channels';
+import { intersect } from './intersect';
 
 /**
  * Adds Event to Promise mapping to Readable streams
  * */
-export class ReadableEvents {
+export class ReadableEvents extends EventEmitter<Progress> {
+  progress = 0;
   /** @internal */
-  constructor(private readable: Readable) {
-
+  stopwatch = new Stopwatch();
+  /** @internal */
+  constructor(private readable: Readable, public currentPosition: number, public expectedLength: number,) {
+    super();
+    readable.on('data', (chunk) => {
+      this.currentPosition += chunk.length;
+      this.progress = Math.round(this.currentPosition * 1000 / expectedLength) / 10;
+      this.emit('progress', this.progress, this.currentPosition, this.stopwatch.total);
+    });
   }
 
   get closed() {
@@ -29,7 +40,7 @@ export class ReadableEvents {
     });
   }
 
-  get ended() {
+  get done() {
     return new Promise<void>((resolve, reject) => {
       this.readable.once('end', resolve);
       this.readable.once('error', reject);
@@ -50,29 +61,62 @@ export class ReadableEvents {
  * */
 
 export class WritableEvents {
+  #finished = false;
+  #closed = false;
   /** @internal */
   constructor(private writable: Writable) {
-
+    this.writable.once('finish', () => {
+      // force writable streams to be destroyed immediately after finishing.
+      this.#finished = true;
+      this.writable.destroy();
+    });
+    this.writable.once('close', () => {
+      // force writable streams to be destroyed immediately after finishing.
+      this.#closed = true;
+      this.writable.destroy();
+    });
   }
 
-  get closed() {
+  get done() {
+    // if it's already done, we resolve immediately
+    if (this.#closed) {
+      return Promise.resolve();
+    }
     return new Promise<void>((resolve, reject) => {
       this.writable.once('close', resolve);
       this.writable.once('error', reject);
     });
   }
+
+  get closed() {
+    // if it's already done, we resolve immediately
+    if (this.#closed) {
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve, reject) => {
+      this.writable.once('close', resolve);
+      this.writable.once('error', reject);
+    });
+  }
+
   get drained() {
     return new Promise<void>((resolve, reject) => {
       this.writable.once('drain', resolve);
       this.writable.once('error', reject);
     });
   }
+
   get finished() {
+    // if it's already done, we resolve immediately
+    if (this.#finished) {
+      return Promise.resolve();
+    }
     return new Promise<void>((resolve, reject) => {
       this.writable.once('finish', resolve);
       this.writable.once('error', reject);
     });
   }
+
   get piped() {
     return new Promise<Readable>((resolve, reject) => {
       this.writable.once('pipe', resolve);
@@ -89,21 +133,60 @@ export class WritableEvents {
 
 export interface EnhancedReadable extends Readable {
   is: ReadableEvents;
+
+  on(event: 'close', listener: () => void): this;
+  on(event: 'data', listener: (chunk: any) => void): this;
+  on(event: 'end', listener: () => void): this;
+  on(event: 'error', listener: (err: Error) => void): this;
+  on(event: 'pause', listener: () => void): this;
+  on(event: 'readable', listener: () => void): this;
+  on(event: 'resume', listener: () => void): this;
+  on(event: 'progress', callback: (progress: number, curentPosition: number, msec: number) => void): this;
+  on(event: string | symbol, listener: (...args: Array<any>) => void): this;
 }
 
 export interface EnhancedWritable extends Writable {
   is: WritableEvents;
-  writeTo(chunk: Buffer): Promise<void>;
+  writeAsync(chunk: Buffer): Promise<void>;
 }
 
 /** @internal */
-export function enhanceReadable(readableStream: Readable) {
-  const result = <AsyncIterable<Buffer> & EnhancedReadable>readableStream;
-  result.is = result.is || new ReadableEvents(readableStream);
-  return result;
+export function enhanceReadable<T extends Readable>(readableStream: T, currentPosition = 0, expectedLength = 0): AsyncIterable<Buffer> & EnhancedReadable & T {
+  if ((<any>readableStream).is) {
+    return <AsyncIterable<Buffer> & EnhancedReadable & T>readableStream;
+  }
+  const is = new ReadableEvents(readableStream, currentPosition, expectedLength);
+  return <AsyncIterable<Buffer> & EnhancedReadable & T>intersect({
+    on: (event: string | symbol, listener: (...args: Array<any>) => void) => {
+      switch (event) {
+        case 'progress':
+          is.on(event, listener);
+
+          // we're going to emit one current progress event so that
+          // they can be assured they get at least one progress message
+          listener(is.progress, is.currentPosition, is.stopwatch.total);
+          return;
+
+        default:
+          readableStream.on(event, listener);
+      }
+    },
+    off: (event: string | symbol, listener: (...args: Array<any>) => void) => {
+      switch (event) {
+        case 'progress':
+          is.off(event, listener);
+          return;
+        default:
+          readableStream.off(event, listener);
+      }
+    },
+    is,
+
+
+  }, readableStream);
 }
 
-function writeTo(this: Writable, chunk: Buffer): Promise<void> {
+function writeAsync(this: Writable, chunk: Buffer): Promise<void> {
   return new Promise((resolve, reject) => {
     if (this.write(chunk, (error: Error | null | undefined) => {
       // callback gave us an error.
@@ -123,11 +206,16 @@ function writeTo(this: Writable, chunk: Buffer): Promise<void> {
 }
 
 /** @internal */
-export function enhanceWritable(writableStream: Writable) {
+export function enhanceWritable<T extends Writable>(writableStream: Writable) {
   const result = <EnhancedWritable>writableStream;
   result.is = result.is || new WritableEvents(writableStream);
-  if (!result.writeTo) {
-    result.writeTo = writeTo.bind(result);
+  if (!result.writeAsync) {
+    result.writeAsync = writeAsync.bind(result);
   }
   return result;
 }
+
+export interface Progress {
+  progress(percent: number, bytes: number, msec: number): void;
+}
+

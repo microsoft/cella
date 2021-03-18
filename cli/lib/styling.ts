@@ -24,7 +24,7 @@ markdown.setOptions({
     showSectionPrefix: false,
     firstHeading: green.underline.bold,
     heading: green.underline,
-    codespan: white,
+    codespan: white.bold,
     link: blue.bold,
     href: blue.bold.underline,
     code: gray
@@ -32,12 +32,20 @@ markdown.setOptions({
   gfm: true,
 });
 
-function md(text: string, session?: Session) {
-  text = (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => {
-    return yellow.dim(session.fileSystem.parse(a).fsPath);
-  }) : text;
+export function indent(text: string): string
+export function indent(text: Array<string>): Array<string>
+export function indent(text: string | Array<string>): string | Array<string> {
+  if (Array.isArray(text)) {
+    return text.map(each => indent(each));
+  }
+  return `  ${text}`;
+}
 
-  return markdown(text);
+function md(text: string, session?: Session) {
+  text = markdown(text);
+
+  // rewrite file:// urls to be locl filesystem urls.
+  return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
 }
 
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;

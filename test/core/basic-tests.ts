@@ -3,14 +3,13 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { suite, test } from '@testdeck/mocha';
 import { createReadStream, ReadStream } from 'fs';
 
 type StreamBuffer = AsyncIterable<Buffer> & ReadStream;
 
 // sample test using decorators.
-@suite class ScratchTesting {
-  @test async 'streamreading'() {
+describe('ScratchTesting', () => {
+  it('streamreading', async () => {
 
     const rs = createReadStream(__filename, { highWaterMark: 8 });
 
@@ -19,5 +18,5 @@ type StreamBuffer = AsyncIterable<Buffer> & ReadStream;
     for await (const chunk of <StreamBuffer>rs) {
       // console.log(chunk.toString());
     }
-  }
-}
+  });
+});

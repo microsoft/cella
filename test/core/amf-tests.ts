@@ -3,32 +3,32 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isNuGet, parseConfiguration as parse } from '@microsoft/cella.core';
-import { suite, test } from '@testdeck/mocha';
+import { isNupkg, parseConfiguration as parse } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import * as s from '../sequence-equal';
+import { rootFolder } from './SuiteLocal';
 
 // don't move this. I need this.
 s;
 
 // sample test using decorators.
-@suite class Amf {
-  @test async 'readProfile'() {
-    const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
+describe('Amf', () => {
+  it('readProfile', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
-    console.log(doc.validationErrors);
+    // console.log(doc.validationErrors);
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
     strict.equal(doc.info.id, 'sample1', 'identity incorrect');
     strict.equal(doc.info.version, '1.2.3', 'version incorrect');
-  }
+  });
 
-  @test async 'profile checks'() {
-    const content = await (await readFile(join(__dirname, 'resources', 'sample1.yaml'))).toString('utf-8');
+  it('profile checks', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
     strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
     strict.ok(doc.isValid, 'better be valid!');
@@ -101,14 +101,14 @@ s;
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
     const install = doc['windows and arm'].install!;
-    strict.ok(isNuGet(install), 'the install type should be NuGet');
+    strict.ok(isNupkg(install), 'the install type should be nupkg');
     strict.equal(install.location, 'floobaloo/1.2.3', 'should have correct location');
 
-    console.log(doc.toString());
-  }
+    // console.log(doc.toString());
+  });
 
-  @test async 'read invalid yaml file'() {
-    const content = await (await readFile(join(__dirname, 'resources', 'errors.yaml'))).toString('utf-8');
+  it('read invalid yaml file', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'errors.yaml'))).toString('utf-8');
     const doc = parse('errors.yaml', content);
 
     strict.equal(doc.isValidYaml, false, 'this document should have errors');
@@ -117,26 +117,26 @@ s;
 
     strict.equal(doc.info.id, 'bob', 'identity incorrect');
     strict.equal(doc.info.version, '1.0.2', 'version incorrect');
-  }
+  });
 
-  @test async 'read empty yaml file'() {
-    const content = await (await readFile(join(__dirname, 'resources', 'empty.yaml'))).toString('utf-8');
+  it('read empty yaml file', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'empty.yaml'))).toString('utf-8');
     const doc = parse('empty.yaml', content);
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
-    console.log(doc.validationErrors);
+    // console.log(doc.validationErrors);
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
     strict.equal(doc.validationErrors[0], 'empty.yaml: SectionMessing, Missing section \'info\'', 'Should have an error about info');
-  }
+  });
 
-  @test async 'validation errors'() {
-    const content = await (await readFile(join(__dirname, 'resources', 'validation-errors.yaml'))).toString('utf-8');
+  it('validation errors', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'validation-errors.yaml'))).toString('utf-8');
     const doc = parse('validation-errors.yaml', content);
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
     strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
-  }
-}
+  });
+});

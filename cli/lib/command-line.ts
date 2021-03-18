@@ -6,6 +6,7 @@
 import { intersect } from '@microsoft/cella.core';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { Command } from './command';
 
 export type switches = {
   [key: string]: Array<string>;
@@ -21,7 +22,13 @@ function onlyOne(values: Array<string>, errorMessage: string) {
   throw new Error(errorMessage);
 }
 
+export interface Help {
+  readonly help: Array<string>;
+  readonly title: string;
+}
+
 export class CommandLine {
+  readonly commands = new Array<Command>();
   readonly inputs = new Array<string>();
   readonly switches: switches = {};
 
@@ -29,17 +36,17 @@ export class CommandLine {
     return onlyOne(this.switches[name], errorMessage);
   }
 
-  #root?: string;
-  get cellaRoot() {
-    // root folder is determined by
-    // command line (--cella-root, --cella_root)
-    // environment (CELLA_ROOT)
+  #home?: string;
+  get cella_home() {
+    // home folder is determined by
+    // command line (--cella-home, --cella_home)
+    // environment (CELLA_HOME)
     // default 1 $HOME/.cella
     // default 2 <tmpdir>/.cella
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#root || (this.#root = this.switches['cella-root']?.[0] || this.switches['cella_root']?.[0] || process.env['CELLA_ROOT'] || join(process.env['HOME'] || tmpdir(), '.cella'));
+    return this.#home || (this.#home = this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella'));
   }
 
   get force() {
@@ -51,7 +58,7 @@ export class CommandLine {
   }
 
   get lang() {
-    return onlyOne(this.switches['language'], '--lang specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
+    return onlyOne(this.switches['language'], '--language specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
   #environment?: { [key: string]: string | undefined; };
@@ -59,6 +66,14 @@ export class CommandLine {
     return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
   }
 
+  addCommand(command: Command) {
+    this.commands.push(command);
+  }
+
+  /** parses the command line and returns the command that has been requested */
+  get command() {
+    return this.commands.find(each => each.command === this.inputs[0]);
+  }
 }
 
 export function parseArgs(args: Array<string>) {

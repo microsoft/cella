@@ -2,25 +2,26 @@
   "compilerOptions": {
     "alwaysStrict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "commonjs",
+    "module": "CommonJS",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitThis": true,
-    "sourceMap": true,
+    "inlineSourceMap": true,
     "declarationMap": true,
     "strict": true,
     "declaration": true,
     "stripInternal": true,
     "noEmitHelpers": false,
-    "target": "es2019",
+    "target": "ESNext",
     "types": [
       "node"
     ],
     "lib": [
-      "es2019"
+      "ESNext"
     ],
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "newLine": "LF"
   },
   "exclude": [

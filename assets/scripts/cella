@@ -1,6 +1,6 @@
 #!/bin/sh 
 # wrapper script for cella.
-# this is intended to be dot-sourced and then you can use the cella() function
+# this is intended to be dot-sourced and then you can use the cella() function.
 
 # DEBUGGING :
 # set | grep -i ^CELLA
@@ -176,13 +176,14 @@ cella_bootstrap_node() {
   fi
 
   local N=`which $NODE_EXE`
-  
-  if [ -f $N ]; then
-    if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12) )"` = "true" ]; then
-      CELLA_NODE=$N
-      CELLA_NPM=`which npm`
-      cella_debug using node in path
-      return 0
+  if [ ! -z "$N" ]; then
+    if [ -f $N ]; then
+      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12) )"` = "true" ]; then
+        CELLA_NODE=$N
+        CELLA_NPM=`which npm`
+        cella_debug using node in path
+        return 0
+      fi
     fi
   fi
 
@@ -422,7 +423,7 @@ cella() {
 
   # call cella.js
   # it picks up the CELLA_POSTSCRIPT environment variable to know where to dump the postscript
-  $CELLA_NODE $CELLA_MAIN ${CELLA_ARGS[@]}
+  $CELLA_NODE --harmony $CELLA_MAIN ${CELLA_ARGS[@]}
   
   cella_debug called cella.js
   # modify the environment 

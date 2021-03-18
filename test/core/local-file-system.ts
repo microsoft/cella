@@ -3,36 +3,20 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { FileType, LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
-import { skip, suite, test } from '@testdeck/mocha';
+import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { mkdtempSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
+import { join } from 'path';
+import { rootFolder, SuiteLocal } from './SuiteLocal';
 
-function uniqueTempFolder(): string {
-  return mkdtempSync(`${tmpdir()}/cella-temp$`);
-}
+describe('LocalFileSystemTests', () => {
+  const local = new SuiteLocal();
+  const fs = local.fs;
 
-@suite class LocalFileSystemTests {
-  static tempFolder: string;
-  static tempFolderUrl: Uri;
-  static fs: LocalFileSystem;
+  after(async () => local.after());
 
-  static before() {
-    const session = new Session('', {});
-    this.tempFolder = uniqueTempFolder();
-    this.fs = new LocalFileSystem(session);
-    this.tempFolderUrl = this.fs.file(LocalFileSystemTests.tempFolder);
-  }
+  it('create/delete folder', async () => {
 
-
-  before() {
-    //
-  }
-
-  @test async 'create/delete folder'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+    const tmp = local.tempFolderUrl;
 
     // create a path to a folder
     const someFolder = tmp.join('someFolder');
@@ -48,11 +32,11 @@ function uniqueTempFolder(): string {
 
     // make sure it's gone!
     strict.ok(!(await fs.isDirectory(someFolder)), `the directory ${someFolder.fsPath} should not exist`);
-  }
 
-  @test async 'create/read file'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+  });
+
+  it('create/read file', async () => {
+    const tmp = local.tempFolderUrl;
 
     const file = tmp.join('hello.txt');
     const expectedText = 'hello world';
@@ -68,11 +52,11 @@ function uniqueTempFolder(): string {
     strict.deepEqual(expectedBuffer, actualBuffer, 'contents should be the same');
     const actualText = actualBuffer.toString();
     strict.equal(expectedText, actualText, 'text should be equal too.');
-  }
 
-  @test async 'readDirectory'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+  });
+
+  it('readDirectory', async () => {
+    const tmp = local.tempFolderUrl;
     const thisFolder = fs.file(__dirname);
 
     // look in the current folder
@@ -83,11 +67,11 @@ function uniqueTempFolder(): string {
 
     // should be a file, right?
     strict.ok(found?.[1] && FileType.File, `${__filename} should be a path`);
-  }
 
-  @test async 'read/write stream'() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+  });
+
+  it('read/write stream', async () => {
+    const tmp = local.tempFolderUrl;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output.txt');
@@ -98,31 +82,55 @@ function uniqueTempFolder(): string {
     // you can iterate thru a stream with 'for await' without casting because I forced the return type to be AsnycIterable<Buffer>
     for await (const chunk of await fs.readStream(thisFile)) {
       text += chunk.toString('utf8');
-      await outStream.writeTo(chunk);
+      await outStream.writeAsync(chunk);
     }
-
+    // close the stream once we're done.
     outStream.end();
-    await outStream.is.closed;
+
+    await outStream.is.done;
 
     strict.equal((await fs.stat(outputFile)).size, (await fs.stat(thisFile)).size, 'outputFile should be the same length as the input file');
     strict.equal((await fs.stat(thisFile)).size, text.length, 'buffer should be the same size as the input file');
-  }
+  });
 
-  @test async 'read/write stream with pipe '() {
-    const fs = LocalFileSystemTests.fs;
-    const tmp = LocalFileSystemTests.tempFolderUrl;
+  it('calculate checksums', async () => {
+    const tmp = local.tempFolderUrl;
+    const path = fs.file(join(rootFolder(), 'resources', 'small-file.txt'));
+
+    strict.equal(await hash(fs.readStream(path)), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'Checksum should match');
+    strict.equal(await hash(fs.readStream(path), 'md5'), 'c82b854702262508e9210c678282d5a4', 'Checksum should match');
+
+  });
+
+  it('read/write stream with pipe ', async () => {
+    const tmp = local.tempFolderUrl;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output2.txt');
 
     const inputStream = await fs.readStream(thisFile);
+
+    let pcount = 0;
+    inputStream.on('progress', (p, t, m) => {
+      pcount++;
+    });
+
+
     const outStream = await fs.writeStream(outputFile);
     inputStream.pipe(outStream);
 
+
     // we can wait for the stream to finish, which will end the pipe.
     // if the pipe fails, this should throw
-    await inputStream.is.ended;
+    await inputStream.is.done;
 
+    // should always wait until the output stream is done too.
+    // (this will ensure that the stream is destroyed. )
+    await outStream.is.done;
+
+    strict.ok(pcount > 1, 'We should get at least two progress events');
     strict.ok(fs.isFile(outputFile), `there should be a file at ${outputFile.fsPath}`);
 
     // this will throw if it fails.
@@ -130,18 +138,9 @@ function uniqueTempFolder(): string {
 
     // make sure it's gone!
     strict.ok(!(await fs.isFile(outputFile)), `the file ${outputFile.fsPath} should not exist`);
-  }
-  @test @skip async 'copy '() {
+  });
+
+  it('copy ', async () => {
     // tbw
-  }
-
-  public after() {
-    //
-  }
-
-  public static after() {
-    // drop the whole temp folder
-    rmSync(LocalFileSystemTests.tempFolder, { recursive: true });
-  }
-}
-
+  });
+});
