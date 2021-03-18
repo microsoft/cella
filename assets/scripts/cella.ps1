@@ -274,7 +274,7 @@ $shh = New-Module -name cella -ArgumentList @($CELLA_NODE,$CELLA_MODULE,$CELLA_H
     # Generate 31 bits of randomness, to avoid clashing with concurrent executions.
     $env:CELLA_POSTSCRIPT = resolve "${CELLA_HOME}/cella_tmp_$(Get-Random -SetSeed $PID).ps1"
 
-    & $CELLA_NODE $CELLA_MODULE @args  
+    & $CELLA_NODE --harmony $CELLA_MODULE @args  
 
     # dot-source the postscript file to modify the environment
     if ($env:CELLA_POSTSCRIPT -and (Test-Path $env:CELLA_POSTSCRIPT)) {
@@ -345,7 +345,7 @@ if "%CELLA_NODE%" EQU "" (
 if "%CELLA_NODE%" EQU "" goto OHNONONODE:
 
 :: call the program
-"%CELLA_NODE%" "%CELLA_HOME%\node_modules\cella" %* 
+"%CELLA_NODE%" --harmony "%CELLA_HOME%\node_modules\cella" %* 
 set CELLA_EXITCODE=%ERRORLEVEL%
 doskey cella="%CELLA_HOME%\node_modules\.bin\cella.cmd" $*
 

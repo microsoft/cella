@@ -56,7 +56,6 @@ async function main() {
   if (!command) {
     // no command recognized.
     // check if --help -h -? --? /? are asked for
-    log(`'cmdline switches' ${commandline.switches['help']}`);
     if (commandline.switches['help'] || commandline.switches['?'] || (['-h', '-help', '-?', '/?'].indexOf(commandline.inputs[0]) > -1)) {
       // let's just run general help
       await help.run();
@@ -86,10 +85,6 @@ async function main() {
   await session.writePostscript();
 
   return process.exit(result ? 0 : 1);
-
-  // await session.addPostscript('cella_time', new Date().toString());
-
-
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
