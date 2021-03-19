@@ -9,10 +9,10 @@ import { anyWhere } from './promise';
 import { enhanceReadable } from './streams';
 import { Uri } from './uri';
 
-export function _head(location: Uri, headers: Headers = {}) {
-  return got.head(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers });
-}
-
+/**
+ * Resolves an HTTP GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request
+ * @param location the URL to get the final location of
+ */
 export async function resolveRedirect(location: Uri) {
   let finalUrl = location;
 
@@ -32,6 +32,11 @@ export async function resolveRedirect(location: Uri) {
   return finalUrl;
 }
 
+/**
+ * Does an HTTP GET request, and on a 404, tries to do an HTTP GET and see if we get a redirect, and harvest the headers from that.
+ * @param location the target URL
+ * @param headers any headers to put in the request.
+ */
 export async function head(location: Uri, headers: Headers = {}): Promise<Response<string>> {
   try {
     // on a successful HEAD request, do nothing different
@@ -72,6 +77,7 @@ export async function head(location: Uri, headers: Headers = {}): Promise<Respon
   }
 }
 
+/** HTTP Get request, returns a buffer  */
 export function get(location: Uri, options?: { start?: number, end?: number }) {
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, options?.end);
@@ -87,6 +93,7 @@ function setRange(headers: Headers | undefined, start?: number, end?: number) {
   return headers;
 }
 
+/** HTTP Get request, returns a stream  */
 export function getStream(location: Uri, options?: { start?: number, end?: number }) {
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, undefined);
@@ -119,28 +126,24 @@ function digest(headers: Headers) {
     return { checksum, algorithm: 'sha512' };
   }
 
-  // an md5 (either in digest or content-md5)
-  checksum = md5(headers['digest'], headers['content-md5']);
+  // an md5 (either in digest or content-md5 or ...etag :o )
+  checksum = md5(headers['digest'], headers['content-md5'], headers['etag']);
   if (checksum) {
     return { checksum, algorithm: 'md5' };
   }
 
-  // ok, last ditch effort.
-  //
-  // maybe if they had an etag, it'd be an md5 checksum perchance? (V) (°,,,,°) (V)
-  let etag = headers['etag'];
-  etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
-  if (etag) {
-    etag = etag.replace(/\W/g, '').toLowerCase();
-    if (etag.length === 32) {
-      // woop woop woop woop
-      return { checksum: etag, algorithm: 'md5' };
-    }
-  }
-
+  // nothing we know about.
   return { checksum: undefined, algorithm: undefined };
 }
 
+/**
+ * RemoteFile is a class that represents a single remote file, but mapped to multiple mirrored URLs
+ * on creation, it kicks off HEAD requests to each URL so that we can get checksum/digest, length, resumability etc
+ *
+ * the properties are Promises<> to the results, where it grabs data from the first returning valid query without
+ * blocking elsewhere.
+ *
+*/
 export class RemoteFile {
   info: Array<Promise<Info>>;
   constructor(protected locations: Array<Uri>) {
@@ -148,7 +151,6 @@ export class RemoteFile {
       return head(location, {
         'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
-        'user-agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5'
       }).then(data => {
         if (data.statusCode === 200) {
           const { checksum, algorithm } = digest(data.headers);
@@ -189,24 +191,61 @@ export class RemoteFile {
   resumableLocation: Promise<Uri | undefined>;
 }
 
+/**
+ * Digest/Checksums in headers are base64 encoded strings.
+ * @param data the base64 encoded string
+ */
 function decode(data?: string): string | undefined {
   return data ? Buffer.from(data, 'base64').toString('hex').toLowerCase() : undefined;
 }
 
-function md5(digest: string | Array<string> | undefined, contentMd5: string | Array<string> | undefined): string | undefined {
+/**
+ * Pulls the MD5 from either the 'Digest' header or 'Content-MD5' header.
+ * @param digest
+ * @param contentMd5
+ */
+function md5(digest: string | Array<string> | undefined, contentMd5: string | Array<string> | undefined, etag: string | Array<string> | undefined): string | undefined {
+  // do we have an md5 digest?
   for (const each of (digest ? Array.isArray(digest) ? digest : [digest] : [])) {
     if (each.startsWith('md5=')) {
       return decode(each.substr(4));
     }
   }
-  return decode(contentMd5 ? Array.isArray(contentMd5) ? contentMd5[0] : contentMd5 : undefined);
+
+  // do we have a content-md5?
+  if (contentMd5?.length ?? 0 > 0) {
+    return decode(contentMd5 ? Array.isArray(contentMd5) ? contentMd5[0] : contentMd5 : undefined);
+  }
+
+  // ok, last ditch effort.
+  //
+  // maybe if they had an etag, it'd be an md5 checksum perchance? (V) (°,,,,°) (V)
+  // even if this isn't the md5 hash, it's ok, we only use this to short circut the download process if possible.
+  etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
+  if (etag) {
+    etag = etag.replace(/\W/g, '').toLowerCase(); // drop quoutes and such, which are common.
+    if (etag.length === 32) {
+      // woop woop woop woop
+      return etag;
+    }
+  }
+
+  // nothing.
+  return undefined;
 }
 
+/**
+ * Get the hash alg/checksum from the digest.
+ * @param digest the digest header
+ * @param algorithm the algorithm we're trying to match
+ */
 function hashAlgorithm(digest: string | Array<string> | undefined, algorithm: 'sha-256' | 'sha-384' | 'sha-512'): string | undefined {
   for (const each of (digest ? Array.isArray(digest) ? digest : [digest] : [])) {
     if (each.startsWith(algorithm)) {
       return decode(each.substr(8));
     }
   }
+
+  // nothing.
   return undefined;
 }
