@@ -3,13 +3,73 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { default as got, Headers } from 'got';
+import { fail } from 'assert';
+import { default as got, Headers, HTTPError, Response } from 'got';
 import { anyWhere } from './promise';
 import { enhanceReadable } from './streams';
 import { Uri } from './uri';
 
-export function head(location: Uri, headers: Headers = {}) {
+export function _head(location: Uri, headers: Headers = {}) {
   return got.head(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers });
+}
+
+export async function resolveRedirect(location: Uri) {
+  let finalUrl = location;
+
+  const stream = got.get(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, isStream: true });
+
+  // when the response comes thru, we can grab the headers & stuff from it
+  stream.on('response', (response: Response) => {
+    finalUrl = location.fileSystem.parse(response.redirectUrls.last || finalUrl.toString());
+  });
+
+  // we have to get at least some data for the response event to trigger.
+  for await (const chunk of stream) {
+    // but we don't need any of it :D
+    break;
+  }
+  stream.destroy();
+  return finalUrl;
+}
+
+export async function head(location: Uri, headers: Headers = {}): Promise<Response<string>> {
+  try {
+    // on a successful HEAD request, do nothing different
+    return await got.head(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers });
+  } catch (E) {
+    // O_o
+    //
+    // So, it turns out that nuget servers (maybe others too?) don't do redirects on HEAD requests,
+    // and instead issue a 404.
+    // let's retry the request as a GET, and dump it after the first chunk.
+    // typically, a HEAD request should see a 300-400msec response time
+    // and yes, this does stretch that out to 500-700msec, but whatcha gonna do?
+    if (E instanceof HTTPError && E.response.statusCode === 404) {
+      try {
+        const syntheticResponse = <Response<string>>{};
+        const stream = got.get(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers, isStream: true });
+
+        // when the response comes thru, we can grab the headers & stuff from it
+        stream.on('response', (response: Response) => {
+          syntheticResponse.headers = response.headers;
+          syntheticResponse.statusCode = response.statusCode;
+          syntheticResponse.redirectUrls = response.redirectUrls;
+        });
+
+        // we have to get at least some data for the response event to trigger.
+        for await (const chunk of stream) {
+          // but we don't need any of it :D
+          break;
+        }
+        stream.destroy();
+        return syntheticResponse;
+      }
+      catch {
+        // whatever, it didn't work. let the rethrow happen.
+      }
+    }
+    throw E;
+  }
 }
 
 export function get(location: Uri, options?: { start?: number, end?: number }) {
@@ -87,7 +147,8 @@ export class RemoteFile {
     this.info = locations.map(location => {
       return head(location, {
         'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
-        'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding
+        'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
+        'user-agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5'
       }).then(data => {
         if (data.statusCode === 200) {
           const { checksum, algorithm } = digest(data.headers);
@@ -109,7 +170,9 @@ export class RemoteFile {
     });
 
     // lazy properties
-    this.availableLocation = Promise.any(this.info).then(success => success.location, fail => undefined);
+    this.availableLocation = Promise.any(this.info).then(success => success.location, f => {
+      fail(`unsuccessful ${f}`);
+    });
     this.resumable = anyWhere(this.info, each => each.resumeable).then(success => true, fail => false);
     this.resumableLocation = anyWhere(this.info, each => each.resumeable).then(success => success.location, fail => undefined);
     this.contentLength = anyWhere(this.info, each => !!each.contentLength).then(success => success.contentLength, fail => -2);

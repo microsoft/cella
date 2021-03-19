@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { http } from '@microsoft/cella.core';
+import { http, resolveNugetUrl } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -97,4 +97,38 @@ describe('Acquire', () => {
     const newfull = <Buffer>(await outputFile.readFile());
     strict.equal(newfull.compare(fullFile), 0, 'files should be identical');
   });
+
+  /**
+  * The NuGet gallery servers don't do redirects on HEAD requests, and to work around it we have to issue a second GET
+  * for each HEAD, after the HEAD fails, which increases the overhead of getting the target file (or verifying that we have it.)
+  *
+  * I've made the test call resolve redirects up front, which did reduce the cost, so... it's about as fast as I can make it.
+  * (~400msec for the whole test, which ain't terrible.)
+  *
+  * The same thing can be accomplished by the all-encompassing nuget() call, but the test suffers if I use that directly, since we're
+  * calling for the same package multple times. 🤷
+  */
+  it('Download a nuget file', async () => {
+    const url = await resolveNugetUrl(local.session, 'zlib-msvc14-x64/1.2.11.7795');
+
+    local.session.channels.debug('==== Downloading nuget package.');
+
+    const acq = http(local.session, [url], 'zlib-msvc.zip');
+    // or const acq = nuget(local.session, 'zlib-msvc14-x64/1.2.11.7795', 'zlib-msvc.zip');
+
+    const outputFile = await acq;
+    local.session.channels.debug('==== done downloading.');
+    const fullSize = await outputFile.size();
+
+    strict.ok(await outputFile.exists(), 'File should exist!');
+    strict.ok(fullSize > 1 << 16, 'Should be at least 64k');
+
+    const size = await outputFile.size();
+    local.session.channels.debug(`==== Size: ${size}.`);
+
+    // what happens if we try again? We should hit our local cache
+    await http(local.session, [url], 'zlib-msvc.zip');
+
+  });
+
 });

@@ -7,7 +7,7 @@ import { fail, strict } from 'assert';
 import { Checksum, ChecksumAlgorithm } from './checksum';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
-import { get, getStream, RemoteFile } from './https';
+import { get, getStream, RemoteFile, resolveRedirect } from './https';
 import { i } from './i18n';
 import { intersect } from './intersect';
 import { Session } from './session';
@@ -72,6 +72,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     }
 
     // start this peeking at the target uris.
+    session.channels.debug(`Acquire '${outputFilename}': checking remote connections.`);
     const locations = new RemoteFile(uris);
     let url: Uri | undefined;
 
@@ -89,6 +90,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
       // it doesn't match a known checksum.
 
       const contentLength = await locations.contentLength;
+      session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
       const onDiskSize = await outputFile.size();
 
       // first, make sure that there is a remote that is accesible.
@@ -160,7 +162,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
     url = url || await locations.availableLocation;
     strict.ok(!!url, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
-
+    session.channels.debug(`Acquire '${outputFilename}': initiating download.`);
     const length = await locations.contentLength;
 
     const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined });
@@ -193,10 +195,32 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
   return intersect(<Emitter<EnhancedReadable>>fwd, fn());
 }
 
-/** @internal */
-export async function nuget(session: Session, pkg: string, outputFilename: string, progress: Progress, options?: AcquireOptions): Promise<void> {
-  // download one of the packages
-  // save it to the cache
+export async function resolveNugetUrl(session: Session, pkg: string) {
+  const [, name, version] = pkg.match(/^(.*)\/(.*)$/) ?? [];
+  strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version}).`);
+
+  //const url = session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`);
+
+  // let's resolve the redirect first, since nuget servers don't like us getting HEAD data on the targets via a redirect.
+  // even if this wasn't the case, this is lower cost now rather than later.
+  const url = await resolveRedirect(session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`));
+
+  session.channels.debug(`Resolving nuget package for '${pkg}' to '${url}'`);
+  return url;
+}
+
+export async function nuget(session: Session, pkg: string, outputFilename: string, options?: AcquireOptions): Promise<Uri> {
+  const [, name, version] = pkg.match(/^(.*)\/(.*)$/) ?? [];
+  strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version}).`);
+
+  //const url = session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`);
+
+  // let's resolve the redirect first, since nuget servers don't like us getting HEAD data on the targets via a redirect.
+  // even if this wasn't the case, this is lower cost now rather than later.
+  const url = await resolveRedirect(session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`));
+
+  session.channels.debug(`Resolving nuget package for '${outputFilename}' as [${url}]`);
+  return http(session, [url], outputFilename, options);
 }
 
 /** @internal */
