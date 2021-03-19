@@ -199,8 +199,6 @@ export async function resolveNugetUrl(session: Session, pkg: string) {
   const [, name, version] = pkg.match(/^(.*)\/(.*)$/) ?? [];
   strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version}).`);
 
-  //const url = session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`);
-
   // let's resolve the redirect first, since nuget servers don't like us getting HEAD data on the targets via a redirect.
   // even if this wasn't the case, this is lower cost now rather than later.
   const url = await resolveRedirect(session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`));
@@ -210,17 +208,7 @@ export async function resolveNugetUrl(session: Session, pkg: string) {
 }
 
 export async function nuget(session: Session, pkg: string, outputFilename: string, options?: AcquireOptions): Promise<Uri> {
-  const [, name, version] = pkg.match(/^(.*)\/(.*)$/) ?? [];
-  strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version}).`);
-
-  //const url = session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`);
-
-  // let's resolve the redirect first, since nuget servers don't like us getting HEAD data on the targets via a redirect.
-  // even if this wasn't the case, this is lower cost now rather than later.
-  const url = await resolveRedirect(session.fileSystem.parse(`https://www.nuget.org/api/v2/package/${name}/${version}`));
-
-  session.channels.debug(`Resolving nuget package for '${outputFilename}' as [${url}]`);
-  return http(session, [url], outputFilename, options);
+  return http(session, [await resolveNugetUrl(session, pkg)], outputFilename, options);
 }
 
 /** @internal */
