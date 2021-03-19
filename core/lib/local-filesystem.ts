@@ -7,7 +7,7 @@ import { strict } from 'assert';
 import { createReadStream, createWriteStream, Stats } from 'fs';
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { Delay } from './events';
+import { delay } from './events';
 import { FileStat, FileSystem, FileType } from './filesystem';
 import { i } from './i18n';
 import { EnhancedReadable, EnhancedWritable, enhanceReadable, enhanceWritable } from './streams';
@@ -94,7 +94,7 @@ export class LocalFileSystem extends FileSystem {
       await rm(uri.fsPath, { recursive: options.recursive, force: true, maxRetries: 3, retryDelay: 20 });
       // todo: Hack -- on windows, when something is used and then deleted, the delete might not actually finish
       // before the Promise is resolved. Adding a delay fixes this (but probably is an underlying node bug)
-      await Delay(50);
+      await delay(50);
       return;
     } finally {
       this.deleted(uri);

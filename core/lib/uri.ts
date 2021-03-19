@@ -7,8 +7,8 @@ import { join } from 'path';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
-import { Checksum, ChecksumAlgorithm, hash } from './checksum';
 import { FileStat, FileSystem, FileType } from './filesystem';
+import { Algorithm, Hash, hash } from './hash';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 
 /**
@@ -256,16 +256,16 @@ bad.fragment === '/project1';
     return (await uri.fileSystem.stat(uri)).size;
   }
 
-  async checksum(algorithm?: ChecksumAlgorithm): Promise<string | undefined> {
+  async hash(algorithm?: Algorithm): Promise<string | undefined> {
     if (algorithm) {
       return await hash(await this.fileSystem.readStream(this), algorithm);
     }
     return undefined;
   }
 
-  async checksumValid(matchOptions?: Checksum) {
+  async hashValid(matchOptions?: Hash) {
     if (matchOptions?.algorithm && await this.exists()) {
-      return matchOptions.checksum?.toLowerCase() === await hash(await this.readStream(), matchOptions.algorithm);
+      return matchOptions.value?.toLowerCase() === await hash(await this.readStream(), matchOptions.algorithm);
     }
     return false;
   }

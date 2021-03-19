@@ -7,7 +7,7 @@ import { parseQuery } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import * as s from '../sequence-equal';
 
-// don't move this. I need this. (forces the global function for sequence equal to be added to strict before this exectues)
+// forces the global function for sequence equal to be added to strict before this exectues:
 s;
 
 

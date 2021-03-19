@@ -14,7 +14,7 @@ import { promisify } from 'util';
  *
  * @param delayMS the length of time to delay in milliseconds.
  */
-export function Delay(delayMS: number): Promise<void> {
+export function delay(delayMS: number): Promise<void> {
   return new Promise<void>(res => setTimeout(res, delayMS));
 }
 

@@ -307,7 +307,7 @@ export interface UnpackSettings {
 /**
  * a file that can be unzipp'd
  *
- * combined with Verifyable, the checksum should be matched before proceeding
+ * combined with Verifyable, the hash should be matched before proceeding
  */
 export interface UnZip extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip */
@@ -318,7 +318,7 @@ export interface UnZip extends Verifiable, UnpackSettings, Installer {
 /**
  * a file that can be untar'd
  *
- * combined with Verifyable, the checksum should be matched before proceeding
+ * combined with Verifyable, the hash should be matched before proceeding
  */
 export interface UnTar extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to untar */
@@ -335,7 +335,7 @@ export interface UnTar extends Verifiable, UnpackSettings, Installer {
  *
  * post MVP we could add the ability to use artifact sources and grab the package that way.
  *
- * combined with Verifyable, the checksum should be matched before proceeding
+ * combined with Verifyable, the hash should be matched before proceeding
  */
 export interface Nupkg extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip/untar/unrar/etc */
@@ -345,7 +345,7 @@ export interface Nupkg extends Verifiable, UnpackSettings, Installer {
 /**
  * a file that can be untar/unzip/unrar/etc
  *
- * combined with Verifyable, the checksum should be matched before proceeding
+ * combined with Verifyable, the hash should be matched before proceeding
  */
 export interface Git extends Installer {
   /** the git repository location to be cloned */

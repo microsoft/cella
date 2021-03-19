@@ -15,7 +15,7 @@ import { Uri } from './uri';
 export async function resolveRedirect(location: Uri) {
   let finalUrl = location;
 
-  const stream = got.get(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, isStream: true });
+  const stream = got.get(location.toUrl(), { timeout: 15000, isStream: true });
 
   // when the response comes thru, we can grab the headers & stuff from it
   stream.on('response', (response: Response) => {
@@ -32,14 +32,14 @@ export async function resolveRedirect(location: Uri) {
 }
 
 /**
- * Does an HTTP GET request, and on a 404, tries to do an HTTP GET and see if we get a redirect, and harvest the headers from that.
+ * Does an HTTP HEAD request, and on a 404, tries to do an HTTP GET and see if we get a redirect, and harvest the headers from that.
  * @param location the target URL
  * @param headers any headers to put in the request.
  */
 export async function head(location: Uri, headers: Headers = {}): Promise<Response<string>> {
   try {
     // on a successful HEAD request, do nothing different
-    return await got.head(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers });
+    return await got.head(location.toUrl(), { timeout: 15000, headers });
   } catch (E) {
     // O_o
     //
@@ -51,7 +51,7 @@ export async function head(location: Uri, headers: Headers = {}): Promise<Respon
     if (E instanceof HTTPError && E.response.statusCode === 404) {
       try {
         const syntheticResponse = <Response<string>>{};
-        const stream = got.get(location.toUrl(), { followRedirect: true, maxRedirects: 10, timeout: 15000, headers, isStream: true });
+        const stream = got.get(location.toUrl(), { timeout: 15000, headers, isStream: true });
 
         // when the response comes thru, we can grab the headers & stuff from it
         stream.on('response', (response: Response) => {
@@ -105,39 +105,39 @@ export interface Info {
   location: Uri;
   resumeable: boolean;
   contentLength: number;
-  checksum?: string;
+  hash?: string;
   algorithm?: string;
 }
 
 function digest(headers: Headers) {
-  let checksum = hashAlgorithm(headers['digest'], 'sha-256');
+  let hash = hashAlgorithm(headers['digest'], 'sha-256');
 
-  // any of the sha* checksums..
-  if (checksum) {
-    return { checksum, algorithm: 'sha256' };
+  // any of the sha* hashes..
+  if (hash) {
+    return { hash, algorithm: 'sha256' };
   }
-  checksum = hashAlgorithm(headers['digest'], 'sha-384');
-  if (checksum) {
-    return { checksum, algorithm: 'sha384' };
+  hash = hashAlgorithm(headers['digest'], 'sha-384');
+  if (hash) {
+    return { hash, algorithm: 'sha384' };
   }
-  checksum = hashAlgorithm(headers['digest'], 'sha-512');
-  if (checksum) {
-    return { checksum, algorithm: 'sha512' };
+  hash = hashAlgorithm(headers['digest'], 'sha-512');
+  if (hash) {
+    return { hash, algorithm: 'sha512' };
   }
 
   // an md5 (either in digest or content-md5 or ...etag :o )
-  checksum = md5(headers['digest'], headers['content-md5'], headers['etag']);
-  if (checksum) {
-    return { checksum, algorithm: 'md5' };
+  hash = md5(headers['digest'], headers['content-md5'], headers['etag']);
+  if (hash) {
+    return { hash, algorithm: 'md5' };
   }
 
   // nothing we know about.
-  return { checksum: undefined, algorithm: undefined };
+  return { hash: undefined, algorithm: undefined };
 }
 
 /**
  * RemoteFile is a class that represents a single remote file, but mapped to multiple mirrored URLs
- * on creation, it kicks off HEAD requests to each URL so that we can get checksum/digest, length, resumability etc
+ * on creation, it kicks off HEAD requests to each URL so that we can get hash/digest, length, resumability etc
  *
  * the properties are Promises<> to the results, where it grabs data from the first returning valid query without
  * blocking elsewhere.
@@ -152,12 +152,12 @@ export class RemoteFile {
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
       }).then(data => {
         if (data.statusCode === 200) {
-          const { checksum, algorithm } = digest(data.headers);
+          const { hash, algorithm } = digest(data.headers);
           return {
             location,
             resumeable: data.headers['accept-ranges'] === 'bytes',
             contentLength: Number.parseInt(data.headers['content-length']!) || -1, // -1 means we were not told.
-            checksum,
+            hash,
             algorithm,
           };
         }
@@ -175,21 +175,21 @@ export class RemoteFile {
     this.resumable = anyWhere(this.info, each => each.resumeable).then(success => true, fail => false);
     this.resumableLocation = anyWhere(this.info, each => each.resumeable).then(success => success.location, fail => undefined);
     this.contentLength = anyWhere(this.info, each => !!each.contentLength).then(success => success.contentLength, fail => -2);
-    this.checksum = anyWhere(this.info, each => !!each.checksum).then(success => success.checksum, fail => undefined);
+    this.hash = anyWhere(this.info, each => !!each.hash).then(success => success.hash, fail => undefined);
     this.algorithm = anyWhere(this.info, each => !!each.algorithm).then(success => success.algorithm, fail => undefined);
 
   }
 
   resumable: Promise<boolean>;
   contentLength: Promise<number>;
-  checksum: Promise<string | undefined>;
+  hash: Promise<string | undefined>;
   algorithm: Promise<string | undefined>;
   availableLocation: Promise<Uri | undefined>;
   resumableLocation: Promise<Uri | undefined>;
 }
 
 /**
- * Digest/Checksums in headers are base64 encoded strings.
+ * Digest/hash in headers are base64 encoded strings.
  * @param data the base64 encoded string
  */
 function decode(data?: string): string | undefined {
@@ -216,7 +216,7 @@ function md5(digest: string | Array<string> | undefined, contentMd5: string | Ar
 
   // ok, last ditch effort.
   //
-  // maybe if they had an etag, it'd be an md5 checksum perchance? (V) (°,,,,°) (V)
+  // maybe if they had an etag, it'd be an md5 hash perchance? (V) (°,,,,°) (V)
   // even if this isn't the md5 hash, it's ok, we only use this to short circut the download process if possible.
   etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
   if (etag) {
@@ -232,7 +232,7 @@ function md5(digest: string | Array<string> | undefined, contentMd5: string | Ar
 }
 
 /**
- * Get the hash alg/checksum from the digest.
+ * Get the hash alg/hash from the digest.
  * @param digest the digest header
  * @param algorithm the algorithm we're trying to match
  */

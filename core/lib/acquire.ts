@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
-import { Checksum, ChecksumAlgorithm } from './checksum';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
+import { Algorithm, Hash } from './hash';
 import { get, getStream, RemoteFile, resolveRedirect } from './https';
 import { i } from './i18n';
 import { intersect } from './intersect';
@@ -14,37 +14,10 @@ import { Session } from './session';
 import { EnhancedReadable, Progress } from './streams';
 import { Uri } from './uri';
 
-/* Downloading URLs
- progress
- uses fs virtualization (no direct writes)
- checksum verification
- supports mirrors
- checks local cache
- Nuget Package Download (via HTTP)
- Write to local cache*/
-
-// is the file the correct one?
-// do we have a checksum to match it?
-// yes, does the checksum match?
-// yes; return
-
-// get the expected file length;
-// is the file smaller than the expected length?
-// yes. do the first 16K and the last 16K of what we have match what is remote?
-// yes, let's try to resume the download
-// no, wipe it and start the download fresh
-
-// no checksum. is it resumable?
-
-
-// download one of the uris
-
-// save it to the cache
-
 const size32K = 1 << 15;
 const size64K = 1 << 16;
 
-export interface AcquireOptions extends Checksum {
+export interface AcquireOptions extends Hash {
   /** force a redownload even if it's in cache */
   force?: boolean;
   credentials: Credentials;
@@ -80,14 +53,14 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     if (await outputFile.exists()) {
       session.channels.debug(`Acquire '${outputFilename}': local file exists.`);
       if (options?.algorithm) {
-        // does it match a checksum that we have?
-        if (await outputFile.checksumValid(options)) {
-          session.channels.debug(`Acquire '${outputFilename}': local file checksum matches metdata.`);
+        // does it match a hash that we have?
+        if (await outputFile.hashValid(options)) {
+          session.channels.debug(`Acquire '${outputFilename}': local file hash matches metdata.`);
           // yes it does. let's just return done.
           return outputFile;
         }
       }
-      // it doesn't match a known checksum.
+      // it doesn't match a known hash.
 
       const contentLength = await locations.contentLength;
       session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
@@ -105,18 +78,18 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
           if (contentLength === onDiskSize) {
             session.channels.debug(`Acquire '${outputFilename}': on disk file matches length of remote file`);
-            const algorithm = <ChecksumAlgorithm>(await locations.algorithm);
-            const checksum = await locations.checksum;
-            session.channels.debug(`Acquire '${outputFilename}': remote alg/chk: '${algorithm}'/'${checksum}.`);
-            if (algorithm && checksum && outputFile.checksumValid({ algorithm, checksum })) {
-              session.channels.debug(`Acquire '${outputFilename}': on disk file checksum matches the server checksum.`);
-              // so *we* don't have the checksum, but ... if the server has a checksum, we could see if what we have is what they have?
+            const algorithm = <Algorithm>(await locations.algorithm);
+            const value = await locations.hash;
+            session.channels.debug(`Acquire '${outputFilename}': remote alg/hash: '${algorithm}'/'${value}.`);
+            if (algorithm && value && outputFile.hashValid({ algorithm, value })) {
+              session.channels.debug(`Acquire '${outputFilename}': on disk file hash matches the server hash.`);
+              // so *we* don't have the hash, but ... if the server has a hash, we could see if what we have is what they have?
               // it does match what the server has.
               // I call this an win.
               return outputFile;
             }
 
-            // we don't have a checksum, or what we have doesn't match.
+            // we don't have a hash, or what we have doesn't match.
             // maybe we will get a match below (or resume)
           }
         }
@@ -177,15 +150,15 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     // this is when we know we're done.
     await outputStream.is.done;
 
-    // we've downloaded the file, let's see if it matches the checksum we have.
+    // we've downloaded the file, let's see if it matches the hash we have.
     if (options?.algorithm) {
-      session.channels.debug(`Acquire '${outputFilename}': checking downloaded file checksum.`);
-      // does it match the checksum that we have?
-      if (!await outputFile.checksumValid(options)) {
+      session.channels.debug(`Acquire '${outputFilename}': checking downloaded file hash.`);
+      // does it match the hash that we have?
+      if (!await outputFile.hashValid(options)) {
         await outputFile.delete();
-        fail(i`Downloaded file '${outputFile.fsPath}' did not have the correct checksum (${options.algorithm}:${options.checksum}) `);
+        fail(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}:${options.value}) `);
       }
-      session.channels.debug(`Acquire '${outputFilename}': downloaded file checksum matches specified checksum.`);
+      session.channels.debug(`Acquire '${outputFilename}': downloaded file hash matches specified hash.`);
     }
 
     session.channels.debug(`Acquire '${outputFilename}': downloading file successful.`);
