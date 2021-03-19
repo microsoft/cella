@@ -38,10 +38,13 @@ export class SuiteLocal {
 
     this.fs = new LocalFileSystem(this.session);
     this.tempFolderUrl = this.fs.file(this.tempFolder);
-    // you can uncomment this section to have the debug messages dumped during testing
-    // this.session.channels.on('debug', (text, context, msec) => {
-    //  console.log(`[${msec}msec] ${text}`);
-    // });
+    // set the debug=1 in the environment to have the debug messages dumped during testing
+    if (process.env['DEBUG'] || process.env['debug']) {
+      this.session.channels.on('debug', (text, context, msec) => {
+        console.log(`[${msec}msec] ${text}`);
+      });
+    }
+
   }
 
   async after() {

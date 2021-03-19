@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { fail } from 'assert';
 import { default as got, Headers, HTTPError, Response } from 'got';
 import { anyWhere } from './promise';
 import { enhanceReadable } from './streams';
@@ -171,10 +170,8 @@ export class RemoteFile {
       });
     });
 
-    // lazy properties
-    this.availableLocation = Promise.any(this.info).then(success => success.location, f => {
-      fail(`unsuccessful ${f}`);
-    });
+    // lazy properties (which do not throw on errors.)
+    this.availableLocation = Promise.any(this.info).then(success => success.location, fail => undefined);
     this.resumable = anyWhere(this.info, each => each.resumeable).then(success => true, fail => false);
     this.resumableLocation = anyWhere(this.info, each => each.resumeable).then(success => success.location, fail => undefined);
     this.contentLength = anyWhere(this.info, each => !!each.contentLength).then(success => success.contentLength, fail => -2);

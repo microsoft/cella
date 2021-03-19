@@ -20,6 +20,10 @@ export function Delay(delayMS: number): Promise<void> {
 
 export type Emitter<T extends (EventEmitter | eventemitter)> = Pick<T, 'on' | 'off'>;
 
+/**
+ * This can proxy event emitters to other sources.
+ * Used with an intersect() call to get a promise that has events.
+*/
 export class EventForwarder<UnionOfEmiters extends (EventEmitter | eventemitter)> implements Emitter<UnionOfEmiters> {
   #emitters = new Array<UnionOfEmiters>();
   #subscriptions = new Array<[string, any]>();
@@ -63,7 +67,11 @@ export class EventForwarder<UnionOfEmiters extends (EventEmitter | eventemitter)
     return <any>this;
   }
 }
-
+/**
+ * creates a awaitable promise for a given event.
+ * @param eventEmitter the event emitter
+ * @param event the event name
+ */
 export function async(eventEmitter: EventEmitter, event: string | symbol) {
   return promisify(eventEmitter.once)(event);
 }
