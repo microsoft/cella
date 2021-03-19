@@ -14,17 +14,28 @@ import { promisify } from 'util';
  *
  * @param delayMS the length of time to delay in milliseconds.
  */
-export function Delay(delayMS: number): Promise<void> {
+export function delay(delayMS: number): Promise<void> {
   return new Promise<void>(res => setTimeout(res, delayMS));
 }
 
 export type Emitter<T extends (EventEmitter | eventemitter)> = Pick<T, 'on' | 'off'>;
 
+/**
+ * This can proxy event emitters to other sources.
+ * Used with an intersect() call to get a promise that has events.
+*/
 export class EventForwarder<UnionOfEmiters extends (EventEmitter | eventemitter)> implements Emitter<UnionOfEmiters> {
   #emitters = new Array<UnionOfEmiters>();
   #subscriptions = new Array<[string, any]>();
 
-  /** @internal */
+  /**
+   * @internal
+   *
+   * registers the actual event emitter with the forwarder.
+   *
+   * if events were subscribed to before the emitter is registered, we're going
+   * to forward on those subscriptions now.
+  */
   register(emitter: UnionOfEmiters) {
     for (const [event, listener] of this.#subscriptions) {
       emitter.on(event, listener);
@@ -32,6 +43,15 @@ export class EventForwarder<UnionOfEmiters extends (EventEmitter | eventemitter)
     this.#emitters.push(emitter);
   }
 
+  /**
+   * Lets our forwarder pass on events to subscribe to
+   *
+   * @remarks we're going to cache these subscriptions, since if the consumer starts subscribing before we
+   *          actually register the emitter, we'll have to subscribe at registration time.
+   *
+   * @param event the event to subscribe to
+   * @param listener the callback for the listener
+   */
   on(event: any, listener: any) {
     this.#subscriptions.push([event, listener]);
     for (const emitter of this.#emitters) {
@@ -47,8 +67,11 @@ export class EventForwarder<UnionOfEmiters extends (EventEmitter | eventemitter)
     return <any>this;
   }
 }
-
-
+/**
+ * creates a awaitable promise for a given event.
+ * @param eventEmitter the event emitter
+ * @param event the event name
+ */
 export function async(eventEmitter: EventEmitter, event: string | symbol) {
   return promisify(eventEmitter.once)(event);
 }

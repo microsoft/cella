@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 export * from './lib/acquire';
 export * from './lib/channels';
-export * from './lib/checksum';
 export * from './lib/events';
 export * from './lib/filesystem';
+export * from './lib/hash';
 export * from './lib/http-filesystem';
 export * from './lib/i18n';
 export * from './lib/intersect';

@@ -10,8 +10,9 @@ import { join } from 'path';
 import * as s from '../sequence-equal';
 import { rootFolder } from './SuiteLocal';
 
-// don't move this. I need this.
+// forces the global function for sequence equal to be added to strict before this exectues:
 s;
+
 
 // sample test using decorators.
 describe('Amf', () => {

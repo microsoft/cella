@@ -8,6 +8,9 @@ import { Readable, Writable } from 'stream';
 import { Stopwatch } from './channels';
 import { intersect } from './intersect';
 
+/** a Stream or a Promise to a Stream (and explicitly calling it an async iterable so it doesn't have to be recast later) */
+export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<AsyncIterable<Buffer> & EnhancedReadable>;
+
 /**
  * Adds Event to Promise mapping to Readable streams
  * */

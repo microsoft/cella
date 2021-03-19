@@ -95,5 +95,9 @@
   ],
   "mochaExplorer.monkeyPatch": true,
   "mochaExplorer.debuggerConfig": "MochaTest",
+  "mochaExplorer.env": {
+    // turn this on to dump session.debug messages in the test output window.
+    // "debug": "true"
+  },
   "eslint.debug": true
 }
