@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { FileStat, FileSystem, FileType } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
 import { get, getStream, head } from './https';
 import { EnhancedReadable, EnhancedWritable, enhanceReadable } from './streams';
 import { Uri } from './uri';
@@ -13,6 +13,7 @@ import { Uri } from './uri';
  *
  */
 export class HttpFileSystem extends FileSystem {
+
   async stat(uri: Uri): Promise<FileStat> {
     const result = await head(uri);
 
@@ -50,4 +51,9 @@ export class HttpFileSystem extends FileSystem {
   writeStream(uri: Uri): Promise<EnhancedWritable> {
     throw new Error('Method not implemented.');
   }
+
+  openFile(uri: Uri): Promise<ReadHandle> {
+    throw new Error('Method not implemented.');
+  }
+
 }

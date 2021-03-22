@@ -104,6 +104,56 @@ describe('LocalFileSystemTests', () => {
 
   });
 
+  it('reads blocks via open', async () => {
+    const file = fs.file(join(rootFolder(), 'resources', 'small-file.txt'));
+    const handle = await file.openFile();
+    let bytesRead = 0;
+    for await (const chunk of handle.readStream(0, 3)) {
+      bytesRead += chunk.length;
+      strict.equal(chunk.length, 4, 'chunk should be 4 bytes long');
+      strict.equal(chunk.toString('utf-8'), 'this', 'chunk should be a word');
+    }
+    strict.equal(bytesRead, 4, 'Stream should read some bytes');
+
+    bytesRead = 0;
+    // should be able to read that same chunk again.
+    for await (const chunk of handle.readStream(0, 3)) {
+      bytesRead += chunk.length;
+      strict.equal(chunk.length, 4, 'chunk should be 4 bytes long');
+      strict.equal(chunk.toString('utf-8'), 'this', 'chunk should be a word');
+    }
+    strict.equal(bytesRead, 4, 'Stream should read some bytes');
+
+    bytesRead = 0;
+    for await (const chunk of handle.readStream()) {
+      bytesRead += chunk.length;
+      strict.equal(chunk.byteLength, 23, 'chunk should be 23 bytes long');
+      strict.equal(chunk.toString('utf-8'), 'this is a small file.\n\n', 'File contents should equal known result');
+    }
+    strict.equal(bytesRead, 23, 'Stream should read some bytes');
+
+    await handle.close();
+
+
+  });
+  it('reads blocks via open in a large file', async () => {
+    const file = fs.file(join(rootFolder(), 'resources', 'large-file.txt'));
+    const handle = await file.openFile();
+    let bytesRead = 0;
+    for await (const chunk of handle.readStream()) {
+      if (bytesRead === 0) {
+        strict.equal(chunk.length, 32768, 'first chunk should be 32768 bytes long');
+      }
+      else {
+        strict.equal(chunk.length, 4134, 'second chunk should be 4134 bytes long');
+      }
+      bytesRead += chunk.length;
+    }
+    strict.equal(bytesRead, 36902, 'Stream should read some bytes');
+
+    await handle.close();
+  });
+
   it('read/write stream with pipe ', async () => {
     const tmp = local.tempFolderUrl;
 

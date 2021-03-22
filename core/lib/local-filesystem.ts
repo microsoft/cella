@@ -5,10 +5,10 @@
 
 import { strict } from 'assert';
 import { createReadStream, createWriteStream, Stats } from 'fs';
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
+import { FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { delay } from './events';
-import { FileStat, FileSystem, FileType } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
 import { i } from './i18n';
 import { EnhancedReadable, EnhancedWritable, enhanceReadable, enhanceWritable } from './streams';
 import { Uri } from './uri';
@@ -45,6 +45,7 @@ class LocalFileStats implements FileStat {
  * This is used to handle the access to the local disks.
  */
 export class LocalFileSystem extends FileSystem {
+
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
     const s = await stat(path);
@@ -128,5 +129,23 @@ export class LocalFileSystem extends FileSystem {
   async writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
     this.write(uri);
     return enhanceWritable(createWriteStream(uri.fsPath, { flags: 'a', autoClose: true }));
+  }
+
+  async openFile(uri: Uri): Promise<ReadHandle> {
+    return new LocalReadHandle(await open(uri.fsPath, 'r'));
+  }
+}
+
+class LocalReadHandle extends ReadHandle {
+  constructor(private handle: FileHandle) {
+    super();
+  }
+
+  read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
+    return this.handle.read(buffer, offset, length, position);
+  }
+
+  async close() {
+    return this.handle.close();
   }
 }
