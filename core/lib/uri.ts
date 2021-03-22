@@ -7,7 +7,7 @@ import { join } from 'path';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
-import { FileStat, FileSystem, FileType } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
 import { Algorithm, Hash, hash } from './hash';
 import { EnhancedReadable, EnhancedWritable } from './streams';
 
@@ -205,8 +205,13 @@ bad.fragment === '/project1';
     return uri.fileSystem.readFile(uri);
   }
 
-  readStream(): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
-    return this.fileSystem.readStream(this);
+  openFile(uri?: Uri | string): Promise<ReadHandle> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.openFile(uri);
+  }
+
+  readStream(start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+    return this.fileSystem.readStream(this, { start, end });
   }
 
   async readBlock(start = 0, end = Infinity): Promise<Buffer> {

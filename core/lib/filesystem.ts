@@ -5,10 +5,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
+import { Readable } from 'stream';
 import { Session } from './session';
-import { EnhancedReadable, EnhancedWritable } from './streams';
+import { EnhancedReadable, EnhancedWritable, enhanceReadable } from './streams';
 import { Uri } from './uri';
 
+const size64K = 1 << 16;
+const size32K = 1 << 15;
 
 /**
  * The `FileStat`-type represents metadata about a file
@@ -67,6 +70,65 @@ export enum FileType {
   SymbolicLink = 64
 }
 
+
+/**
+ * A random-access reading interface to access a file in a FileSystem.
+ *
+ * Ideally, we keep reads in a file to a forward order, so that this can be implemented on filesystems
+ * that do not support random access (ie, please do your best to order reads so that they go forward only as much as possible)
+ *
+ * Underneath on FSes that do not support random access, this would likely require multiple 'open' operation for the same
+ * target file.
+ */
+export abstract class ReadHandle {
+  /**
+   * Reads a block from a file
+   *
+   * @param buffer The buffer that the data will be written to.
+   * @param offset The offset in the buffer at which to start writing.
+   * @param length The number of bytes to read.
+   * @param position The offset from the beginning of the file from which data should be read. If `null`, data will be read from the current position.
+   */
+  abstract read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number, buffer: TBuffer }>;
+
+  readStream(start = 0, end = Infinity): AsyncIterable<Buffer> & EnhancedReadable {
+    return enhanceReadable(Readable.from(asyncIterableOverHandle(start, end, this), {}));
+  }
+
+  abstract close(): Promise<void>;
+
+}
+
+/**
+ * Picks a reasonable buffer size. Not more than 64k
+ *
+ * @param length
+ */
+function reasonableBuffer(length: number) {
+  return Buffer.alloc(length > size64K ? size32K : length);
+}
+
+/**
+ * Creates an AsyncIterable<Buffer> over a ReadHandle
+ * @param start the first byte in the target read from
+ * @param end the last byte in the target to read from
+ * @param handle the ReadHandle
+ */
+async function* asyncIterableOverHandle(start: number, end: number, handle: ReadHandle): AsyncIterable<Buffer> {
+  const buffer = reasonableBuffer(1 + end - start);
+  let p = start;
+  while (p < end) {
+    const count = Math.min(1 + end - p, buffer.byteLength);
+    const b = await handle.read(buffer, 0, count, p);
+    p += b.bytesRead;
+    if (b.bytesRead === 0) {
+      return;
+    }
+    // return only what was actually read.
+    yield buffer.slice(0, b.bytesRead);
+    //yield Buffer.from(buffer, 0, b.bytesRead);
+  }
+}
 
 export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
 
@@ -179,6 +241,8 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param options Defines if existing files should be overwritten.
    */
   abstract rename(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<void>;
+
+  abstract openFile(uri: Uri): Promise<ReadHandle>;
 
   /**
    * Copy files or folders.

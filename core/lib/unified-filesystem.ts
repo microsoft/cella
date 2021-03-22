@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
-import { FileStat, FileSystem, FileType } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
 import { i } from './i18n';
 import { Dictionary } from './linq';
 import { EnhancedReadable, EnhancedWritable } from './streams';
@@ -21,6 +21,7 @@ function schemeOf(uri: string) {
 }
 
 export class UnifiedFileSystem extends FileSystem {
+
   private filesystems: Dictionary<FileSystem> = {};
 
   /** registers a scheme to a given filesystem
@@ -81,6 +82,10 @@ export class UnifiedFileSystem extends FileSystem {
 
   readFile(uri: Uri): Promise<Uint8Array> {
     return this.filesystem(uri).readFile(uri);
+  }
+
+  openFile(uri: Uri): Promise<ReadHandle> {
+    return this.filesystem(uri).openFile(uri);
   }
 
   writeFile(uri: Uri, content: Uint8Array): Promise<void> {
