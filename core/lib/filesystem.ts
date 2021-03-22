@@ -91,12 +91,16 @@ export abstract class ReadHandle {
    */
   abstract read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number, buffer: TBuffer }>;
 
+  /**
+   * Returns an EnhancedReadable stream for consuming an opened ReadHandle
+   * @param start the first byte to read of the target
+   * @param end the last byte to read of the target (inclusive!)
+   */
   readStream(start = 0, end = Infinity): AsyncIterable<Buffer> & EnhancedReadable {
     return enhanceReadable(Readable.from(asyncIterableOverHandle(start, end, this), {}));
   }
 
   abstract close(): Promise<void>;
-
 }
 
 /**
@@ -116,17 +120,16 @@ function reasonableBuffer(length: number) {
  */
 async function* asyncIterableOverHandle(start: number, end: number, handle: ReadHandle): AsyncIterable<Buffer> {
   const buffer = reasonableBuffer(1 + end - start);
-  let p = start;
-  while (p < end) {
-    const count = Math.min(1 + end - p, buffer.byteLength);
-    const b = await handle.read(buffer, 0, count, p);
-    p += b.bytesRead;
+
+  while (start < end) {
+    const count = Math.min(1 + end - start, buffer.byteLength);
+    const b = await handle.read(buffer, 0, count, start);
     if (b.bytesRead === 0) {
       return;
     }
-    // return only what was actually read.
+    start += b.bytesRead;
+    // return only what was actually read. (just a view)
     yield buffer.slice(0, b.bytesRead);
-    //yield Buffer.from(buffer, 0, b.bytesRead);
   }
 }
 
