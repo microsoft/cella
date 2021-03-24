@@ -275,5 +275,9 @@ bad.fragment === '/project1';
     return false;
   }
 
-
+  parent(): Uri {
+    return new Uri(this.fileSystem, this.with({
+      path: this.path.replace(/(?:[\\/][^\\/]+)([\\/])?$/g, '$1')
+    }));
+  }
 }

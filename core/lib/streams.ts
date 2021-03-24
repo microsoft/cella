@@ -19,12 +19,17 @@ export class ReadableEvents extends EventEmitter<Progress> {
   /** @internal */
   stopwatch = new Stopwatch();
   /** @internal */
-  constructor(private readable: Readable, public currentPosition: number, public expectedLength: number,) {
+  constructor(private readable: Readable, public currentPosition: number, public expectedLength: number, public enforceExpectedLength: boolean = false) {
     super();
     readable.on('data', (chunk) => {
-      this.currentPosition += chunk.length;
-      this.progress = Math.round(this.currentPosition * 1000 / expectedLength) / 10;
-      this.emit('progress', this.progress, this.currentPosition, this.stopwatch.total);
+      const newPosition = this.currentPosition + chunk.length;
+      if (this.enforceExpectedLength && newPosition >this.expectedLength) {
+        throw new Error('read stream was too long');
+      }
+
+      this.currentPosition = newPosition;
+      this.progress = Math.round(newPosition * 1000 / this.expectedLength) / 10;
+      this.emit('progress', this.progress, newPosition, this.stopwatch.total);
     });
   }
 
@@ -144,7 +149,7 @@ export interface EnhancedReadable extends Readable {
   on(event: 'pause', listener: () => void): this;
   on(event: 'readable', listener: () => void): this;
   on(event: 'resume', listener: () => void): this;
-  on(event: 'progress', callback: (progress: number, curentPosition: number, msec: number) => void): this;
+  on(event: 'progress', callback: (progress: number, currentPosition: number, msec: number) => void): this;
   on(event: string | symbol, listener: (...args: Array<any>) => void): this;
 }
 
@@ -154,7 +159,7 @@ export interface EnhancedWritable extends Writable {
 }
 
 /** @internal */
-export function enhanceReadable<T extends Readable>(readableStream: T, currentPosition = 0, expectedLength = 0): AsyncIterable<Buffer> & EnhancedReadable & T {
+export function enhanceReadable<T extends Readable>(readableStream: T, currentPosition = 0, expectedLength = 0, enforceExpectedLength = false): AsyncIterable<Buffer> & EnhancedReadable & T {
   if ((<any>readableStream).is) {
     return <AsyncIterable<Buffer> & EnhancedReadable & T>readableStream;
   }
@@ -221,4 +226,3 @@ export function enhanceWritable<T extends Writable>(writableStream: Writable) {
 export interface Progress {
   progress(percent: number, bytes: number, msec: number): void;
 }
-
