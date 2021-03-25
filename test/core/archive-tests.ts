@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { LocalFileSystem, ZipUnpacker } from '@microsoft/cella.core';
-import { fail, ok, strictEqual } from 'assert';
+import { strict } from 'assert';
 import { join } from 'path';
 import { rootFolder, SuiteLocal } from './SuiteLocal';
 
@@ -17,12 +17,12 @@ describe('ZipUnpacking', () => {
     const targetPath = join(local.tempFolder, 'example');
     const targetUri = fs.parse(targetPath);
     await unpacker.unpack(fs.parse(zipPath), targetUri, {});
-    strictEqual((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
-    strictEqual((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
-    strictEqual((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
-    strictEqual((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
-    strictEqual((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
-    strictEqual((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
   });
 
   it('UnpacksZipsWithCompression', async () => {
@@ -33,8 +33,8 @@ describe('ZipUnpacking', () => {
     const targetUri = fs.parse(targetPath);
     await unpacker.unpack(fs.parse(zipPath), targetUri, {});
     const contents = await targetUri.readFile('0x100000');
-    strictEqual(contents.length, 0x100000);
-    ok(contents.every((value: number) => value === 0x0));
+    strict.equal(contents.length, 0x100000);
+    strict.ok(contents.every((value: number) => value === 0x0));
   });
 
   it('FailsToUnpackMalformed', async () => {
@@ -43,11 +43,14 @@ describe('ZipUnpacking', () => {
     const zipPath = join(rootFolder(), 'resources', 'wrong-entry-sizes.zip');
     const targetPath = join(local.tempFolder, 'wrong-entry-sizes');
     const targetUri = fs.parse(targetPath);
+    let pass = true;
     try {
+      // can't use strict.throws due to the next await:
       await unpacker.unpack(fs.parse(zipPath), targetUri, {});
-      fail('accepted bad input');
+      pass = false;
     } catch (error)
     // eslint-disable-next-line no-empty
-    {  }
+    { }
+    strict.ok(pass);
   });
 });

@@ -18,6 +18,7 @@ export * from './lib/metadata-format';
 export * from './lib/session';
 export * from './lib/unified-filesystem';
 export * from './lib/uri';
+export * from './lib/util/percentage-scaler';
 export * from './lib/version';
 
 /** This adds the expected declarations to the Array type. */

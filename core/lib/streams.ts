@@ -7,6 +7,7 @@ import { EventEmitter } from 'ee-ts';
 import { Readable, Writable } from 'stream';
 import { Stopwatch } from './channels';
 import { intersect } from './intersect';
+import { PercentageScaler } from './util/percentage-scaler';
 
 /** a Stream or a Promise to a Stream (and explicitly calling it an async iterable so it doesn't have to be recast later) */
 export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<AsyncIterable<Buffer> & EnhancedReadable>;
@@ -17,18 +18,21 @@ export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<
 export class ReadableEvents extends EventEmitter<Progress> {
   progress = 0;
   /** @internal */
-  stopwatch = new Stopwatch();
+  public readonly stopwatch = new Stopwatch();
+  /** @internal */
+  private readonly scaler : PercentageScaler;
   /** @internal */
   constructor(private readable: Readable, public currentPosition: number, public expectedLength: number, public enforceExpectedLength: boolean = false) {
     super();
+    this.scaler = new PercentageScaler(currentPosition, currentPosition + expectedLength);
     readable.on('data', (chunk) => {
       const newPosition = this.currentPosition + chunk.length;
       if (this.enforceExpectedLength && newPosition >this.expectedLength) {
-        throw new Error('read stream was too long');
+        this.readable.emit('error', new Error('bad length'));
       }
 
       this.currentPosition = newPosition;
-      this.progress = Math.round(newPosition * 1000 / this.expectedLength) / 10;
+      this.progress = this.scaler.scalePosition(newPosition);
       this.emit('progress', this.progress, newPosition, this.stopwatch.total);
     });
   }
@@ -163,7 +167,7 @@ export function enhanceReadable<T extends Readable>(readableStream: T, currentPo
   if ((<any>readableStream).is) {
     return <AsyncIterable<Buffer> & EnhancedReadable & T>readableStream;
   }
-  const is = new ReadableEvents(readableStream, currentPosition, expectedLength);
+  const is = new ReadableEvents(readableStream, currentPosition, expectedLength, enforceExpectedLength);
   return <AsyncIterable<Buffer> & EnhancedReadable & T>intersect({
     on: (event: string | symbol, listener: (...args: Array<any>) => void) => {
       switch (event) {

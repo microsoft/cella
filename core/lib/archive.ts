@@ -10,6 +10,7 @@ import { ReadHandle } from './filesystem';
 import { Session } from './session';
 import { EnhancedReadable, enhanceReadable } from './streams';
 import { Uri } from './uri';
+import { PercentageScaler } from './util/percentage-scaler';
 
 interface FileEntry {
   archiveUri: Uri;
@@ -19,7 +20,7 @@ interface FileEntry {
 
 /** The event definitions for for unpackers */
 interface UnpackEvents {
-  progress(entry: Readonly<FileEntry>, percentage: number): void;
+  progress(entry: Readonly<FileEntry>, filePercentage: number, archivePercentage: number): void;
   unpacked(entry: Readonly<FileEntry>): void;
   error(entry: Readonly<FileEntry>, message: string): void;
 }
@@ -44,8 +45,8 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
   /* Event Emitters */
 
   /** EventEmitter: progress, at least once per file */
-  protected progress(entry: Readonly<FileEntry>, percentage: number): void {
-    this.emit('progress', entry, percentage);
+  protected progress(entry: Readonly<FileEntry>, filePercentage: number, archivePercentage: number): void {
+    this.emit('progress', entry, filePercentage, archivePercentage);
   }
 
 
@@ -79,13 +80,19 @@ class YauzlRandomAccessAdapter extends RandomAccessReader {
   read(buffer: Buffer, offset: number, length: number, position: number, callback: (err?: Error, bytesRead?: number) => void): void {
     this.file.read(buffer, offset, length, position).then(
       (buffer) => callback(undefined, buffer.bytesRead),
-      (reason) => callback(reason)
+      callback
     );
   }
 
   close(callback: (err?: Error) => void): void {
-    this.file.close()
-      .then(() => callback(), (reason) => callback(reason));
+    this.file.close().catch(callback);
+  }
+}
+
+class UnpackEntryCommon {
+  readonly filePercentageScaler : PercentageScaler;
+  constructor(public zipFile: ZipFile, public archiveUri: Uri, public outputUri: Uri, public options : OutputOptions) {
+    this.filePercentageScaler = new PercentageScaler(0, zipFile.entryCount + 1);
   }
 }
 
@@ -94,7 +101,7 @@ export class ZipUnpacker extends Unpacker {
     super();
   }
 
-  private openFromRandomAccessReader(adapter: YauzlRandomAccessAdapter, size: number): Promise<ZipFile> {
+  private static openFromRandomAccessReader(adapter: YauzlRandomAccessAdapter, size: number): Promise<ZipFile> {
     return new Promise((resolve, reject) => {
       fromRandomAccessReader(adapter, size, { lazyEntries: true, autoClose: false, validateEntrySizes: false },
         (err?: Error | undefined, zipFile?: ZipFile | undefined) => {
@@ -107,7 +114,7 @@ export class ZipUnpacker extends Unpacker {
     });
   }
 
-  private openReadStream(entry: Entry, zipFile: ZipFile): Promise<Readable> {
+  private static openZipEntryDataStream(entry: Entry, zipFile: ZipFile): Promise<Readable> {
     return new Promise((resolve, reject) => {
       zipFile.openReadStream(entry, (err?: Error, stream?: Readable | undefined) => {
         if (stream) {
@@ -119,7 +126,7 @@ export class ZipUnpacker extends Unpacker {
     });
   }
 
-  async maybeUnpackEntry(entry: Entry, zipFile: ZipFile, archiveUri: Uri, outputUri: Uri, options: OutputOptions) : Promise<void> {
+  async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon) : Promise<void> {
     const fileName = entry.fileName;
     if (fileName.length === 0 || fileName[fileName.length - 1] === '/') {
       // skip directories or empty filenames
@@ -127,23 +134,32 @@ export class ZipUnpacker extends Unpacker {
     }
 
     const fileEntry = {
-      archiveUri: archiveUri,
+      archiveUri: common.archiveUri,
       path: fileName,
-      destination: outputUri.join(fileName)
+      destination: common.outputUri.join(fileName)
     };
 
-    this.session.channels.debug(`unpacking ZIP ${archiveUri}/${fileName} => ${fileEntry.destination}`);
-    this.progress(fileEntry, 0);
+    this.session.channels.debug(`unpacking ZIP ${common.archiveUri}/${fileName} => ${fileEntry.destination}`);
+
+    const entriesRead = common.zipFile.entriesRead;
+    const thisFilePercentageScaler = new PercentageScaler(
+      0,
+      100,
+      common.filePercentageScaler.scalePosition(entriesRead),
+      common.filePercentageScaler.scalePosition(entriesRead + 1)
+    );
+
+    this.progress(fileEntry, 0, thisFilePercentageScaler.lowestPercentage);
     const parentDirectory = fileEntry.destination.parent();
     await parentDirectory.createDirectory();
-    const readStream = await enhanceReadable(await this.openReadStream(entry, zipFile), 0, entry.uncompressedSize, true);
+    const readStream = await enhanceReadable(await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile), 0, entry.uncompressedSize, true);
     const writeStream = await fileEntry.destination.writeStream();
-    readStream.on('progress', (percent) => this.progress(fileEntry, percent));
+    readStream.on('progress', (filePercentage) =>
+      this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
     readStream.pipe(writeStream);
     await readStream.is.done;
-    readStream.unpipe(writeStream);
-    writeStream.end();
-    this.progress(fileEntry, 100);
+    await writeStream.is.done;
+    this.progress(fileEntry, 100, thisFilePercentageScaler.highestPercentage);
     this.unpacked(fileEntry);
   }
 
@@ -151,10 +167,11 @@ export class ZipUnpacker extends Unpacker {
     this.session.channels.debug(`unpacking ZIP ${archiveUri} => ${outputUri}`);
     const openedFile = await archiveUri.openFile();
     const adapter = new YauzlRandomAccessAdapter(openedFile);
-    const zipFile = await this.openFromRandomAccessReader(adapter, await openedFile.size());
+    const zipFile = await ZipUnpacker.openFromRandomAccessReader(adapter, await openedFile.size());
+    const common = new UnpackEntryCommon(zipFile, archiveUri, outputUri, options);
     return new Promise<void>((resolve, reject) => {
       zipFile.on('entry', (entry: Entry) =>
-        this.maybeUnpackEntry(entry, zipFile, archiveUri, outputUri, options)
+        this.maybeUnpackEntry(entry, common)
           .then(() => zipFile.readEntry(), reject));
       zipFile.on('error', reject);
       zipFile.once('end', () => {

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
@@ -277,7 +277,7 @@ bad.fragment === '/project1';
 
   parent(): Uri {
     return new Uri(this.fileSystem, this.with({
-      path: this.path.replace(/(?:[\\/][^\\/]+)([\\/])?$/g, '$1')
+      path: dirname(this.path)
     }));
   }
 }
