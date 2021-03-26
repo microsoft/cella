@@ -92,7 +92,7 @@ class YauzlRandomAccessAdapter extends RandomAccessReader {
 class UnpackEntryCommon {
   readonly filePercentageScaler : PercentageScaler;
   constructor(public zipFile: ZipFile, public archiveUri: Uri, public outputUri: Uri, public options : OutputOptions) {
-    this.filePercentageScaler = new PercentageScaler(0, zipFile.entryCount + 1);
+    this.filePercentageScaler = new PercentageScaler(0, zipFile.entryCount);
   }
 }
 
@@ -128,11 +128,6 @@ export class ZipUnpacker extends Unpacker {
 
   async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon) : Promise<void> {
     const fileName = entry.fileName;
-    if (fileName.length === 0 || fileName[fileName.length - 1] === '/') {
-      // skip directories or empty filenames
-      return;
-    }
-
     const fileEntry = {
       archiveUri: common.archiveUri,
       path: fileName,
@@ -145,20 +140,23 @@ export class ZipUnpacker extends Unpacker {
     const thisFilePercentageScaler = new PercentageScaler(
       0,
       100,
-      common.filePercentageScaler.scalePosition(entriesRead),
-      common.filePercentageScaler.scalePosition(entriesRead + 1)
+      common.filePercentageScaler.scalePosition(entriesRead - 1),
+      common.filePercentageScaler.scalePosition(entriesRead)
     );
 
     this.progress(fileEntry, 0, thisFilePercentageScaler.lowestPercentage);
-    const parentDirectory = fileEntry.destination.parent();
-    await parentDirectory.createDirectory();
-    const readStream = await enhanceReadable(await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile), 0, entry.uncompressedSize, true);
-    const writeStream = await fileEntry.destination.writeStream();
-    readStream.on('progress', (filePercentage) =>
-      this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
-    readStream.pipe(writeStream);
-    await readStream.is.done;
-    await writeStream.is.done;
+    if (fileName.length !== 0 && fileName[fileName.length - 1] !== '/') {
+      const parentDirectory = fileEntry.destination.parent();
+      await parentDirectory.createDirectory();
+      const readStream = await enhanceReadable(await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile), 0, entry.uncompressedSize, true);
+      const writeStream = await fileEntry.destination.writeStream();
+      readStream.on('progress', (filePercentage) =>
+        this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
+      readStream.pipe(writeStream);
+      await readStream.is.done;
+      await writeStream.is.done;
+    }
+
     this.progress(fileEntry, 100, thisFilePercentageScaler.highestPercentage);
     this.unpacked(fileEntry);
   }
