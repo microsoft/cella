@@ -14,8 +14,9 @@ import { PercentageScaler } from './util/percentage-scaler';
 
 interface FileEntry {
   archiveUri: Uri;
-  destination: Uri;
+  destination: Uri | undefined;
   path: string;
+  extractPath: string | undefined;
 }
 
 /** The event definitions for for unpackers */
@@ -35,7 +36,7 @@ export interface OutputOptions {
   strip?: number;
 
   /**
-   * A regular expression to transform filenames during unpack.
+   * A regular expression to transform filenames during unpack. If the resulting file name is empty, it is not emitted.
    */
   transform?: string;
 }
@@ -56,6 +57,85 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
   }
 
   abstract unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void>;
+
+  private static isSlash(c : string) : boolean {
+    return c == '/' || c == '\\';
+  }
+
+  /**
+ * Returns a new path string such that the path has prefixCount path elements removed.
+ * If prefixCount is greater than the number of path elements in the path, undefined is returned.
+ * @param prefixCount
+ */
+  public static stripPath(path: string, prefixCount: number) : string | undefined {
+    if (prefixCount == 0) {
+      return path;
+    }
+
+    let first = 0;
+    const last = path.length;
+    // establish invariant that current character isn't a slash
+    for (;;) {
+      if (first == last) {
+        return undefined;
+      }
+
+      if (!this.isSlash(path[first])) {
+        break;
+      }
+
+      ++first;
+    }
+
+    const firstNonSlash = first;
+    // for each prefix to remove
+    for (; prefixCount != 0; --prefixCount) {
+    // skip over a block of not slashes
+      for (;;) {
+        ++first;
+        if (first == last) {
+          return undefined;
+        }
+        if (this.isSlash(path[first])) {
+          break;
+        }
+      }
+
+      // then skip over a block of slashes
+      for (;;) {
+        ++first;
+        if (first == last) {
+          return undefined;
+        }
+        if (!this.isSlash(path[first])) {
+          break;
+        }
+      }
+    }
+
+    const leadingSlashes = path.slice(0, firstNonSlash);
+    const trailingKept = path.slice(first, last);
+    return leadingSlashes + trailingKept;
+  }
+
+  /**
+ * Apply OutputOptions to a path before extraction.
+ * @param entry The initial path to a file to unpack.
+ * @param options Options to apply to that file name.
+ * @returns If the file is to be emitted, the path to use; otherwise, undefined.
+ */
+  protected static implementOutputOptions(path: string, options: OutputOptions) : string | undefined {
+    if (options.strip) {
+      const maybeStripped = Unpacker.stripPath(path, options.strip);
+      if (maybeStripped) {
+        path = maybeStripped;
+      } else {
+        return undefined;
+      }
+    }
+
+    return path;
+  }
 }
 
 class YauzlRandomAccessAdapter extends RandomAccessReader {
@@ -127,14 +207,29 @@ export class ZipUnpacker extends Unpacker {
   }
 
   async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon) : Promise<void> {
-    const fileName = entry.fileName;
+    const path = entry.fileName;
+    let extractPath : string | undefined = path;
+    if (extractPath.length === 0 || extractPath[extractPath.length - 1] === '/') {
+      extractPath = undefined;
+    }
+
+    if (extractPath) {
+      extractPath = Unpacker.implementOutputOptions(extractPath, common.options);
+    }
+
+    let destination : Uri | undefined = undefined;
+    if (extractPath) {
+      destination = common.outputUri.join(extractPath);
+    }
+
     const fileEntry = {
       archiveUri: common.archiveUri,
-      path: fileName,
-      destination: common.outputUri.join(fileName)
+      destination: destination,
+      path: path,
+      extractPath : extractPath
     };
 
-    this.session.channels.debug(`unpacking ZIP ${common.archiveUri}/${fileName} => ${fileEntry.destination}`);
+    this.session.channels.debug(`unpacking ZIP ${common.archiveUri}/${path} => ${destination}`);
 
     const entriesRead = common.zipFile.entriesRead;
     const thisFilePercentageScaler = new PercentageScaler(
@@ -145,11 +240,11 @@ export class ZipUnpacker extends Unpacker {
     );
 
     this.progress(fileEntry, 0, thisFilePercentageScaler.lowestPercentage);
-    if (fileName.length !== 0 && fileName[fileName.length - 1] !== '/') {
-      const parentDirectory = fileEntry.destination.parent();
+    if (destination) {
+      const parentDirectory = destination.parent();
       await parentDirectory.createDirectory();
       const readStream = await enhanceReadable(await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile), 0, entry.uncompressedSize, true);
-      const writeStream = await fileEntry.destination.writeStream();
+      const writeStream = await destination.writeStream();
       readStream.on('progress', (filePercentage) =>
         this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
       readStream.pipe(writeStream);
