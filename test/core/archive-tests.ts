@@ -3,10 +3,9 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { LocalFileSystem, ZipUnpacker } from '@microsoft/cella.core';
+import { ZipUnpacker } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { join } from 'path';
-import { rootFolder, SuiteLocal } from './SuiteLocal';
+import { SuiteLocal } from './SuiteLocal';
 
 /** Checks that progress delivers 0, 100, and constantly increasing percentages. */
 class PercentageChecker {
@@ -96,19 +95,20 @@ class ProgressChecker {
   }
 }
 
-describe('ZipUnpacking', () => {
+describe('ZipUnpacker', () => {
   const local = new SuiteLocal();
-  const fs = new LocalFileSystem(local.session);
+  const fs = local.fs;
+
+  after(local.after.bind(local));
   const unpacker = new ZipUnpacker(local.session);
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
+  before(() => progressChecker.reset());
   it('UnpacksLegitimateSmallZips', async () => {
-    progressChecker.reset();
-    const zipPath = join(rootFolder(), 'resources', 'example-zip.zip');
-    const targetPath = join(local.tempFolder, 'example');
-    const targetUri = fs.parse(targetPath);
-    await unpacker.unpack(fs.parse(zipPath), targetUri, {});
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example');
+    await unpacker.unpack(zipUri, targetUri, {});
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
@@ -121,11 +121,9 @@ describe('ZipUnpacking', () => {
   it('UnpacksZipsWithCompression', async () => {
     // big-compression.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/big-compression.zip
-    progressChecker.reset();
-    const zipPath = join(rootFolder(), 'resources', 'big-compression.zip');
-    const targetPath = join(local.tempFolder, 'big-compression');
-    const targetUri = fs.parse(targetPath);
-    await unpacker.unpack(fs.parse(zipPath), targetUri, {});
+    const zipUri = local.rootFolderUri.join('resources', 'big-compression.zip');
+    const targetUri = local.tempFolderUri.join('big-compression');
+    await unpacker.unpack(zipUri, targetUri, {});
     const contents = await targetUri.readFile('0x100000');
     strict.equal(contents.length, 0x100000);
     strict.ok(contents.every((value: number) => value === 0x0));
@@ -135,14 +133,12 @@ describe('ZipUnpacking', () => {
   it('FailsToUnpackMalformed', async () => {
     // wrong-entry-sizes.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/wrong-entry-sizes/wrong-entry-sizes.zip
-    progressChecker.reset();
-    const zipPath = join(rootFolder(), 'resources', 'wrong-entry-sizes.zip');
-    const targetPath = join(local.tempFolder, 'wrong-entry-sizes');
-    const targetUri = fs.parse(targetPath);
+    const zipUri = local.rootFolderUri.join('resources', 'wrong-entry-sizes.zip');
+    const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
     let pass = true;
     try {
       // can't use strict.throws due to the next await:
-      await unpacker.unpack(fs.parse(zipPath), targetUri, {});
+      await unpacker.unpack(zipUri, targetUri, {});
       pass = false;
     } catch (error)
     // eslint-disable-next-line no-empty

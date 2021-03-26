@@ -25,10 +25,12 @@ export function rootFolder(from = __dirname): string {
 }
 
 export class SuiteLocal {
-  tempFolder: string;
-  tempFolderUrl: Uri;
-  session: Session;
-  fs: LocalFileSystem;
+  readonly rootFolder : string = rootFolder();
+  readonly rootFolderUri: Uri;
+  readonly tempFolder: string;
+  readonly tempFolderUri: Uri;
+  readonly session: Session;
+  readonly fs: LocalFileSystem;
 
   constructor() {
     this.tempFolder = uniqueTempFolder();
@@ -37,14 +39,14 @@ export class SuiteLocal {
     });
 
     this.fs = new LocalFileSystem(this.session);
-    this.tempFolderUrl = this.fs.file(this.tempFolder);
+    this.rootFolderUri = this.fs.file(this.rootFolder);
+    this.tempFolderUri = this.fs.file(this.tempFolder);
     // set the debug=1 in the environment to have the debug messages dumped during testing
     if (process.env['DEBUG'] || process.env['debug']) {
       this.session.channels.on('debug', (text, context, msec) => {
         console.log(`[${msec}msec] ${text}`);
       });
     }
-
   }
 
   async after() {

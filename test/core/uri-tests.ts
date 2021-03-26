@@ -3,14 +3,15 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { LocalFileSystem } from '@microsoft/cella.core';
 import { strictEqual } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
 describe('Uri', () => {
   const local = new SuiteLocal();
-  const fs = new LocalFileSystem(local.session);
-  const tempUrl = local.tempFolderUrl;
+  const fs = local.fs;
+
+  after(local.after.bind(local));
+  const tempUrl = local.tempFolderUri;
   const tempUrlForward = tempUrl.join().toString();
 
   it('Converts slashes on join', () => {

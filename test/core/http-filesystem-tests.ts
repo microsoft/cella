@@ -9,11 +9,10 @@ import { SuiteLocal } from './SuiteLocal';
 
 
 describe('HttpFileSystemTests', () => {
-
   const local = new SuiteLocal();
-  const fs = new HttpFileSystem(local.session);
 
-  after(async () => local.after());
+  after(local.after.bind(local));
+  const fs = new HttpFileSystem(local.session);
 
   it('stat a file', async () => {
 

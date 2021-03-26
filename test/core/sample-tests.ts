@@ -13,7 +13,6 @@ describe('SomeTests', () => {
   });
 });
 
-
 // sample test that uses describe/it
 describe('sample test', () => {
   it('does not make mistakes', () => {

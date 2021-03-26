@@ -11,7 +11,7 @@ describe('Acquire', () => {
   const local = new SuiteLocal();
   const fs = local.fs;
 
-  after(async () => local.after());
+  after(local.after.bind(local));
 
   it('try some downloads', async () => {
 
