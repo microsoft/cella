@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ZipUnpacker } from '@microsoft/cella.core';
-import { strict } from 'assert';
+import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
 /** Checks that progress delivers 0, 100, and constantly increasing percentages. */
@@ -135,14 +135,6 @@ describe('ZipUnpacker', () => {
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/wrong-entry-sizes/wrong-entry-sizes.zip
     const zipUri = local.rootFolderUri.join('resources', 'wrong-entry-sizes.zip');
     const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
-    let pass = true;
-    try {
-      // can't use strict.throws due to the next await:
-      await unpacker.unpack(zipUri, targetUri, {});
-      pass = false;
-    } catch (error)
-    // eslint-disable-next-line no-empty
-    { }
-    strict.ok(pass);
+    await rejects(unpacker.unpack(zipUri, targetUri, {}));
   });
 });
