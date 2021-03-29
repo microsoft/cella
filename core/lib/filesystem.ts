@@ -100,6 +100,8 @@ export abstract class ReadHandle {
     return enhanceReadable(Readable.from(asyncIterableOverHandle(start, end, this), {}));
   }
 
+  abstract size(): Promise<number>;
+
   abstract close(): Promise<void>;
 }
 

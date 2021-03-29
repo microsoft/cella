@@ -8,9 +8,7 @@ import * as assert from 'assert';
 
 const anArray = ['A', 'B', 'C', 'D', 'E'];
 
-describe('LinqTests', () => {
-
-
+describe('Linq', () => {
   it('distinct', async () => {
 
     const items = ['one', 'two', 'two', 'three'];
@@ -34,4 +32,3 @@ describe('LinqTests', () => {
     assert.strictEqual(linq.values(anArray).count(), 5);
   });
 });
-
