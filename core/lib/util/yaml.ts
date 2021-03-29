@@ -24,7 +24,6 @@ export function getOrCreateMap(node: Document.Parsed | YAMLMap, name: string): Y
   return <any>m;
 }
 
-
 export function getStrings(node: Document.Parsed | YAMLMap, name: string): Array<string> {
   const r = node.get(name);
   if (r) {
@@ -60,9 +59,9 @@ export function serialize(value: any) {
   const document = new Document(value);
   visit(document, {
     Seq: (k, n, p) => {
+      // set arrays to [ ... ] instead of one value per line.
       n.flow = true;
     }
   });
   return document.toString();
-  //return stringify(value, <any>{ flow: true });
 }
