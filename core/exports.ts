@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 export * from './lib';
 export * from './lib/acquire';
+export * from './lib/archive';
 export * from './lib/channels';
 export * from './lib/events';
 export * from './lib/filesystem';
@@ -18,6 +19,7 @@ export * from './lib/metadata-format';
 export * from './lib/session';
 export * from './lib/unified-filesystem';
 export * from './lib/uri';
+export * from './lib/util/percentage-scaler';
 export * from './lib/util/yaml';
 export * from './lib/version';
 

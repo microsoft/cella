@@ -5,18 +5,16 @@
 
 import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { join } from 'path';
-import { rootFolder, SuiteLocal } from './SuiteLocal';
+import { SuiteLocal } from './SuiteLocal';
 
 describe('LocalFileSystemTests', () => {
   const local = new SuiteLocal();
   const fs = local.fs;
 
-  after(async () => local.after());
-
+  after(local.after.bind(local));
   it('create/delete folder', async () => {
 
-    const tmp = local.tempFolderUrl;
+    const tmp = local.tempFolderUri;
 
     // create a path to a folder
     const someFolder = tmp.join('someFolder');
@@ -36,7 +34,7 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('create/read file', async () => {
-    const tmp = local.tempFolderUrl;
+    const tmp = local.tempFolderUri;
 
     const file = tmp.join('hello.txt');
     const expectedText = 'hello world';
@@ -56,7 +54,7 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('readDirectory', async () => {
-    const tmp = local.tempFolderUrl;
+    const tmp = local.tempFolderUri;
     const thisFolder = fs.file(__dirname);
 
     // look in the current folder
@@ -71,7 +69,7 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('read/write stream', async () => {
-    const tmp = local.tempFolderUrl;
+    const tmp = local.tempFolderUri;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output.txt');
@@ -94,8 +92,8 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('calculate hashes', async () => {
-    const tmp = local.tempFolderUrl;
-    const path = fs.file(join(rootFolder(), 'resources', 'small-file.txt'));
+    const tmp = local.tempFolderUri;
+    const path = local.rootFolderUri.join('resources', 'small-file.txt');
 
     strict.equal(await hash(fs.readStream(path)), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'hash should match');
     strict.equal(await hash(fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'hash should match');
@@ -105,7 +103,7 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('reads blocks via open', async () => {
-    const file = fs.file(join(rootFolder(), 'resources', 'small-file.txt'));
+    const file = local.rootFolderUri.join('resources', 'small-file.txt');
     const handle = await file.openFile();
     let bytesRead = 0;
     for await (const chunk of handle.readStream(0, 3)) {
@@ -137,7 +135,7 @@ describe('LocalFileSystemTests', () => {
 
   });
   it('reads blocks via open in a large file', async () => {
-    const file = fs.file(join(rootFolder(), 'resources', 'large-file.txt'));
+    const file = local.rootFolderUri.join('resources', 'large-file.txt');
     const handle = await file.openFile();
     let bytesRead = 0;
     for await (const chunk of handle.readStream()) {
@@ -155,7 +153,7 @@ describe('LocalFileSystemTests', () => {
   });
 
   it('read/write stream with pipe ', async () => {
-    const tmp = local.tempFolderUrl;
+    const tmp = local.tempFolderUri;
 
     const thisFile = fs.file(__filename);
     const outputFile = tmp.join('output2.txt');

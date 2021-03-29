@@ -9,9 +9,9 @@ import { SuiteLocal } from './SuiteLocal';
 
 describe('StreamTests', () => {
   const local = new SuiteLocal();
+  const fs = local.fs;
 
-  after(async () => local.after());
-
+  after(local.after.bind(local));
   it('event emitter works', async () => {
 
     const expected = ['a', 'b', 'c', 'd'];
@@ -30,7 +30,5 @@ describe('StreamTests', () => {
     }
 
     strictEqual(expected.length, i, 'should have got the right number of messages');
-
-
   });
 });

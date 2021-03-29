@@ -13,7 +13,6 @@ import { rootFolder } from './SuiteLocal';
 // forces the global function for sequence equal to be added to strict before this exectues:
 s;
 
-
 // sample test using decorators.
 describe('Amf', () => {
   it('readProfile', async () => {

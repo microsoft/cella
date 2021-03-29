@@ -7,6 +7,7 @@ import { EventEmitter } from 'ee-ts';
 import { Readable, Writable } from 'stream';
 import { Stopwatch } from './channels';
 import { intersect } from './intersect';
+import { PercentageScaler } from './util/percentage-scaler';
 
 /** a Stream or a Promise to a Stream (and explicitly calling it an async iterable so it doesn't have to be recast later) */
 export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<AsyncIterable<Buffer> & EnhancedReadable>;
@@ -17,13 +18,20 @@ export type ReadableStream = AsyncIterable<Buffer> & EnhancedReadable | Promise<
 export class ReadableEvents extends EventEmitter<Progress> {
   progress = 0;
   /** @internal */
-  stopwatch = new Stopwatch();
+  public readonly stopwatch = new Stopwatch();
   /** @internal */
-  constructor(private readable: Readable, public currentPosition: number, public expectedLength: number,) {
+  private readonly scaler: PercentageScaler;
+  /** @internal */
+  constructor(private readable: Readable, public currentPosition: number, public expectedLength: number, public enforceExpectedLength: boolean = false) {
     super();
+    this.scaler = new PercentageScaler(currentPosition, currentPosition + expectedLength);
     readable.on('data', (chunk) => {
       this.currentPosition += chunk.length;
-      this.progress = Math.round(this.currentPosition * 1000 / expectedLength) / 10;
+      if (this.enforceExpectedLength && this.currentPosition > this.expectedLength) {
+        this.readable.emit('error', new Error('bad length'));
+      }
+
+      this.progress = this.scaler.scalePosition(this.currentPosition);
       this.emit('progress', this.progress, this.currentPosition, this.stopwatch.total);
     });
   }
@@ -144,7 +152,7 @@ export interface EnhancedReadable extends Readable {
   on(event: 'pause', listener: () => void): this;
   on(event: 'readable', listener: () => void): this;
   on(event: 'resume', listener: () => void): this;
-  on(event: 'progress', callback: (progress: number, curentPosition: number, msec: number) => void): this;
+  on(event: 'progress', callback: (progress: number, currentPosition: number, msec: number) => void): this;
   on(event: string | symbol, listener: (...args: Array<any>) => void): this;
 }
 
@@ -154,11 +162,11 @@ export interface EnhancedWritable extends Writable {
 }
 
 /** @internal */
-export function enhanceReadable<T extends Readable>(readableStream: T, currentPosition = 0, expectedLength = 0): AsyncIterable<Buffer> & EnhancedReadable & T {
+export function enhanceReadable<T extends Readable>(readableStream: T, currentPosition = 0, expectedLength = 0, enforceExpectedLength = false): AsyncIterable<Buffer> & EnhancedReadable & T {
   if ((<any>readableStream).is) {
     return <AsyncIterable<Buffer> & EnhancedReadable & T>readableStream;
   }
-  const is = new ReadableEvents(readableStream, currentPosition, expectedLength);
+  const is = new ReadableEvents(readableStream, currentPosition, expectedLength, enforceExpectedLength);
   return <AsyncIterable<Buffer> & EnhancedReadable & T>intersect({
     on: (event: string | symbol, listener: (...args: Array<any>) => void) => {
       switch (event) {
@@ -221,4 +229,3 @@ export function enhanceWritable<T extends Writable>(writableStream: Writable) {
 export interface Progress {
   progress(percent: number, bytes: number, msec: number): void;
 }
-

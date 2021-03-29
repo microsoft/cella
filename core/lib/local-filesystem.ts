@@ -145,6 +145,11 @@ class LocalReadHandle extends ReadHandle {
     return this.handle.read(buffer, offset, length, position);
   }
 
+  async size(): Promise<number> {
+    const stat = await this.handle.stat();
+    return stat.size;
+  }
+
   async close() {
     return this.handle.close();
   }
