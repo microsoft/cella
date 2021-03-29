@@ -10,7 +10,7 @@ import { SuiteLocal } from './SuiteLocal';
 /** Checks that progress delivers 0, 100, and constantly increasing percentages. */
 class PercentageChecker {
   seenZero = false;
-  lastSeen : number | undefined = undefined;
+  lastSeen: number | undefined = undefined;
   recordPercent(percentage: number) {
     if (percentage === 0) {
       this.seenZero = true;
@@ -39,7 +39,7 @@ class ProgressCheckerEntry {
   seenUnpacked = false;
   filePercentage = new PercentageChecker();
 
-  constructor(public entryPath: string, public entryIdentity: any) {}
+  constructor(public entryPath: string, public entryIdentity: any) { }
 
   onProgress(entry: any, filePercentage: number) {
     strict.equal(this.entryIdentity, entry);
@@ -88,7 +88,7 @@ class ProgressChecker {
     this.archivePercentage.reset();
   }
 
-  test(entryCount : number) {
+  test(entryCount: number) {
     strict.equal(entryCount, this.seenEntries.size);
     this.seenEntries.forEach((value) => value.test());
     this.archivePercentage.test();
@@ -104,8 +104,8 @@ describe('ZipUnpacker', () => {
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
-  before(() => progressChecker.reset());
   it('UnpacksLegitimateSmallZips', async () => {
+    progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
     const targetUri = local.tempFolderUri.join('example');
     await unpacker.unpack(zipUri, targetUri, {});
@@ -121,6 +121,7 @@ describe('ZipUnpacker', () => {
   it('UnpacksZipsWithCompression', async () => {
     // big-compression.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/big-compression.zip
+    progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'big-compression.zip');
     const targetUri = local.tempFolderUri.join('big-compression');
     await unpacker.unpack(zipUri, targetUri, {});
@@ -133,6 +134,7 @@ describe('ZipUnpacker', () => {
   it('FailsToUnpackMalformed', async () => {
     // wrong-entry-sizes.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/wrong-entry-sizes/wrong-entry-sizes.zip
+    progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'wrong-entry-sizes.zip');
     const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
     await rejects(unpacker.unpack(zipUri, targetUri, {}));
