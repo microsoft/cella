@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail } from 'assert';
-import { YAMLMap } from 'yaml/types';
+import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';

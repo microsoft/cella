@@ -3,34 +3,33 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Document, parseDocument } from 'yaml';
-import { Collection, Node, Pair, Scalar, YAMLMap, YAMLSeq } from 'yaml/types';
-import { Type } from 'yaml/util';
+
+import { Document, Node, Pair, parseDocument, Scalar, visit, YAMLMap, YAMLSeq } from 'yaml';
 import { StringOrStrings } from '../metadata-format';
 
 
 /** @internal */
-export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false, keepCstNodes: true }).createNode(v, { wrapScalars: b });
+export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false }).createNode(v, {});
 
 /** @internal */
-export function getOrCreateMap(node: Document.Parsed | Collection, name: string): YAMLMap {
+export function getOrCreateMap(node: Document.Parsed | YAMLMap, name: string): YAMLMap {
   let m = node.get(name);
   if (m) {
-    return m;
+    return <any>m;
   }
   // these should be picked up in validate()
   // strict.ok(m instanceof YAMLMap, 'node is not a map');
 
   node.set(name, m = new YAMLMap());
-  return m;
+  return <any>m;
 }
 
 
-export function getStrings(node: Document.Parsed | Collection, name: string): Array<string> {
+export function getStrings(node: Document.Parsed | YAMLMap, name: string): Array<string> {
   const r = node.get(name);
   if (r) {
     if (r instanceof YAMLSeq) {
-      return r.items.map(each => each.value);
+      return r.items.map((each: any) => each.value);
     }
     if (typeof r === 'string') {
       return [r];
@@ -39,7 +38,7 @@ export function getStrings(node: Document.Parsed | Collection, name: string): Ar
   return [];
 }
 
-export function setStrings(node: Document.Parsed | Collection, name: string, value: StringOrStrings) {
+export function setStrings(node: Document.Parsed | YAMLMap, name: string, value: StringOrStrings) {
   if (Array.isArray(value)) {
     switch (value.length) {
       case 0:
@@ -53,23 +52,17 @@ export function setStrings(node: Document.Parsed | Collection, name: string, val
 }
 
 
-/** @internal */
-export function isMap(item: Node): item is YAMLMap {
-  return item && item.type === Type.MAP;
+export function getPair(from: YAMLMap, name: string): Pair<Node, string> | undefined {
+  return <any>from.items.find((each: any) => (<Scalar>each.key).value === name);
 }
 
-/** @internal */
-export function isSequence(item: Node): item is YAMLSeq {
-  return item && item.type === Type.SEQ;
-}
-
-export function getPair(from: Collection, name: string): Pair | undefined {
-  return from.items.find(each => (<Scalar>each.key).value === name);
-}
-
-export function column(node: Node, addOffset?: number | { column: number }) {
-  return (node.cstNode?.rangeAsLinePos?.start.col || 0) + (Number(addOffset) || Number((<any>addOffset)?.column) || 0);
-}
-export function line(node: Node, addOffset?: number | { line: number }) {
-  return (node.cstNode?.rangeAsLinePos?.start.line || 0) + (Number(addOffset) || Number((<any>addOffset)?.line) || 0);
+export function serialize(value: any) {
+  const document = new Document(value);
+  visit(document, {
+    Seq: (k, n, p) => {
+      n.flow = true;
+    }
+  });
+  return document.toString();
+  //return stringify(value, <any>{ flow: true });
 }

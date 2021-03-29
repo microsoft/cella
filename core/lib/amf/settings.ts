@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { YAMLMap } from 'yaml/types';
+import { YAMLMap } from 'yaml';
 import { DictionaryOf, Paths, Settings, StringOrStrings, ValidationError } from '../metadata-format';
 import { getOrCreateMap, getStrings, setStrings } from '../util/yaml';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
@@ -21,7 +21,7 @@ export class SettingsNode extends DictionaryImpl<any> implements Settings {
 
   #tools!: DictionaryOf<string>;
   get tools(): DictionaryOf<string> {
-    return this.#tools || (this.#tools = proxyDictionary(getOrCreateMap(this.node, 'tools'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
+    return this.#tools || (this.#tools = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'tools'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
   #variables!: DictionaryOf<StringOrStrings>;
@@ -31,7 +31,7 @@ export class SettingsNode extends DictionaryImpl<any> implements Settings {
 
   #defines!: DictionaryOf<string>;
   get defines(): DictionaryOf<string> {
-    return this.#defines || (this.#defines = proxyDictionary(getOrCreateMap(this.node, 'defines'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
+    return this.#defines || (this.#defines = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'defines'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
   *validate(): Iterable<ValidationError> {

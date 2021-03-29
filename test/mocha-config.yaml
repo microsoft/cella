@@ -1,6 +1,6 @@
 color: true
 require: 
-  - 'source-map-support/register'
+ - 'source-map-support/register'
 monkeyPatch: true
 spec: ./**/*.js
 ignore: 

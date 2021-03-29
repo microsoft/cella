@@ -2,14 +2,6 @@
  *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-export interface Index<T> {
-  [key: number]: T;
-}
 
 export interface Dictionary<T> {
   [key: string]: T;

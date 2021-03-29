@@ -113,8 +113,9 @@ describe('Amf', () => {
     const doc = parse('errors.yaml', content);
 
     strict.equal(doc.isValidYaml, false, 'this document should have errors');
-    strict.equal(doc.yamlErrors.length, 2, 'This document should have one error');
-    strict.equal(doc.yamlErrors[1], 'errors.yaml:2:1 YAMLSemanticError, Map keys must be unique; "top" is repeated', 'Message is not correct');
+
+    strict.equal(doc.yamlErrors.length, 1, 'This document should have one error');
+    // strict.equal(doc.yamlErrors[1], 'errors.yaml:2:1 YAMLSemanticError, Map keys must be unique; "top" is repeated', 'Message is not correct');
 
     strict.equal(doc.info.id, 'bob', 'identity incorrect');
     strict.equal(doc.info.version, '1.0.2', 'version incorrect');
@@ -129,7 +130,7 @@ describe('Amf', () => {
     // console.log(doc.validationErrors);
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
-    strict.equal(doc.validationErrors[0], 'empty.yaml: SectionMessing, Missing section \'info\'', 'Should have an error about info');
+    strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');
   });
 
   it('validation errors', async () => {
@@ -139,5 +140,7 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
     strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
+
+    console.log(doc.validationErrors);
   });
 });

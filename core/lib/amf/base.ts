@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { YAMLMap } from 'yaml/types';
+import { YAMLMap } from 'yaml';
 import { StringOrStrings, ValidationError } from '../metadata-format';
 import { Strings } from '../util/strings';
-import { column, createNode, getStrings, line } from '../util/yaml';
+import { createNode, getStrings } from '../util/yaml';
 
 /** @internal */
 export class NodeBase {
@@ -103,13 +103,4 @@ export class NodeBase {
   *validate(): Iterable<ValidationError> {
     //
   }
-
-  protected get line(): number {
-    return line(this.node);
-  }
-  protected get column(): number {
-    return column(this.node);
-  }
-
-
 }
