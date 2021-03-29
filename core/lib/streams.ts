@@ -20,20 +20,19 @@ export class ReadableEvents extends EventEmitter<Progress> {
   /** @internal */
   public readonly stopwatch = new Stopwatch();
   /** @internal */
-  private readonly scaler : PercentageScaler;
+  private readonly scaler: PercentageScaler;
   /** @internal */
   constructor(private readable: Readable, public currentPosition: number, public expectedLength: number, public enforceExpectedLength: boolean = false) {
     super();
     this.scaler = new PercentageScaler(currentPosition, currentPosition + expectedLength);
     readable.on('data', (chunk) => {
-      const newPosition = this.currentPosition + chunk.length;
-      if (this.enforceExpectedLength && newPosition >this.expectedLength) {
+      this.currentPosition += chunk.length;
+      if (this.enforceExpectedLength && this.currentPosition > this.expectedLength) {
         this.readable.emit('error', new Error('bad length'));
       }
 
-      this.currentPosition = newPosition;
-      this.progress = this.scaler.scalePosition(newPosition);
-      this.emit('progress', this.progress, newPosition, this.stopwatch.total);
+      this.progress = this.scaler.scalePosition(this.currentPosition);
+      this.emit('progress', this.progress, this.currentPosition, this.stopwatch.total);
     });
   }
 
