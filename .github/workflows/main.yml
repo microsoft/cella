@@ -35,13 +35,12 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - name: use Rush to update/rebuild/test/lint 
+        shell: bash {0}
         run: |
             npx @microsoft/rush update 
             rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
 
-            echo before
-            npx @microsoft/rush rebuild ; echo done running rebuild 
-            
+            npx @microsoft/rush rebuild 
 
             npx @microsoft/rush test 
             rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
