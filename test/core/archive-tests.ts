@@ -142,6 +142,28 @@ describe('ZipUnpacker', () => {
     progressChecker.test(11);
   });
 
+  it('Truncates', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-truncates');
+    await unpacker.unpack(zipUri, targetUri, {});
+    progressChecker.reset();
+    await unpacker.unpack(zipUri, targetUri, {}); // intentionally doubled
+    strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+      'This content is only not in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
   it('UnpacksZipsWithCompression', async () => {
     // big-compression.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/big-compression.zip
