@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
+import { sed } from 'sed-lite';
 import { Readable } from 'stream';
 import { Entry, fromRandomAccessReader, RandomAccessReader, ZipFile } from 'yauzl';
 import { ReadHandle } from './filesystem';
@@ -38,7 +39,7 @@ export interface OutputOptions {
   /**
    * A regular expression to transform filenames during unpack. If the resulting file name is empty, it is not emitted.
    */
-  transform?: string;
+  transform?: string | string[];
 }
 
 /** Unpacker base class definition */
@@ -58,7 +59,7 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
 
   abstract unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void>;
 
-  private static isSlash(c : string) : boolean {
+  private static isSlash(c: string): boolean {
     return c == '/' || c == '\\';
   }
 
@@ -67,7 +68,7 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
  * If prefixCount is greater than the number of path elements in the path, undefined is returned.
  * @param prefixCount
  */
-  public static stripPath(path: string, prefixCount: number) : string | undefined {
+  public static stripPath(path: string, prefixCount: number): string | undefined {
     if (prefixCount == 0) {
       return path;
     }
@@ -75,7 +76,7 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
     let first = 0;
     const last = path.length;
     // establish invariant that current character isn't a slash
-    for (;;) {
+    for (; ;) {
       if (first == last) {
         return undefined;
       }
@@ -90,8 +91,8 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
     const firstNonSlash = first;
     // for each prefix to remove
     for (; prefixCount != 0; --prefixCount) {
-    // skip over a block of not slashes
-      for (;;) {
+      // skip over a block of not slashes
+      for (; ;) {
         ++first;
         if (first == last) {
           return undefined;
@@ -102,7 +103,7 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
       }
 
       // then skip over a block of slashes
-      for (;;) {
+      for (; ;) {
         ++first;
         if (first == last) {
           return undefined;
@@ -118,13 +119,23 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
     return leadingSlashes + trailingKept;
   }
 
+  private static arrayIfy(value: string | string[] | undefined): string[] {
+    if (Array.isArray(value)) {
+      return value;
+    } else if (value) {
+      return [value];
+    } else {
+      return [];
+    }
+  }
+
   /**
  * Apply OutputOptions to a path before extraction.
  * @param entry The initial path to a file to unpack.
  * @param options Options to apply to that file name.
  * @returns If the file is to be emitted, the path to use; otherwise, undefined.
  */
-  protected static implementOutputOptions(path: string, options: OutputOptions) : string | undefined {
+  protected static implementOutputOptions(path: string, options: OutputOptions): string | undefined {
     if (options.strip) {
       const maybeStripped = Unpacker.stripPath(path, options.strip);
       if (maybeStripped) {
@@ -132,6 +143,15 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
       } else {
         return undefined;
       }
+    }
+
+    for (const transformExpr of Unpacker.arrayIfy(options.transform)) {
+      if (!path) {
+        break;
+      }
+
+      const sedTransformExpr = sed(transformExpr);
+      path = sedTransformExpr(path);
     }
 
     return path;
@@ -170,8 +190,8 @@ class YauzlRandomAccessAdapter extends RandomAccessReader {
 }
 
 class UnpackEntryCommon {
-  readonly filePercentageScaler : PercentageScaler;
-  constructor(public zipFile: ZipFile, public archiveUri: Uri, public outputUri: Uri, public options : OutputOptions) {
+  readonly filePercentageScaler: PercentageScaler;
+  constructor(public zipFile: ZipFile, public archiveUri: Uri, public outputUri: Uri, public options: OutputOptions) {
     this.filePercentageScaler = new PercentageScaler(0, zipFile.entryCount);
   }
 }
@@ -206,9 +226,9 @@ export class ZipUnpacker extends Unpacker {
     });
   }
 
-  async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon) : Promise<void> {
+  async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon): Promise<void> {
     const path = entry.fileName;
-    let extractPath : string | undefined = path;
+    let extractPath: string | undefined = path;
     if (extractPath.length === 0 || extractPath[extractPath.length - 1] === '/') {
       extractPath = undefined;
     }
@@ -217,7 +237,7 @@ export class ZipUnpacker extends Unpacker {
       extractPath = Unpacker.implementOutputOptions(extractPath, common.options);
     }
 
-    let destination : Uri | undefined = undefined;
+    let destination: Uri | undefined = undefined;
     if (extractPath) {
       destination = common.outputUri.join(extractPath);
     }
@@ -226,7 +246,7 @@ export class ZipUnpacker extends Unpacker {
       archiveUri: common.archiveUri,
       destination: destination,
       path: path,
-      extractPath : extractPath
+      extractPath: extractPath
     };
 
     this.session.channels.debug(`unpacking ZIP ${common.archiveUri}/${path} => ${destination}`);
