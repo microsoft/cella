@@ -27,6 +27,7 @@ export class ReadableEvents extends EventEmitter<Progress> {
     this.scaler = new PercentageScaler(currentPosition, currentPosition + expectedLength);
     readable.on('data', (chunk) => {
       this.currentPosition += chunk.length;
+      // eslint-disable-next-line keyword-spacing
       if (this.enforceExpectedLength && this.currentPosition > this.expectedLength) {
         this.readable.emit('error', new Error('bad length'));
       }
