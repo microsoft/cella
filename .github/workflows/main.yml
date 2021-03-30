@@ -39,8 +39,8 @@ jobs:
             npx @microsoft/rush update 
             rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
 
-            npx @microsoft/rush rebuild 
-            echo done running rebuild
+            echo before
+            npx @microsoft/rush rebuild ; echo done running rebuild 
             
 
             npx @microsoft/rush test 
