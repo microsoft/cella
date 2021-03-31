@@ -150,11 +150,12 @@ class YauzlRandomAccessAdapter extends RandomAccessReader {
   }
 }
 
-class UnpackEntryCommon {
-  readonly filePercentageScaler: PercentageScaler;
-  constructor(public zipFile: ZipFile, public archiveUri: Uri, public outputUri: Uri, public options: OutputOptions) {
-    this.filePercentageScaler = new PercentageScaler(0, zipFile.entryCount);
-  }
+interface UnpackEntryCommon {
+  filePercentageScaler: PercentageScaler;
+  zipFile: ZipFile;
+  archiveUri: Uri;
+  outputUri: Uri;
+  options: OutputOptions;
 }
 
 export class ZipUnpacker extends Unpacker {
@@ -239,7 +240,7 @@ export class ZipUnpacker extends Unpacker {
     const openedFile = await archiveUri.openFile();
     const adapter = new YauzlRandomAccessAdapter(openedFile);
     const zipFile = await ZipUnpacker.openFromRandomAccessReader(adapter, await openedFile.size());
-    const common = new UnpackEntryCommon(zipFile, archiveUri, outputUri, options);
+    const common = {zipFile, archiveUri, outputUri, options, filePercentageScaler: new PercentageScaler(0, zipFile.entryCount)};
     return new Promise<void>((resolve, reject) => {
       zipFile.on('entry', (entry: Entry) =>
         this.maybeUnpackEntry(entry, common)
