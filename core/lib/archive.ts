@@ -189,10 +189,7 @@ export class ZipUnpacker extends Unpacker {
 
   async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon): Promise<void> {
     const path = entry.fileName;
-    let extractPath: string | undefined = path;
-    if (extractPath.length === 0 || extractPath[extractPath.length - 1] === '/') {
-      extractPath = undefined;
-    }
+    let extractPath = !path || path.endsWith('/') ? undefined : path;
 
     if (extractPath) {
       extractPath = Unpacker.implementOutputOptions(extractPath, common.options);
