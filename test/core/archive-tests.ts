@@ -3,9 +3,29 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ZipUnpacker } from '@microsoft/cella.core';
+import { Unpacker, ZipUnpacker } from '@microsoft/cella.core';
 import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
+
+describe('Unpacker', () => {
+  it('StripsPaths', () => {
+    ['', '/'].forEach((prefix) => {
+      ['', '/'].forEach((suffix) => {
+        const d = prefix + 'delta' + suffix;
+        const cd = prefix + 'charlie/delta' + suffix;
+        const bcd = prefix + 'beta/charlie/delta' + suffix;
+        const abcd = prefix + 'alpha/beta/charlie/delta' + suffix;
+        strict.equal(Unpacker.stripPath(abcd, 0), abcd);
+        strict.equal(Unpacker.stripPath(abcd, 1), bcd);
+        strict.equal(Unpacker.stripPath(abcd, 2), cd);
+        strict.equal(Unpacker.stripPath(abcd, 3), d);
+        strict.equal(Unpacker.stripPath(abcd, 4), undefined);
+
+        strict.equal(Unpacker.stripPath(prefix + 'some///slashes\\\\\\\\here' + suffix, 0), prefix + 'some/slashes/here' + suffix);
+      });
+    });
+  });
+});
 
 /** Checks that progress delivers 0, 100, and constantly increasing percentages. */
 class PercentageChecker {
@@ -112,10 +132,38 @@ describe('ZipUnpacker', () => {
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+      'This content is only not in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
     strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
-    progressChecker.test(7);
+    strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('Truncates', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-truncates');
+    await unpacker.unpack(zipUri, targetUri, {});
+    progressChecker.reset();
+    await unpacker.unpack(zipUri, targetUri, {}); // intentionally doubled
+    strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+      'This content is only not in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
   });
 
   it('UnpacksZipsWithCompression', async () => {
@@ -138,5 +186,119 @@ describe('ZipUnpacker', () => {
     const zipUri = local.rootFolderUri.join('resources', 'wrong-entry-sizes.zip');
     const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
     await rejects(unpacker.unpack(zipUri, targetUri, {}));
+  });
+
+  it('Strips1', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-strip-1');
+    await unpacker.unpack(zipUri, targetUri, { strip: 1 });
+    strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('Strips2', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-strip-2');
+    await unpacker.unpack(zipUri, targetUri, { strip: 2 });
+    strict.equal((await targetUri.readFile('only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('StripsAll', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-strip-all');
+    await unpacker.unpack(zipUri, targetUri, { strip: 3 });
+    strict.ok(!await targetUri.exists());
+    progressChecker.test(11);
+  });
+
+  it('TransformsOne', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-transform-one');
+    await unpacker.unpack(zipUri, targetUri, { transform: ['s/a\\.txt/ehh.txt/'] });
+    strict.equal((await targetUri.readFile('ehh.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+      'This content is only not in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/ehh.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('TransformsArray', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-transform-array');
+    await unpacker.unpack(zipUri, targetUri, {
+      transform: [
+        's/a\\.txt/ehh.txt/',
+        's/c\\.txt/see.txt/',
+        's/see\\.txt/seeee.txt/',
+        's/directory//g',
+      ]
+    });
+    strict.equal((await targetUri.readFile('ehh.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('seeee.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-.txt')).toString(),
+      'This content is only not in the directory.\n');
+    strict.equal((await targetUri.readFile('a-/ehh.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('a-/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-/seeee.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-/only-.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-/inner/only--.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('StripsThenTransforms', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-strip-then-transform');
+    await unpacker.unpack(zipUri, targetUri, { strip: 1, transform: ['s/b/beeee/'] });
+    strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    strict.equal((await targetUri.readFile('beeee.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
+  });
+
+  it('AllowsTransformToNotExtract', async () => {
+    progressChecker.reset();
+    const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
+    const targetUri = local.tempFolderUri.join('example-transform-no-extract');
+    await unpacker.unpack(zipUri, targetUri, { transform: ['s/.+a.txt$//'] });
+    strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+      'This content is only not in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/c.txt')).toString(), 'The contents of c.txt.\n');
+    strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+      'This content is only in the directory.\n');
+    strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+      'This content is only doubly nested.\n');
+    progressChecker.test(11);
   });
 });

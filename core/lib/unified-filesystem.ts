@@ -96,8 +96,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).readStream(uri, options);
   }
 
-  writeStream(uri: Uri): Promise<EnhancedWritable> {
-    return this.filesystem(uri).writeStream(uri);
+  writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
+    return this.filesystem(uri).writeStream(uri, options);
   }
 
   delete(uri: Uri, options?: { recursive?: boolean | undefined; useTrash?: boolean | undefined; }): Promise<void> {
