@@ -127,12 +127,7 @@ export class LocalFileSystem extends FileSystem {
 
   async writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
     this.write(uri);
-    let flags = 'w';
-    if (options && options.append) {
-      flags = 'a';
-    }
-
-    return enhanceWritable(createWriteStream(uri.fsPath, { flags: flags, autoClose: true }));
+    return enhanceWritable(createWriteStream(uri.fsPath, { flags: options?.append ? 'a' : 'w', autoClose: true }));
   }
 
   async openFile(uri: Uri): Promise<ReadHandle> {
