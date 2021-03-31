@@ -59,64 +59,33 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
 
   abstract unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void>;
 
-  private static isSlash(c: string): boolean {
-    return c == '/' || c == '\\';
-  }
-
   /**
- * Returns a new path string such that the path has prefixCount path elements removed.
- * If prefixCount is greater than the number of path elements in the path, undefined is returned.
- * @param prefixCount
+ * Returns a new path string such that the path has prefixCount path elements removed, and directory
+ * separators normalized to a single forward slash.
+ * If prefixCount is greater than or equal to the number of path elements in the path, undefined is returned.
  */
   public static stripPath(path: string, prefixCount: number): string | undefined {
-    if (prefixCount == 0) {
-      return path;
+    const elements = path.split(/[\\/]+/);
+    const hasLeadingSlash = elements.length !== 0 && elements[0].length === 0;
+    const hasTrailingSlash = elements.length !== 0 && elements[elements.length - 1].length === 0;
+    let countForUndefined = prefixCount;
+    if (hasLeadingSlash) {
+      ++countForUndefined;
     }
 
-    let first = 0;
-    const last = path.length;
-    // establish invariant that current character isn't a slash
-    for (; ;) {
-      if (first == last) {
-        return undefined;
-      }
-
-      if (!this.isSlash(path[first])) {
-        break;
-      }
-
-      ++first;
+    if (hasTrailingSlash) {
+      ++countForUndefined;
     }
 
-    const firstNonSlash = first;
-    // for each prefix to remove
-    for (; prefixCount != 0; --prefixCount) {
-      // skip over a block of not slashes
-      for (; ;) {
-        ++first;
-        if (first == last) {
-          return undefined;
-        }
-        if (this.isSlash(path[first])) {
-          break;
-        }
-      }
-
-      // then skip over a block of slashes
-      for (; ;) {
-        ++first;
-        if (first == last) {
-          return undefined;
-        }
-        if (!this.isSlash(path[first])) {
-          break;
-        }
-      }
+    if (elements.length <= countForUndefined) {
+      return undefined;
     }
 
-    const leadingSlashes = path.slice(0, firstNonSlash);
-    const trailingKept = path.slice(first, last);
-    return leadingSlashes + trailingKept;
+    if (hasLeadingSlash) {
+      return '/' + elements.splice(prefixCount + 1).join('/');
+    }
+
+    return elements.splice(prefixCount).join('/');
   }
 
   private static arrayIfy(value: string | string[] | undefined): string[] {

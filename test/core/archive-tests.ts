@@ -20,6 +20,8 @@ describe('Unpacker', () => {
         strict.equal(Unpacker.stripPath(abcd, 2), cd);
         strict.equal(Unpacker.stripPath(abcd, 3), d);
         strict.equal(Unpacker.stripPath(abcd, 4), undefined);
+
+        strict.equal(Unpacker.stripPath(prefix + 'some///slashes\\\\\\\\here' + suffix, 0), prefix + 'some/slashes/here' + suffix);
       });
     });
   });
