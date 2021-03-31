@@ -39,7 +39,7 @@ export interface OutputOptions {
   /**
    * A regular expression to transform filenames during unpack. If the resulting file name is empty, it is not emitted.
    */
-  transform?: string | string[];
+  transform?: Array<string>;
 }
 
 /** Unpacker base class definition */
@@ -88,16 +88,6 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
     return elements.splice(prefixCount).join('/');
   }
 
-  private static arrayIfy(value: string | string[] | undefined): string[] {
-    if (Array.isArray(value)) {
-      return value;
-    } else if (value) {
-      return [value];
-    } else {
-      return [];
-    }
-  }
-
   /**
  * Apply OutputOptions to a path before extraction.
  * @param entry The initial path to a file to unpack.
@@ -114,13 +104,15 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
       }
     }
 
-    for (const transformExpr of Unpacker.arrayIfy(options.transform)) {
-      if (!path) {
-        break;
-      }
+    if (options.transform) {
+      for (const transformExpr of options.transform) {
+        if (!path) {
+          break;
+        }
 
-      const sedTransformExpr = sed(transformExpr);
-      path = sedTransformExpr(path);
+        const sedTransformExpr = sed(transformExpr);
+        path = sedTransformExpr(path);
+      }
     }
 
     return path;

@@ -226,7 +226,7 @@ describe('ZipUnpacker', () => {
     progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
     const targetUri = local.tempFolderUri.join('example-transform-one');
-    await unpacker.unpack(zipUri, targetUri, { transform: 's/a\\.txt/ehh.txt/' });
+    await unpacker.unpack(zipUri, targetUri, { transform: ['s/a\\.txt/ehh.txt/'] });
     strict.equal((await targetUri.readFile('ehh.txt')).toString(), 'The contents of a.txt.\n');
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
@@ -273,7 +273,7 @@ describe('ZipUnpacker', () => {
     progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
     const targetUri = local.tempFolderUri.join('example-strip-then-transform');
-    await unpacker.unpack(zipUri, targetUri, { strip: 1, transform: 's/b/beeee/' });
+    await unpacker.unpack(zipUri, targetUri, { strip: 1, transform: ['s/b/beeee/'] });
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
     strict.equal((await targetUri.readFile('beeee.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
@@ -288,7 +288,7 @@ describe('ZipUnpacker', () => {
     progressChecker.reset();
     const zipUri = local.rootFolderUri.join('resources', 'example-zip.zip');
     const targetUri = local.tempFolderUri.join('example-transform-no-extract');
-    await unpacker.unpack(zipUri, targetUri, { transform: 's/.+a.txt$//' });
+    await unpacker.unpack(zipUri, targetUri, { transform: ['s/.+a.txt$//'] });
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
     strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
