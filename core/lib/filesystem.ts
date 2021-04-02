@@ -5,9 +5,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { Session } from './session';
-import { EnhancedReadable, EnhancedWritable, enhanceReadable } from './streams';
 import { Uri } from './uri';
 
 const size64K = 1 << 16;
@@ -70,6 +69,11 @@ export enum FileType {
   SymbolicLink = 64
 }
 
+export interface WriteStreamOptions {
+  append?: boolean;
+  mode?: number;
+  mtime?: Date;
+}
 
 /**
  * A random-access reading interface to access a file in a FileSystem.
@@ -92,12 +96,12 @@ export abstract class ReadHandle {
   abstract read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number, buffer: TBuffer }>;
 
   /**
-   * Returns an EnhancedReadable stream for consuming an opened ReadHandle
+   * Returns a Readable for consuming an opened ReadHandle
    * @param start the first byte to read of the target
    * @param end the last byte to read of the target (inclusive!)
    */
-  readStream(start = 0, end = Infinity): AsyncIterable<Buffer> & EnhancedReadable {
-    return enhanceReadable(Readable.from(asyncIterableOverHandle(start, end, this), {}));
+  readStream(start = 0, end = Infinity): Readable {
+    return Readable.from(asyncIterableOverHandle(start, end, this), {});
   }
 
   abstract size(): Promise<number>;
@@ -212,7 +216,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return a Readable stream
    */
-  abstract readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable>;
+  abstract readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable>;
 
   /**
    * Write data to a file, replacing its entire contents.
@@ -220,7 +224,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @param content The new content of the file.
    */
-  abstract writeFile(uri: Uri, content: Uint8Array, options?: {}): Promise<void>;
+  abstract writeFile(uri: Uri, content: Uint8Array): Promise<void>;
 
   /**
    * Creates a stream to write a file to the filesystem
@@ -228,7 +232,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the file.
    * @return a Writeable stream
    */
-  abstract writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable>;
+  abstract writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable>;
 
   /**
    * Delete a file.
@@ -298,10 +302,8 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
     return false;
   }
 
-
   constructor(protected session: Session) {
     super();
-
   }
 
   /** EventEmitter for when files are read */

@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
+import { Readable } from 'stream';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
 import { Algorithm, Hash } from './hash';
@@ -11,8 +12,10 @@ import { get, getStream, RemoteFile, resolveRedirect } from './https';
 import { i } from './i18n';
 import { intersect } from './intersect';
 import { Session } from './session';
-import { EnhancedReadable, Progress } from './streams';
+import { Progress } from './streams';
 import { Uri } from './uri';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { pipeline } = require('stream/promises');
 
 const size32K = 1 << 15;
 const size64K = 1 << 16;
@@ -29,7 +32,7 @@ export interface AcquireEvents extends Progress {
 
 /** */
 export function http(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
-  const fwd = new EventForwarder<EnhancedReadable>();
+  const fwd = new EventForwarder<Readable>();
 
   session.channels.debug(`Attempting to download file '${outputFilename}' from [${uris.map(each => each.toString()).join(',')}]`);
 
@@ -66,7 +69,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
       session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
       const onDiskSize = await outputFile.size();
 
-      // first, make sure that there is a remote that is accesible.
+      // first, make sure that there is a remote that is accessible.
       strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
 
       url = await locations.resumableLocation;
@@ -142,13 +145,10 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     // bubble up access to the events to the consumer if they want them
     fwd.register(inputStream);
 
-    const outputStream = await outputFile.appendStream();
+    const outputStream = await outputFile.writeStream({append:true});
 
     // whoooosh. write out the file
-    inputStream.pipe(outputStream);
-
-    // this is when we know we're done.
-    await outputStream.is.done;
+    await pipeline(inputStream, outputStream);
 
     // we've downloaded the file, let's see if it matches the hash we have.
     if (options?.algorithm) {
@@ -165,7 +165,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     return outputFile;
   };
 
-  return intersect(<Emitter<EnhancedReadable>>fwd, fn());
+  return intersect(<Emitter<Readable>>fwd, fn());
 }
 
 export async function resolveNugetUrl(session: Session, pkg: string) {

@@ -4,12 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { dirname, join } from 'path';
+import { Readable, Writable } from 'stream';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
-import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { Algorithm, Hash, hash } from './hash';
-import { EnhancedReadable, EnhancedWritable } from './streams';
 
 /**
  * This class is intended to be a drop-in replacement for the vscode uri
@@ -210,7 +210,7 @@ bad.fragment === '/project1';
     return uri.fileSystem.openFile(uri);
   }
 
-  readStream(start = 0, end = Infinity): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+  readStream(start = 0, end = Infinity): Promise<Readable> {
     return this.fileSystem.readStream(this, { start, end });
   }
 
@@ -229,12 +229,8 @@ bad.fragment === '/project1';
     return this;
   }
 
-  writeStream(): Promise<EnhancedWritable> {
-    return this.fileSystem.writeStream(this);
-  }
-
-  appendStream(): Promise<EnhancedWritable> {
-    return this.fileSystem.writeStream(this, { append: true });
+  writeStream(options?: WriteStreamOptions): Promise<Writable> {
+    return this.fileSystem.writeStream(this, options);
   }
 
   delete(options?: { recursive?: boolean, useTrash?: boolean }): Promise<void> {
