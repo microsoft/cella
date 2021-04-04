@@ -106,7 +106,7 @@ describe('LocalFileSystemTests', () => {
     // you can iterate thru a stream with 'for await' without casting because I forced the return type to be AsnycIterable<Buffer>
     for await (const chunk of await fs.readStream(thisFile)) {
       text += chunk.toString('utf8');
-      writeAsync(outStream, chunk);
+      await writeAsync(outStream, chunk);
     }
     // close the stream once we're done.
     outStream.end();
