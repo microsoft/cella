@@ -4,13 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
-import { createReadStream, createWriteStream, Stats } from 'fs';
+import { close, createReadStream, createWriteStream, futimes, open as openFd, Stats } from 'fs';
 import { FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { Readable, Writable } from 'stream';
+import { promisify } from 'util';
 import { delay } from './events';
-import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { i } from './i18n';
-import { EnhancedReadable, EnhancedWritable, enhanceReadable, enhanceWritable } from './streams';
 import { Uri } from './uri';
 
 function getFileType(stats: Stats) {
@@ -45,7 +46,6 @@ class LocalFileStats implements FileStat {
  * This is used to handle the access to the local disks.
  */
 export class LocalFileSystem extends FileSystem {
-
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
     const s = await stat(path);
@@ -120,14 +120,30 @@ export class LocalFileSystem extends FileSystem {
     throw new Error('cross filesystem copynot implemented yet.');
   }
 
-  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
     this.read(uri);
-    return enhanceReadable(createReadStream(uri.fsPath, options), options?.start ?? 0, options?.end ?? (await this.stat(uri)).size);
+    return createReadStream(uri.fsPath, options);
   }
 
-  async writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
+  async writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     this.write(uri);
-    return enhanceWritable(createWriteStream(uri.fsPath, { flags: options?.append ? 'a' : 'w', autoClose: true }));
+    const flags = options?.append ? 'a' : 'w';
+    let theFd: number | undefined;
+    theFd = await promisify(openFd)(uri.fsPath, flags, options?.mode ?? 0o666);
+    try {
+      if (options?.mtime) {
+        const mtime = options.mtime;
+        await promisify(futimes)(theFd, new Date(), mtime);
+      }
+
+      const rawWriteStream = createWriteStream(uri.fsPath, { flags, autoClose: true, fd: theFd });
+      theFd = undefined;
+      return rawWriteStream;
+    } finally {
+      if (theFd) {
+        await promisify(close)(theFd);
+      }
+    }
   }
 
   async openFile(uri: Uri): Promise<ReadHandle> {

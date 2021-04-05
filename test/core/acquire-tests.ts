@@ -19,15 +19,8 @@ describe('Acquire', () => {
 
     let acq = http(local.session, [remoteFile], 'readme.md');
 
-    // let's make sure we get some progress back
-    let pcount = 0;
-    acq.on('progress', (p, b, m) => {
-      pcount++;
-    });
-
     const outputFile = await acq;
 
-    strict.ok(pcount > 1, 'We should get at least two progress events');
     strict.ok(await outputFile.exists(), 'File should exist!');
     const size = await outputFile.size();
     // let's try some resume scenarios
@@ -43,10 +36,6 @@ describe('Acquire', () => {
     local.session.channels.debug('==== chopped the file in half, redownload');
 
     acq = http(local.session, [remoteFile], 'readme.md');
-    pcount = 0;
-    acq.on('progress', (p, b, m) => {
-      pcount++;
-    });
     await acq;
     const newsize = await outputFile.size();
     strict.equal(newsize, size, 'the file should be the right size at the end.');
@@ -86,10 +75,6 @@ describe('Acquire', () => {
     local.session.channels.debug('==== chopped the large file in half, should resume.');
     acq = http(local.session, [remoteFile], 'xyz.png');
 
-    let pcount = 0;
-    acq.on('progress', (p, b, m) => {
-      pcount++;
-    });
     await acq;
     const newsize = await outputFile.size();
     strict.equal(newsize, size, 'the file should be the right size at the end.');

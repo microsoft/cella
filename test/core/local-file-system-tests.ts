@@ -5,7 +5,29 @@
 
 import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
+import { Writable } from 'stream';
 import { SuiteLocal } from './SuiteLocal';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { pipeline } = require('stream/promises');
+
+function writeAsync(writable: Writable, chunk: Buffer): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (writable.write(chunk, (error: Error | null | undefined) => {
+      // callback gave us an error.
+      if (error) {
+        reject(error);
+      }
+    })) {
+      // returned true, we're good to go.
+      resolve();
+    } else {
+      // returned false
+      // we were told to wait for it to drain.
+      writable.once('drain', resolve);
+      writable.once('error', reject);
+    }
+  });
+}
 
 describe('LocalFileSystemTests', () => {
   const local = new SuiteLocal();
@@ -75,17 +97,21 @@ describe('LocalFileSystemTests', () => {
     const outputFile = tmp.join('output.txt');
 
     const outStream = await fs.writeStream(outputFile);
+    const outStreamDone = new Promise<void>((resolve, reject) => {
+      outStream.once('close', resolve);
+      outStream.once('error', reject);
+    });
 
     let text = '';
     // you can iterate thru a stream with 'for await' without casting because I forced the return type to be AsnycIterable<Buffer>
     for await (const chunk of await fs.readStream(thisFile)) {
       text += chunk.toString('utf8');
-      await outStream.writeAsync(chunk);
+      await writeAsync(outStream, chunk);
     }
     // close the stream once we're done.
     outStream.end();
 
-    await outStream.is.done;
+    await outStreamDone;
 
     strict.equal((await fs.stat(outputFile)).size, (await fs.stat(thisFile)).size, 'outputFile should be the same length as the input file');
     strict.equal((await fs.stat(thisFile)).size, text.length, 'buffer should be the same size as the input file');
@@ -95,10 +121,10 @@ describe('LocalFileSystemTests', () => {
     const tmp = local.tempFolderUri;
     const path = local.rootFolderUri.join('resources', 'small-file.txt');
 
-    strict.equal(await hash(fs.readStream(path)), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'hash should match');
-    strict.equal(await hash(fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'hash should match');
-    strict.equal(await hash(fs.readStream(path), 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'hash should match');
-    strict.equal(await hash(fs.readStream(path), 'md5'), 'c82b854702262508e9210c678282d5a4', 'hash should match');
+    strict.equal(await hash(await fs.readStream(path)), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'hash should match');
+    strict.equal(await hash(await fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'hash should match');
+    strict.equal(await hash(await fs.readStream(path), 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'hash should match');
+    strict.equal(await hash(await fs.readStream(path), 'md5'), 'c82b854702262508e9210c678282d5a4', 'hash should match');
 
   });
 
@@ -156,30 +182,17 @@ describe('LocalFileSystemTests', () => {
     const tmp = local.tempFolderUri;
 
     const thisFile = fs.file(__filename);
+    const thisFileText = (await fs.readFile(thisFile)).toString();
     const outputFile = tmp.join('output2.txt');
 
     const inputStream = await fs.readStream(thisFile);
-
-    let pcount = 0;
-    inputStream.on('progress', (p, t, m) => {
-      pcount++;
-    });
-
-
     const outStream = await fs.writeStream(outputFile);
-    inputStream.pipe(outStream);
+    await pipeline(inputStream, outStream);
 
-
-    // we can wait for the stream to finish, which will end the pipe.
-    // if the pipe fails, this should throw
-    await inputStream.is.done;
-
-    // should always wait until the output stream is done too.
-    // (this will ensure that the stream is destroyed. )
-    await outStream.is.done;
-
-    strict.ok(pcount > 1, 'We should get at least two progress events');
     strict.ok(fs.isFile(outputFile), `there should be a file at ${outputFile.fsPath}`);
+
+    const outFileText = (await fs.readFile(outputFile)).toString();
+    strict.equal(outFileText, thisFileText);
 
     // this will throw if it fails.
     await fs.delete(outputFile);
