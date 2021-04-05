@@ -45,8 +45,8 @@ export class HttpFileSystem extends FileSystem {
   copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
-    return Promise.resolve(getStream(uri, options));
+  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
+    return getStream(uri, options);
   }
   writeStream(uri: Uri): Promise<Writable> {
     throw new Error('Method not implemented.');

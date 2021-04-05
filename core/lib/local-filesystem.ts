@@ -120,15 +120,15 @@ export class LocalFileSystem extends FileSystem {
     throw new Error('cross filesystem copynot implemented yet.');
   }
 
-  readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
+  async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
     this.read(uri);
-    return Promise.resolve(createReadStream(uri.fsPath, options));
+    return createReadStream(uri.fsPath, options);
   }
 
   async writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     this.write(uri);
     const flags = options?.append ? 'a' : 'w';
-    let theFd : number | undefined;
+    let theFd: number | undefined;
     theFd = await promisify(openFd)(uri.fsPath, flags, options?.mode ?? 0o666);
     try {
       if (options?.mtime) {
