@@ -61,6 +61,12 @@
       "projectFolder": "./test",
       "reviewCategory": "production",
       "shouldPublish": false
+    },
+    {
+      "packageName": "yauzl",
+      "projectFolder": "./yauzl",
+      "reviewCategory": "production",
+      "shouldPublish": false
     }
   ]
 }

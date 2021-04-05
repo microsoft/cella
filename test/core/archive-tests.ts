@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Unpacker, ZipUnpacker } from '@microsoft/cella.core';
-import { strict } from 'assert';
+import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
 describe('Unpacker', () => {
@@ -180,10 +180,6 @@ describe('ZipUnpacker', () => {
     progressChecker.test(1);
   });
 
-  // This test is currently disabled due to a bug in yauzl which causes it to not propagate errors correctly, leading
-  // to hangs. See https://github.com/thejoshwolfe/yauzl/pull/123 for a potential fix; the test will pass once yauzl
-  // merges that PR.
-  /*
   it('FailsToUnpackMalformed', async () => {
     // wrong-entry-sizes.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/wrong-entry-sizes/wrong-entry-sizes.zip
@@ -192,7 +188,6 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
     await rejects(unpacker.unpack(zipUri, targetUri, {}));
   });
-  */
 
   it('Strips1', async () => {
     progressChecker.reset();
