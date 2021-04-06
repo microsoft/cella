@@ -43,6 +43,10 @@ export interface FileStat {
    * example.
    */
   size: number;
+  /**
+   * The file mode (unix permissions).
+   */
+  mode: number;
 }
 
 /**

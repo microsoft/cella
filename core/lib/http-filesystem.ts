@@ -21,7 +21,8 @@ export class HttpFileSystem extends FileSystem {
       type: FileType.File,
       mtime: Date.parse(result.headers.date || ''),
       ctime: Date.parse(result.headers.date || ''),
-      size: Number.parseInt(result.headers['content-length'] || '0')
+      size: Number.parseInt(result.headers['content-length'] || '0'),
+      mode: 0o555 // http is read only but always 'executable'
     };
   }
   readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
