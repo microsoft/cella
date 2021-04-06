@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
-import { createDecompressor as createLzmaDecompressor } from 'lzma-native';
 import { sed } from 'sed-lite';
 import { Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
@@ -344,12 +343,5 @@ export class TarBzUnpacker extends BasicTarUnpacker {
   unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR.BZ2 ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options, bz2());
-  }
-}
-
-export class TarXzUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
-    this.session.channels.debug(`unpacking TAR.XZ ${archiveUri} => ${outputUri}`);
-    return this.unpackTar(archiveUri, outputUri, options, createLzmaDecompressor());
   }
 }

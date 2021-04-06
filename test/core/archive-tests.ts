@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, TarXzUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
+import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -420,32 +420,6 @@ describe('TarGzUnpacker', () => {
   it('ImplementsUnpackOptions', async () => {
     progressChecker.reset();
     const targetUri = local.tempFolderUri.join('example-tar-gz-transformed');
-    await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
-    await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
-  });
-});
-
-describe('TarXzUnpacker', () => {
-  const local = new SuiteLocal();
-  const fs = local.fs;
-
-  after(local.after.bind(local));
-  const unpacker = new TarXzUnpacker(local.session);
-  const progressChecker = new ProgressChecker();
-  unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
-  unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
-  const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar.xz');
-  it('UnpacksLegitimateSmallTarXz', async () => {
-    progressChecker.reset();
-    const targetUri = local.tempFolderUri.join('example-tar-xz');
-    await unpacker.unpack(archiveUri, targetUri, {});
-    await checkExtractedTar(targetUri);
-    progressChecker.test(8);
-  });
-  it('ImplementsUnpackOptions', async () => {
-    progressChecker.reset();
-    const targetUri = local.tempFolderUri.join('example-tar-xz-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
     progressChecker.test(8);
