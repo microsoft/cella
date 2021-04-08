@@ -37,12 +37,14 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
+  repo: Uri;
   readonly globalConfig: Uri;
   readonly cache: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
-  readonly utf8 = new TextDecoder('utf-8').decode;
+  #decoder = new TextDecoder('utf-8');
+  readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
 
   constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -57,6 +59,7 @@ export class Session {
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
+    this.repo = this.cellaHome.join('repo');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }

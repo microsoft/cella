@@ -116,7 +116,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   get yamlErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
-      // each.makePretty();
+
       const line = each.linePos?.line || 1;
       const column = each.linePos?.col || 1;
       return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
@@ -148,6 +148,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   private positionAt(range?: [number, number], offset?: { line: number, column: number }) {
     const { line, col } = this.lineCounter.linePos(range?.[0] || 0);
     return {
+      // adds the offset values (which can come from the mediaquery parser) to the line & column. If MQ doesn't have a position, it's zero.
       line: line + (offset?.line || 0),
       column: col + (offset?.column || 0),
     };

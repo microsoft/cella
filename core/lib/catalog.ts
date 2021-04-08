@@ -27,6 +27,7 @@ interface HasToString {
  */
 export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>> {
   private index: TIndex;
+  /** @internal */
   indexOfTargets = new Array<string>();
 
   /**
@@ -63,14 +64,20 @@ export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>
    */
   get where(): TIndex {
     // clone the index so that the consumer can filter on it.
-    return this.index.clone();
+    const cat = new Catalog(this.indexConstructor);
+    cat.indexOfTargets = this.indexOfTargets;
+    for (const [key, impl] of this.index.mapOfKeyObjects.entries()) {
+      cat.index.mapOfKeyObjects.get(key)!.cloneKey(impl);
+    }
+    return cat.index;
   }
 
   /** inserts an object into the index */
   insert(content: TGraph, target: string) {
     const n = this.indexOfTargets.push(target) - 1;
-    for (const indexKey of this.index.keys.values()) {
-      indexKey.insert(content, n);
+    let key = '';
+    for (const indexKey of this.index.mapOfKeyObjects.values()) {
+      key += indexKey.insert(content, n);
     }
   }
 }
@@ -107,7 +114,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   abstract coerce(value: TKey | string): TKey;
 
   protected nestedKeys = new Array<Key<TGraph, any, TIndex>>();
-  protected keys = new BTree<TKey, Set<number>>(undefined, this.compare);
+  protected values = new BTree<TKey, Set<number>>(undefined, this.compare);
   protected words = new BTree<string, Set<number>>();
   protected index: TIndex;
   protected path: Array<string>;
@@ -131,7 +138,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
       keys: {},
       words: {},
     };
-    for (const each of this.keys.entries()) {
+    for (const each of this.values.entries()) {
       result.keys[each[0]] = [...each[1]];
     }
     for (const each of this.words.entries()) {
@@ -143,19 +150,25 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   /** deserializes an object graph back into this key */
   deserialize(content: any) {
     for (const [key, ids] of items(content.keys)) {
-      this.keys.set(this.coerce(key), new Set(<any>ids));
+      this.values.set(this.coerce(key), new Set(<any>ids));
     }
     for (const [key, ids] of items(content.words)) {
       this.words.set(key, new Set(<any>ids));
     }
   }
 
+  /** @internal */
+  cloneKey(from: this) {
+    this.values = from.values.greedyClone();
+    this.words = from.words.greedyClone();
+  }
+
   /** adds key value to this Key */
   protected addKey(each: TKey, n: number) {
-    let set = this.keys.get(each);
+    let set = this.values.get(each);
     if (!set) {
       set = new Set<number>();
-      this.keys.set(each, set);
+      this.values.set(each, set);
     }
     set.add(n);
   }
@@ -204,16 +217,13 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
       this.addKey(value, n);
       this.addWord(value, n);
     }
-
   }
 
   /** construct a Key */
   constructor(index: Index<TGraph, TIndex>, public accessor: (value: TGraph, ...args: Array<any>) => TKey | undefined | Array<TKey> | Iterable<TKey>) {
-    index.index;
-
     this.path = deconstruct(accessor.toString());
     this.index = <TIndex><unknown>index;
-    this.index.keys.set(this.identity, this);
+    this.index.mapOfKeyObjects.set(this.identity, this);
   }
 
   /** word search */
@@ -230,7 +240,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   /** exact match search */
   equals(value: TKey | string): TIndex {
     if (value !== undefined && value !== '') {
-      const matches = this.keys.get(this.coerce(value));
+      const matches = this.values.get(this.coerce(value));
       if (matches) {
         this.index.filter(matches);
       }
@@ -240,10 +250,10 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
   /** metadata value is greater than search */
   greaterThan(value: TKey | string): TIndex {
-    const max = this.keys.maxKey();
+    const max = this.values.maxKey();
     if (max && value !== undefined && value !== '') {
       const set = new Set<number>();
-      this.keys.forRange(this.coerce(value), max, true, (k, v) => {
+      this.values.forRange(this.coerce(value), max, true, (k, v) => {
         for (const n of v) {
           set.add(n);
         }
@@ -255,11 +265,11 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
   /** metadata value is less than search */
   lessThan(value: TKey | string): TIndex {
-    const min = this.keys.minKey();
+    const min = this.values.minKey();
     if (min && value !== undefined && value !== '') {
       value = this.coerce(value);
       const set = new Set<number>();
-      this.keys.forRange(min, this.coerce(value), false, (k, v) => {
+      this.values.forRange(min, this.coerce(value), false, (k, v) => {
         for (const n of v) {
           set.add(n);
         }
@@ -277,7 +287,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
     const set = new Set<number>();
 
-    for (const node of this.keys.entries()) {
+    for (const node of this.values.entries()) {
       for (const id of node[1]) {
         if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
           // it's currently in the keep list.
@@ -299,7 +309,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
     const set = new Set<number>();
 
-    for (const node of this.keys.entries()) {
+    for (const node of this.values.entries()) {
       for (const id of node[1]) {
         if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
           // it's currently in the keep list.
@@ -319,7 +329,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
     const set = new Set<number>();
 
-    for (const node of this.keys.entries()) {
+    for (const node of this.values.entries()) {
       for (const id of node[1]) {
         if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
           // it's currently in the keep list.
@@ -388,7 +398,7 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
  */
 export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
   /** the collection of keys in this index */
-  readonly keys = new Map<string, Key<TGraph, any, TSelf>>();
+  readonly mapOfKeyObjects = new Map<string, Key<TGraph, any, TSelf>>();
 
   /**
    * the selected element ids.
@@ -422,7 +432,7 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
   serialize() {
     const result = <any>{
     };
-    for (const [key, impl] of this.keys.entries()) {
+    for (const [key, impl] of this.mapOfKeyObjects.entries()) {
       result[key] = impl.serialize();
     }
     return result;
@@ -435,7 +445,7 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
    * @param content the persistable object graph.
    */
   deserialize(content: any) {
-    for (const [key, impl] of this.keys.entries()) {
+    for (const [key, impl] of this.mapOfKeyObjects.entries()) {
       impl.deserialize(content[key]);
     }
   }
@@ -444,16 +454,11 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
    * returns the selected
    */
   get items(): Array<string> {
-    return this.selectedElements ? [...this.selectedElements].map(each => this.index.indexOfTargets[each]) : this.index.indexOfTargets;
+    return this.selectedElements ? [...this.selectedElements].map(each => this.catalog.indexOfTargets[each]) : this.catalog.indexOfTargets;
   }
 
   /** @internal */
-  protected constructor(public index: Catalog<TGraph, TSelf>) {
-  }
-
-  /** Clones this index so that the consumer can perform ever-narrowing search criteria on it. */
-  clone(): this {
-    return Object.setPrototypeOf({ ... this }, Object.getPrototypeOf(this));
+  constructor(public catalog: Catalog<TGraph, TSelf>) {
   }
 }
 

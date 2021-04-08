@@ -17,7 +17,6 @@ interface TestData {
     email?: string;
     role?: Array<string>;
   }>
-
 }
 
 
@@ -94,24 +93,6 @@ describe('Index Tests', () => {
       items;
 
     console.log(results2);
-
-    // from files where id contains 'foo' and version > 2.5.2
-    /*
-        const metadatas = index.where.
-          id.contains('foo').                 // narrow the list
-          version.greaterThan('2.5.2').       // narrow the list
-          description.contains('compiler').   // narrow the list
-          contacts.contains('Garrett').
-          contacts.email.endsWith('@serack.org').
-          items;                              // run the query, return the results.
-
-
-        const someFiles = index.where.
-          // anything.contains('microsoft').
-          version.greaterThan('4.2.3').
-          items;
-
-    */
   });
 
 });

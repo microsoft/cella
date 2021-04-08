@@ -17,8 +17,6 @@ export function getOrCreateMap(node: Document.Parsed | YAMLMap, name: string): Y
   if (m) {
     return <any>m;
   }
-  // these should be picked up in validate()
-  // strict.ok(m instanceof YAMLMap, 'node is not a map');
 
   node.set(name, m = new YAMLMap());
   return <any>m;

@@ -57,6 +57,7 @@
     "tar-stream": "2.2.0",
     "got": "11.8.2",
     "sorted-btree": "1.4.0",
-    "yauzl": "~2.10.0"
+    "yauzl": "~2.10.0",
+    "sed-lite": "~0.8.2"
   }
 }

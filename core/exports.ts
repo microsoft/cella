@@ -16,6 +16,7 @@ export * from './lib/linq';
 export * from './lib/local-filesystem';
 export * from './lib/mediaquery/media-query';
 export * from './lib/metadata-format';
+export * from './lib/repository';
 export * from './lib/session';
 export * from './lib/unified-filesystem';
 export * from './lib/uri';

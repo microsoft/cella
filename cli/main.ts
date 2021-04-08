@@ -84,7 +84,7 @@ async function main() {
 
   await session.writePostscript();
 
-  return process.exit(result ? 0 : 1);
+  return process.exitCode = (result ? 0 : 1);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises

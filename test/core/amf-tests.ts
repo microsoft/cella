@@ -18,7 +18,6 @@ describe('Amf', () => {
   it('readProfile', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
-    // console.log(doc.validationErrors);
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
@@ -78,10 +77,6 @@ describe('Amf', () => {
     doc.requires['range/with/resolved'] = <any>{ range: '1.*', resolved: '1.0.0' };
     strict.equal(doc.requires['range/with/resolved'].raw, '1.* 1.0.0');
 
-    // for (const each of doc.requires.keys) {
-    //  console.log(`${each} => ${doc.requires[each].range.range} ,  ${doc.requires[each].range.raw}, ${doc.requires[each].resolved}`);
-    // }
-
     strict.equal(doc.settings.tools['CC'], 'foo/bar/cl.exe', 'should have a value');
     strict.equal(doc.settings.tools['CXX'], 'bin/baz/cl.exe', 'should have a value');
     strict.equal(doc.settings.tools['Whatever'], 'some/tool/path/foo', 'should have a value');
@@ -114,7 +109,6 @@ describe('Amf', () => {
     strict.equal(doc.isValidYaml, false, 'this document should have errors');
 
     strict.equal(doc.yamlErrors.length, 1, 'This document should have one error');
-    // strict.equal(doc.yamlErrors[1], 'errors.yaml:2:1 YAMLSemanticError, Map keys must be unique; "top" is repeated', 'Message is not correct');
 
     strict.equal(doc.info.id, 'bob', 'identity incorrect');
     strict.equal(doc.info.version, '1.0.2', 'version incorrect');
@@ -125,8 +119,6 @@ describe('Amf', () => {
     const doc = parse('empty.yaml', content);
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
-
-    // console.log(doc.validationErrors);
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
     strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');

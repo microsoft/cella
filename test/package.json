@@ -49,6 +49,7 @@
   "dependencies": {
     "@microsoft/cella.core": "~0.1.0",
     "yaml": "~2.0.0-4",
-    "semver": "~7.3.4"
+    "semver": "~7.3.4",
+    "txtgen": "2.2.8"
   }
 }

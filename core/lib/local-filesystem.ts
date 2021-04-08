@@ -4,9 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
+import { COPYFILE_EXCL } from 'constants';
 import { createReadStream, createWriteStream, Stats } from 'fs';
-import { FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
+import { basename, join } from 'path';
 import { delay } from './events';
 import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
 import { i } from './i18n';
@@ -81,8 +82,9 @@ export class LocalFileSystem extends FileSystem {
     }
   }
 
-  writeFile(uri: Uri, content: Uint8Array): Promise<void> {
+  async writeFile(uri: Uri, content: Uint8Array): Promise<void> {
     try {
+      await uri.parent().createDirectory();
       return writeFile(uri.fsPath, content);
     } finally {
       this.write(uri, content);
@@ -112,23 +114,51 @@ export class LocalFileSystem extends FileSystem {
   }
 
   async copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
-    // if (source.fileSystem === target.fileSystem) {
-    //  options = options || {};
-    //  return await copyFile(source.fsPath, target.fsPath, options.overwrite ? 0 : constants.COPYFILE_EXCL);
-    // }
+    const s = await source.stat();
+    let targetIsFile = false;
+    try {
+      targetIsFile = !!((await target.stat()).type & FileType.File);
+    } catch {
+      //
+    }
+    options = options || {};
 
-    throw new Error('cross filesystem copynot implemented yet.');
+    if (s.type & FileType.File) {
+      // make sure the target folder is there
+      await target.parent().createDirectory();
+      return copyFile(source.fsPath, target.fsPath, options.overwrite ? 0 : COPYFILE_EXCL);
+    }
+
+    if (s.type & FileType.Directory) {
+      // if it's a folder, then the target has to be a folder, or not exist
+      strict.ok(!targetIsFile, `Copy failed: source (${source.fsPath}) is a folder, target (${target}) is a file.`);
+
+      await target.createDirectory();
+      const processing = new Array<Promise<void>>();
+      for (const each of await source.readDirectory()) {
+        const targ = target.join(basename(each[0].path));
+        if (each[1] & FileType.Directory) {
+          await this.copy(each[0], targ);
+        } else {
+          await targ.parent().createDirectory();
+          processing.push(copyFile(each[0].fsPath, targ.fsPath, options.overwrite ? 0 : COPYFILE_EXCL));
+        }
+      }
+      await Promise.all(processing);
+    } else {
+      throw new Error('BAD ');
+    }
   }
+
 
   async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
     this.read(uri);
-
     return enhanceReadable(createReadStream(uri.fsPath, options), options?.start ?? 0, options?.end ?? (await this.stat(uri)).size);
   }
 
   async writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
     this.write(uri);
-    return enhanceWritable(createWriteStream(uri.fsPath, { flags: 'a', autoClose: true }));
+    return enhanceWritable(createWriteStream(uri.fsPath, { flags: options?.append ? 'a' : 'w', autoClose: true }));
   }
 
   async openFile(uri: Uri): Promise<ReadHandle> {
