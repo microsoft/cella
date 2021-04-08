@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Catalog, Dictionary, Index, keys, SemVer, SemverKey, serialize, StringKey } from '@microsoft/cella.core';
+import { Catalog, Dictionary, Index, keys, SemVer, SemverKey, StringKey } from '@microsoft/cella.core';
 import { describe, it } from 'mocha';
 
 interface TestData {
@@ -60,10 +60,10 @@ describe('Index Tests', () => {
       },
       contacts: {
         'bob Smith': {
-          email: 'garrett@serack.org'
+          email: 'garrett@contoso.org'
         },
         'rob Smith': {
-          email: 'tarrett@serack.org'
+          email: 'tarrett@contoso.org'
         },
       }
     }, 'foo/tom');
@@ -81,8 +81,8 @@ describe('Index Tests', () => {
       version.greaterThan(new SemVer('0.3.0')).
       items;
 
-    console.log(results);
-    console.log(serialize(index.serialize()));
+    // console.log(results);
+    // console.log(serialize(index.serialize()));
 
     const data = index.serialize();
     const index2 = new Catalog<TestData, MyIndex>(MyIndex);

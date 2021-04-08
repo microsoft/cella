@@ -9,9 +9,11 @@ import { Readable } from 'stream';
 import { Entry, fromRandomAccessReader, RandomAccessReader, ZipFile } from 'yauzl';
 import { ReadHandle } from './filesystem';
 import { Session } from './session';
-import { EnhancedReadable, enhanceReadable } from './streams';
+import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { pipeline } = require('stream/promises');
 
 interface FileEntry {
   archiveUri: Uri;
@@ -124,7 +126,7 @@ class YauzlRandomAccessAdapter extends RandomAccessReader {
     super();
   }
 
-  _readStreamForRange(start: number, end: number): AsyncIterable<Buffer> & EnhancedReadable {
+  _readStreamForRange(start: number, end: number): Readable {
     if (end < 1) {
       throw 'invalid end';
     }
@@ -165,6 +167,7 @@ export class ZipUnpacker extends Unpacker {
 
   private static openFromRandomAccessReader(adapter: YauzlRandomAccessAdapter, size: number): Promise<ZipFile> {
     return new Promise((resolve, reject) => {
+      // validateEntrySizes is set to false to workaround https://github.com/thejoshwolfe/yauzl/pull/123
       fromRandomAccessReader(adapter, size, { lazyEntries: true, autoClose: false, validateEntrySizes: false },
         (err?: Error | undefined, zipFile?: ZipFile | undefined) => {
           if (zipFile) {
@@ -222,13 +225,12 @@ export class ZipUnpacker extends Unpacker {
     if (destination) {
       const parentDirectory = destination.parent();
       await parentDirectory.createDirectory();
-      const readStream = await enhanceReadable(await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile), 0, entry.uncompressedSize, true);
-      const writeStream = await destination.writeStream();
-      readStream.on('progress', (filePercentage) =>
+      const readStream = await ZipUnpacker.openZipEntryDataStream(entry, common.zipFile);
+      const progressStream = new ProgressTrackingStream(0, entry.uncompressedSize);
+      progressStream.on('progress', (filePercentage) =>
         this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
-      readStream.pipe(writeStream);
-      await readStream.is.done;
-      await writeStream.is.done;
+      const writeStream = await destination.writeStream({mtime:entry.getLastModDate()});
+      await pipeline(readStream, progressStream, writeStream);
     }
 
     this.progress(fileEntry, 100, thisFilePercentageScaler.highestPercentage);

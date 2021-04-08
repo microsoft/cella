@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
-import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
+import { Readable, Writable } from 'stream';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { i } from './i18n';
 import { Dictionary } from './linq';
-import { EnhancedReadable, EnhancedWritable } from './streams';
 import { Uri } from './uri';
 
 /**
@@ -92,11 +92,11 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).writeFile(uri, content);
   }
 
-  readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<AsyncIterable<Buffer> & EnhancedReadable> {
+  readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
     return this.filesystem(uri).readStream(uri, options);
   }
 
-  writeStream(uri: Uri, options?: { append?: boolean }): Promise<EnhancedWritable> {
+  writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     return this.filesystem(uri).writeStream(uri, options);
   }
 

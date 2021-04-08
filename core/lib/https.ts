@@ -5,7 +5,6 @@
 
 import { default as got, Headers, HTTPError, Response } from 'got';
 import { anyWhere } from './promise';
-import { enhanceReadable } from './streams';
 import { Uri } from './uri';
 
 /**
@@ -97,7 +96,7 @@ export function getStream(location: Uri, options?: { start?: number, end?: numbe
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, undefined);
 
-  return enhanceReadable(got.get(location.toUrl(), { isStream: true, retry: 3, headers }), options?.start, options?.end);
+  return got.get(location.toUrl(), { isStream: true, retry: 3, headers });
 }
 
 export interface Info {
