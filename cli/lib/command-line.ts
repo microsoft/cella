@@ -49,6 +49,10 @@ export class CommandLine {
     return this.#home || (this.#home = this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella'));
   }
 
+  get repositoryFolder() {
+    return this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined;
+  }
+
   get force() {
     return !!this.switches['force'];
   }

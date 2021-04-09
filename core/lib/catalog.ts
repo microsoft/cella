@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
-import { SemVer } from 'semver';
+import { Range, SemVer } from 'semver';
 import BTree from 'sorted-btree';
 import { intersect } from './intersect';
 import { Dictionary, items, keys } from './linq';
@@ -26,7 +26,8 @@ interface HasToString {
  * @param TIndex the custom index type.
  */
 export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>> {
-  private index: TIndex;
+  /** @internal */
+  index: TIndex;
   /** @internal */
   indexOfTargets = new Array<string>();
 
@@ -78,6 +79,12 @@ export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>
     let key = '';
     for (const indexKey of this.index.mapOfKeyObjects.values()) {
       key += indexKey.insert(content, n);
+    }
+  }
+
+  doneInsertion() {
+    for (const indexKey of this.index.mapOfKeyObjects.values()) {
+      indexKey.doneInsertion();
     }
   }
 }
@@ -175,15 +182,22 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
   /** adds a 'word' value to this key  */
   protected addWord(each: TKey, n: number) {
-    const words = each.toString().split(/\W/);
-    for (const word of words.filter(i => i)) {
-      let set = this.words.get(word);
-      if (!set) {
-        set = new Set<number>();
-        this.words.set(word, set);
+    const words = each.toString().split(/(\W+)/g);
+
+    for (let word = 0; word < words.length; word += 2) {
+      for (let i = word; i < words.length; i += 2) {
+        const s = words.slice(word, i + 1).join('');
+        if (s && s.indexOf(' ') === -1) {
+          let set = this.words.get(s);
+          if (!set) {
+            set = new Set<number>();
+            this.words.set(s, set);
+          }
+          set.add(n);
+        }
       }
-      set.add(n);
     }
+
   }
 
   /** processes an object to generate key/word values for it. */
@@ -230,9 +244,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   contains(value: TKey | string): TIndex {
     if (value !== undefined && value !== '') {
       const matches = this.words.get(value.toString());
-      if (matches) {
-        this.index.filter(matches);
-      }
+      this.index.filter(matches || []);
     }
     return this.index;
   }
@@ -241,9 +253,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   equals(value: TKey | string): TIndex {
     if (value !== undefined && value !== '') {
       const matches = this.values.get(this.coerce(value));
-      if (matches) {
-        this.index.filter(matches);
-      }
+      this.index.filter(matches || []);
     }
     return this.index;
   }
@@ -251,31 +261,31 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   /** metadata value is greater than search */
   greaterThan(value: TKey | string): TIndex {
     const max = this.values.maxKey();
+    const set = new Set<number>();
     if (max && value !== undefined && value !== '') {
-      const set = new Set<number>();
       this.values.forRange(this.coerce(value), max, true, (k, v) => {
         for (const n of v) {
           set.add(n);
         }
       });
-      this.index.filter(set.values());
     }
+    this.index.filter(set.values());
     return this.index;
   }
 
   /** metadata value is less than search */
   lessThan(value: TKey | string): TIndex {
     const min = this.values.minKey();
+    const set = new Set<number>();
     if (min && value !== undefined && value !== '') {
       value = this.coerce(value);
-      const set = new Set<number>();
       this.values.forRange(min, this.coerce(value), false, (k, v) => {
         for (const n of v) {
           set.add(n);
         }
       });
-      this.index.filter(set.values());
     }
+    this.index.filter(set.values());
     return this.index;
   }
 
@@ -343,10 +353,15 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
     this.index.filter(set.values());
     return this.index;
   }
+
+  doneInsertion() {
+    // nothing normally
+  }
 }
 
 /** An index key for string values. */
 export class StringKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends Key<TGraph, string, TIndex> {
+
   compare(a: string, b: string): number {
     if (a && b) {
       return a.localeCompare(b);
@@ -359,13 +374,84 @@ export class StringKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
     }
     return 0;
   }
+
   /** impl: transform value into comparable key */
   coerce(value: string): string {
-    //
     return value;
   }
 }
 
+function shortName(value: string, n: number) {
+  const v = value.split('/');
+  let p = v.length - n;
+  if (p < 0) {
+    p = 0;
+  }
+  return v.slice(p).join('/');
+}
+
+export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends StringKey<TGraph, TIndex> {
+
+  protected identities = new BTree<string, Set<number>>(undefined, this.compare);
+  protected idShortName = new Map<string, string>();
+
+  doneInsertion() {
+    // go thru each of the values, find short name for each.
+    const ids = new Map<string, Array<[string, Set<number>]>>();
+
+    for (const idAndIndexNumber of this.values.entries()) {
+      const sn = shortName(idAndIndexNumber[0], 1);
+      if (!ids.has(sn)) {
+        ids.set(sn, []);
+      }
+      ids.get(sn)!.push(idAndIndexNumber);
+    }
+
+    let n = 1;
+    while (ids.size > 0) {
+      n++;
+      for (const [snKey, artifacts] of [...ids.entries()]) {
+        // remove it from the list.
+        ids.delete(snKey);
+
+        if (artifacts.length === 1) {
+          // keep this one, it's unique
+          this.identities.set(snKey, artifacts[0][1]);
+          this.idShortName.set(artifacts[0][0], snKey);
+        } else {
+          for (const each of artifacts) {
+            const sn = shortName(each[0], n);
+            if (!ids.has(sn)) {
+              ids.set(sn, []);
+            }
+            ids.get(sn)!.push(each);
+          }
+        }
+      }
+    }
+  }
+
+  getShortNameOf(id: string) {
+    return this.idShortName.get(id);
+  }
+
+  shortName(value: string): TIndex {
+    if (value !== undefined && value !== '') {
+      const matches = this.identities.get(value.toString());
+      if (matches) {
+        this.index.filter(matches);
+      }
+    }
+    return this.index;
+  }
+
+
+  /** deserializes an object graph back into this key */
+  deserialize(content: any) {
+    super.deserialize(content);
+    this.doneInsertion();
+  }
+}
 
 /** An index key for string values. Does not support 'word' searches */
 export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends Key<TGraph, SemVer, TIndex> {
@@ -380,6 +466,30 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
   }
   protected addWord(each: SemVer, n: number) {
     // no parts
+  }
+
+  rangeMatch(value: Range | string) {
+
+    // This could be faster if we stored a reverse lookup
+    // array that had the id for each key, but .. I don't
+    // think the perf will suffer much doing it this way.
+
+    const set = new Set<number>();
+
+    for (const node of this.values.entries()) {
+      for (const id of node[1]) {
+
+        if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
+          // it's currently in the keep list.
+          if (new Range(value).test(node[0])) {
+            set.add(id);
+          }
+        }
+      }
+    }
+
+    this.index.filter(set.values());
+    return this.index;
   }
 
   serialize() {

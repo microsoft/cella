@@ -13,6 +13,10 @@ contacts:
     email: kitware@kitware.com
     role: originator
 
+requires:
+    compilers/arm/gcc: 2020.10.0
+    compilers/arm/other: 1.2.3 
+    
 windows:
   install:
     unzip: https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-windows-x86_64.zip

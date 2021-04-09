@@ -75,13 +75,7 @@ describe('Repository Tests', () => {
 
   const local = new SuiteLocal();
 
-  after(async () => {
-    // throw 'Foo';
-    // await local.after();
-
-  }
-
-  );
+  after(local.after.bind(local));
 
   before(async () => {
     // creates a bunch of artifacts, with multiple versions

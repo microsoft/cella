@@ -37,6 +37,8 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
+  readonly repoUri: Uri;
+  readonly tmpFolder: Uri;
   repo: Uri;
   readonly globalConfig: Uri;
   readonly cache: Uri;
@@ -55,11 +57,14 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
+    this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
-    this.repo = this.cellaHome.join('repo');
+    const repositoryFolder = environment['repositoryFolder'];
+    this.repo = repositoryFolder ? this.fileSystem.file(repositoryFolder) : this.cellaHome.join('repo');
+    this.tmpFolder = this.cellaHome.join('tmp');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }

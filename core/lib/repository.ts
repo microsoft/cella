@@ -6,16 +6,18 @@
 import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
-import { Catalog, Index, SemverKey, StringKey } from './catalog';
+import { http } from './acquire';
+import { ZipUnpacker } from './archive';
+import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
 import { linq } from './linq';
 import { MetadataFile, parseConfiguration } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
-import { serialize } from './util/yaml';
+import { isYAML, serialize } from './util/yaml';
 
 class RepoIndex extends Index<MetadataFile, RepoIndex> {
-  id = new StringKey(this, (i) => i.info.id)
+  id = new IdentityKey(this, (i) => i.info.id)
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
   description = new StringKey(this, (i) => i.info.description);
   summary = new StringKey(this, (i) => i.info.summary);
@@ -45,27 +47,28 @@ export class Repository {
           processing.push(process(each[0]));
           continue;
         }
-        if (each[1] & FileType.File) {
+        if (each[1] & FileType.File && isYAML(each[0].path)) {
           const content = $.session.utf8(await each[0].readFile());
           if (content.startsWith(MAGIC_STRING)) {
             continue;
           }
+          $.session.channels.debug(`index processing ${each[0].fsPath}`);
           try {
             const amf = parseConfiguration(each[0].fsPath, content);
             $.catalog.insert(amf, $.session.repo.relative(each[0]));
           } catch (e) {
-            console.log(each[0].fsPath);
-            throw e;
+            $.session.channels.warning(`skipping invalid metadata file ${each[0].fsPath}`);
           }
         }
-
       }
       await Promise.all(processing);
     }
-
     await process(this.session.repo);
 
+    // we're done inserting values
+    this.catalog.doneInsertion();
   }
+
   async load(): Promise<void> {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
@@ -77,6 +80,14 @@ export class Repository {
 
   get where(): RepoIndex {
     return this.catalog.where;
+  }
+
+  async update(ghAuthToken: string) {
+    const file = await http(this.session, [this.session.repoUri], 'repository.zip', { credentials: { githubToken: ghAuthToken } });
+    if (await file.exists()) {
+      const unpacker = new ZipUnpacker(this.session);
+      await unpacker.unpack(file, this.session.repo, { strip: 1 });
+    }
   }
 
   async open(manifests: Array<string>) {
@@ -96,12 +107,10 @@ export class Repository {
         insertManifest(metadataFiles, parseConfiguration(manifestUri.fsPath, content));
       }));
     }
-
     // return a map.
-    return linq.values(metadataFiles).groupBy(m => m.info.id, m => m);
+    return linq.values(metadataFiles).groupBy(m => m.info.id, metadata => ({ shortName: this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id, metadata }));
   }
 }
-
 
 function insertManifest(sortedArray: Array<MetadataFile>, element: MetadataFile, lowerBound = 0, upperBound = sortedArray.length - 1): Array<MetadataFile> {
   const band = upperBound - lowerBound;
@@ -130,27 +139,4 @@ function insertManifest(sortedArray: Array<MetadataFile>, element: MetadataFile,
   return compare(element.info.version, sortedArray[halfway].info.version) < 0
     ? insertManifest(sortedArray, element, lowerBound, halfway)
     : insertManifest(sortedArray, element, halfway, upperBound);
-}
-
-function insertSorted<T>(sortedArray: Array<T>, element: T, lowerBound = 0, upperBound = sortedArray.length - 1): Array<T> {
-  const band = upperBound - lowerBound;
-  if (band === 1) {
-    if (element < sortedArray[lowerBound]) {
-      sortedArray.splice(lowerBound, 0, element);
-      return sortedArray;
-    }
-
-    if (element > sortedArray[upperBound]) {
-      sortedArray.splice(upperBound + 1, 0, element);
-      return sortedArray;
-    }
-    sortedArray.splice(upperBound, 0, element);
-    return sortedArray;
-  }
-
-  const halfway = lowerBound = Math.floor(band / 2);
-
-  return element < sortedArray[halfway]
-    ? insertSorted(sortedArray, element, lowerBound, halfway)
-    : insertSorted(sortedArray, element, halfway, upperBound);
 }

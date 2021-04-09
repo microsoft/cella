@@ -27,7 +27,15 @@ markdown.setOptions({
     codespan: white.bold,
     link: blue.bold,
     href: blue.bold.underline,
-    code: gray
+    code: gray,
+    tableOptions: {
+      chars: {
+        'top': '', 'top-mid': '', 'top-left': '', 'top-right': ''
+        , 'bottom': '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': ''
+        , 'left': '', 'left-mid': '', 'mid': '', 'mid-mid': ''
+        , 'right': '', 'right-mid': '', 'middle': ''
+      }
+    }
   }),
   gfm: true,
 });
@@ -41,8 +49,8 @@ export function indent(text: string | Array<string>): string | Array<string> {
   return `  ${text}`;
 }
 
-function md(text: string, session?: Session) {
-  text = markdown(text);
+function md(text = '', session?: Session) {
+  text = markdown(text.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
 
   // rewrite file:// urls to be locl filesystem urls.
   return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;

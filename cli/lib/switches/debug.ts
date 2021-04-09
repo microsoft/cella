@@ -3,13 +3,14 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
-import { Switch } from './switch';
+import { cli } from '../constants';
+import { Switch } from '../switch';
 
-export class Force extends Switch {
-  switch = 'force';
+export class Debug extends Switch {
+  switch = 'debug';
   get help() {
     return [
-      i`proceeds with the (potentially dangerous) action without confirmation`
+      i`enables debug mode, displays internal messsages about how ${cli} works`
     ];
   }
 }

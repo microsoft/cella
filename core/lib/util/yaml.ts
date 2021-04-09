@@ -3,10 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
 import { Document, Node, Pair, parseDocument, Scalar, visit, YAMLMap, YAMLSeq } from 'yaml';
 import { StringOrStrings } from '../metadata-format';
-
 
 /** @internal */
 export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false }).createNode(v, {});
@@ -48,7 +46,6 @@ export function setStrings(node: Document.Parsed | YAMLMap, name: string, value:
   node.set(name, value);
 }
 
-
 export function getPair(from: YAMLMap, name: string): Pair<Node, string> | undefined {
   return <any>from.items.find((each: any) => (<Scalar>each.key).value === name);
 }
@@ -62,4 +59,9 @@ export function serialize(value: any) {
     }
   });
   return document.toString();
+}
+
+export function isYAML(path: string) {
+  path = path.toLocaleLowerCase();
+  return path.endsWith('.yml') || path.endsWith('.yaml');
 }

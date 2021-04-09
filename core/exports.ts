@@ -7,6 +7,7 @@ export * from './lib/archive';
 export * from './lib/catalog';
 export * from './lib/channels';
 export * from './lib/events';
+export * from './lib/exceptions';
 export * from './lib/filesystem';
 export * from './lib/hash';
 export * from './lib/http-filesystem';
