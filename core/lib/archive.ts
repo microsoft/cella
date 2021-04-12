@@ -5,15 +5,16 @@
 
 import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
-import { Readable } from 'stream';
+import { pipeline as p, Readable } from 'stream';
+import { promisify } from 'util';
 import { Entry, fromRandomAccessReader, RandomAccessReader, ZipFile } from 'yauzl';
 import { ReadHandle } from './filesystem';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { pipeline } = require('stream/promises');
+
+const pipeline = promisify(p);
 
 interface FileEntry {
   archiveUri: Uri;
@@ -229,7 +230,7 @@ export class ZipUnpacker extends Unpacker {
       const progressStream = new ProgressTrackingStream(0, entry.uncompressedSize);
       progressStream.on('progress', (filePercentage) =>
         this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
-      const writeStream = await destination.writeStream({mtime:entry.getLastModDate()});
+      const writeStream = await destination.writeStream({ mtime: entry.getLastModDate() });
       await pipeline(readStream, progressStream, writeStream);
     }
 
@@ -242,7 +243,7 @@ export class ZipUnpacker extends Unpacker {
     const openedFile = await archiveUri.openFile();
     const adapter = new YauzlRandomAccessAdapter(openedFile);
     const zipFile = await ZipUnpacker.openFromRandomAccessReader(adapter, await openedFile.size());
-    const common = {zipFile, archiveUri, outputUri, options, filePercentageScaler: new PercentageScaler(0, zipFile.entryCount)};
+    const common = { zipFile, archiveUri, outputUri, options, filePercentageScaler: new PercentageScaler(0, zipFile.entryCount) };
     return new Promise<void>((resolve, reject) => {
       zipFile.on('entry', (entry: Entry) =>
         this.maybeUnpackEntry(entry, common)

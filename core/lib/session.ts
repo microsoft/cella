@@ -57,7 +57,8 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
-    this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    // this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    this.repoUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');

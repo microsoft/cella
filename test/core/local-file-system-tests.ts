@@ -5,10 +5,11 @@
 
 import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { Writable } from 'stream';
+import { pipeline as p, Writable } from 'stream';
+import { promisify } from 'util';
 import { SuiteLocal } from './SuiteLocal';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { pipeline } = require('stream/promises');
+
+const pipeline = promisify(p);
 
 function writeAsync(writable: Writable, chunk: Buffer): Promise<void> {
   return new Promise((resolve, reject) => {
