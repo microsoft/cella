@@ -7,6 +7,7 @@ import { yellowBright } from 'chalk';
 import { session } from '../../main';
 import { Command } from '../command';
 import { parseArgs } from '../command-line';
+import { Table } from '../markdown-table';
 import { error, log, writeException } from '../styling';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
@@ -70,16 +71,14 @@ export class FindCommand extends Command {
 
     const results = await repository.open(selections.items);
 
-    let t = '|Artifact|Version|Summary|\n|--|--|--|\n';
+    const table = new Table('Artifact', 'Version', 'Summary');
+
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
-
-      const shortname = latest.shortName;
-      const name = `${fullName.substr(0, fullName.length - shortname.length)}${yellowBright(shortname)}`;
-
-      t += (`|${name} | ${artifacts[0].metadata.info.version}|${artifacts[0].metadata.info.summary || ''}|\n`);
+      const name = `${fullName.substr(0, fullName.length - latest.shortName.length)}${yellowBright(latest.shortName)}`;
+      table.push(name, latest.metadata.info.version, latest.metadata.info.summary || '');
     }
-    log(t);
+    log(table.toString());
     log();
     return true;
   }
