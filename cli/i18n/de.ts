@@ -145,5 +145,69 @@ export const map: language = {
   '  cli version: ${0} ': (cliVersion: any) => {
     // autotranslated using Azure Translator via 'translate-strings' tool (`  cli version: ${cliVersion} `)
     return ` cli Version: ${cliVersion} `;
+  },
+  'Find artifacts in the repository.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Find artifacts in the repository.')
+    return 'Finden Sie Artefakte im Repository.';
+  },
+  'This allows the user to find artifacts based on some criteria.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('This allows the user to find artifacts based on some criteria.')
+    return 'Dies ermöglicht es dem Benutzer, Artefakte basierend auf bestimmten Kriterien zu finden.';
+  },
+  'Artifact repository data is not loaded.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Artifact repository data is not loaded.')
+    return 'Artefakt-Repository-Daten werden nicht geladen.';
+  },
+  'Attempting to update artifact repository.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Attempting to update artifact repository.')
+    return 'Versuch, das Artefakt-Repository zu aktualisieren.';
+  },
+  'Unable to load repository index.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Unable to load repository index.')
+    return 'Repository-Index kann nicht geladen werden.';
+  },
+  'regenerate the index for a repository': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('regenerate the index for a repository')
+    return 'Regenerieren des Indexes für ein Repository';
+  },
+  'This allows the user to regenerate the index.yaml files for a ${0} repository.': (cli: "cella") => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`This allows the user to regenerate the index.yaml files for a ${cli} repository.`)
+    return `Dadurch kann der Benutzer die index.yaml-Dateien für ein ${cli}-Repository regenerieren.`;
+  },
+  'Regenerating index.yaml file for the repository at ${0}': (p0: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Regenerating index.yaml file for the repository at ${p0}`)
+    return `Regenerieren der index.yaml-Datei für das Repository bei ${p0}`;
+  },
+  'Regeneration complete. Index contains ${0} metadata files.': (p0: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Regeneration complete. Index contains ${p0} metadata files.`)
+    return `Regeneration abgeschlossen. Index enthält ${p0} Metadatendateien.`;
+  },
+  'update the repository from the remote': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('update the repository from the remote')
+    return 'Aktualisieren des Repositorys von der Fernbedienung';
+  },
+  'This downloads the latest contents of the repository from github.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('This downloads the latest contents of the repository from github.')
+    return 'Dadurch werden die neuesten Inhalte des Repositorys von github heruntergeladen.';
+  },
+  'Downloading repository data': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Downloading repository data')
+    return 'Repository-Daten herunterladen';
+  },
+  'Repository update complete. Repository contains \\`${0}\\` metadata files.': (p0: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Repository update complete. Repository contains \`${p0}\` metadata files.`)
+    return `Repository-Aktualisierung abgeschlossen. Das Repository enthält Metadatendateien von ''${p0}''.`;
+  },
+  'Unable to download repository snapshot.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Unable to download repository snapshot.')
+    return 'Repository-Snapshot kann nicht heruntergeladen werden.';
+  },
+  'override the path to the repository': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('override the path to the repository')
+    return 'überschreiben sie den Pfad zum Repository';
+  },
+  'a version or version range to match': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('a version or version range to match')
+    return 'eine Version oder ein entsprechender Versionsbereich';
   }
 };
