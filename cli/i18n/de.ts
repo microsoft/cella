@@ -170,7 +170,7 @@ export const map: language = {
     // autotranslated using Azure Translator via 'translate-strings' tool ('regenerate the index for a repository')
     return 'Regenerieren des Indexes für ein Repository';
   },
-  'This allows the user to regenerate the index.yaml files for a ${0} repository.': (cli: "cella") => {
+  'This allows the user to regenerate the index.yaml files for a ${0} repository.': (cli: 'cella') => {
     // autotranslated using Azure Translator via 'translate-strings' tool (`This allows the user to regenerate the index.yaml files for a ${cli} repository.`)
     return `Dadurch kann der Benutzer die index.yaml-Dateien für ein ${cli}-Repository regenerieren.`;
   },
