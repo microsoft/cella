@@ -5,7 +5,7 @@
 import { i, RemoteFileUnavailable, Repository } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { log } from '../styling';
+import { log, writeException } from '../styling';
 import { Repo } from '../switches/repo';
 
 export class UpdateCommand extends Command {
@@ -37,6 +37,8 @@ export class UpdateCommand extends Command {
         log(i`Unable to download repository snapshot.`);
         return false;
       }
+      writeException(e);
+      return false;
     }
     return true;
   }

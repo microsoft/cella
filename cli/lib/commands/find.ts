@@ -7,7 +7,7 @@ import { yellowBright } from 'chalk';
 import { session } from '../../main';
 import { Command } from '../command';
 import { parseArgs } from '../command-line';
-import { error, log } from '../styling';
+import { error, log, writeException } from '../styling';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { UpdateCommand } from './update';
@@ -42,7 +42,8 @@ export class FindCommand extends Command {
       let success = true;
       try {
         success = await update.run();
-      } catch {
+      } catch (e) {
+        writeException(e);
         success = false;
       }
       if (!success) {
@@ -52,6 +53,7 @@ export class FindCommand extends Command {
       try {
         await repository.load();
       } catch (e) {
+        writeException(e);
         // it just doesn't want to load.
         error(i`Unable to load repository index.`);
         return false;

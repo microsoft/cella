@@ -5,11 +5,11 @@
 
 import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { pipeline as p, Writable } from 'stream';
+import { pipeline as origPipeline, Writable } from 'stream';
 import { promisify } from 'util';
 import { SuiteLocal } from './SuiteLocal';
 
-const pipeline = promisify(p);
+const pipeline = promisify(origPipeline);
 
 function writeAsync(writable: Writable, chunk: Buffer): Promise<void> {
   return new Promise((resolve, reject) => {

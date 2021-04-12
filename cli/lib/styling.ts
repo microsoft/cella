@@ -61,6 +61,15 @@ export let error: (message?: any, ...optionalParams: Array<any>) => void = conso
 export let warning: (message?: any, ...optionalParams: Array<any>) => void = console.error;
 export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => { console.log(`${cyan.bold('debug: ')}${text}`); };
 
+export function writeException(e: any) {
+  if (e instanceof Error) {
+    debug(e.message);
+    debug(e.stack);
+    return;
+  }
+  debug(e && e.toString ? e.toString() : e);
+}
+
 export function initStyling(commandline: CommandLine, session: Session) {
   log = (text) => console.log((md(text, session).trim()));
   error = (text) => console.log(`${red.bold('ERROR:')}${md(text, session).trim()}`);

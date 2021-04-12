@@ -5,7 +5,7 @@
 
 import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
-import { pipeline as p, Readable } from 'stream';
+import { pipeline as origPipeline, Readable } from 'stream';
 import { promisify } from 'util';
 import { Entry, fromRandomAccessReader, RandomAccessReader, ZipFile } from 'yauzl';
 import { ReadHandle } from './filesystem';
@@ -14,7 +14,7 @@ import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
 
-const pipeline = promisify(p);
+const pipeline = promisify(origPipeline);
 
 interface FileEntry {
   archiveUri: Uri;

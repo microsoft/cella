@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
-import { pipeline as p, Readable } from 'stream';
+import { pipeline as origPipeline, Readable } from 'stream';
 import { promisify } from 'util';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
@@ -17,7 +17,7 @@ import { Session } from './session';
 import { Progress } from './streams';
 import { Uri } from './uri';
 
-const pipeline = promisify(p);
+const pipeline = promisify(origPipeline);
 
 const size32K = 1 << 15;
 const size64K = 1 << 16;
