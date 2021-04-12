@@ -170,7 +170,7 @@ export class RemoteFile {
       return head(location, setCredentials({
         'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
-      }, location, options?.credentials)!).then(data => {
+      }, location, options?.credentials)).then(data => {
         if (data.statusCode === 200) {
           const { hash, algorithm } = digest(data.headers);
           return {
