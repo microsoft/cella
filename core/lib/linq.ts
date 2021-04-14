@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------------------------
@@ -182,8 +182,8 @@ export const linq = {
   keys: _keys
 };
 
-/** returns an IterableWithLinq<> for values in the collection 
- * 
+/** returns an IterableWithLinq<> for values in the collection
+ *
  * @note - null/undefined/empty values are considered 'empty'
 */
 function _values<K, T, TSrc extends (Array<T> | Dictionary<T> | Map<K, T>)>(source: (Iterable<T> | Array<T> | Dictionary<T> | Map<K, T> | Set<T>) | null | undefined): IterableWithLinq<T> {

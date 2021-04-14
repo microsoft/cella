@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
@@ -9,9 +9,9 @@ export const map: language = {
     // autotranslated using Azure Translator via 'translate-strings' tool (`core version: ${Version}`)
     return `Kernversion: ${Version}`;
   },
-  '(C) Copyright 2021 Microsoft Corporation': () => {
-    // autotranslated using Azure Translator via 'translate-strings' tool ('(C) Copyright 2021 Microsoft Corporation')
-    return '(C) Copyright 2021 Microsoft Corporation';
+  '(C) Copyright Microsoft Corporation': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('(C) Copyright Microsoft Corporation')
+    return '(C) Copyright Microsoft Corporation';
   },
   'Unrecognized command \'${0}\'.': (cmd: string) => {
     // autotranslated using Azure Translator via 'translate-strings' tool (`Unrecognized command '${cmd}'.`)
