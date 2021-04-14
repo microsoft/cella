@@ -20,8 +20,6 @@ interface HasToString {
 /**
  * A Catalog is a index of Indexes.
  *
- * A listing of
- *
  * @param TGraph The type of object to create an index for
  * @param TIndex the custom index type.
  */
