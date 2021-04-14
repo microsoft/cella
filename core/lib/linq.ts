@@ -409,7 +409,6 @@ function duplicates<T>(this: Iterable<T>, selector?: (each: T) => any): Iterable
     }
   }.bind(this)());
 }
-<<<<<<< HEAD
 
 /** A Map of Key: Array<Value>  */
 export class ManyMap<K, V> extends Map<K, Array<V>> {
@@ -422,5 +421,3 @@ export class ManyMap<K, V> extends Map<K, Array<V>> {
     this.getOrDefault(key, []).push(value);
   }
 }
-=======
->>>>>>> f221c2db894875ce656e9b932045b08bdb2355a1

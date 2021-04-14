@@ -61,16 +61,7 @@ export function serialize(value: any) {
   return document.toString();
 }
 
-<<<<<<< HEAD
 export function isYAML(path: string) {
   path = path.toLowerCase();
   return path.endsWith('.yml') || path.endsWith('.yaml');
 }
-=======
-export function column(node: Node, addOffset?: number | { column: number }) {
-  return (node.cstNode?.rangeAsLinePos?.start.col || 0) + (Number(addOffset) || Number((<any>addOffset)?.column) || 0);
-}
-export function line(node: Node, addOffset?: number | { line: number }) {
-  return (node.cstNode?.rangeAsLinePos?.start.line || 0) + (Number(addOffset) || Number((<any>addOffset)?.line) || 0);
-}
->>>>>>> f221c2db894875ce656e9b932045b08bdb2355a1
