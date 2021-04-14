@@ -253,8 +253,7 @@ bad.fragment === '/project1';
   }
 
   async size(uri?: Uri | string): Promise<number> {
-    uri = this.resolve(uri);
-    return (await uri.fileSystem.stat(uri)).size;
+    return (await this.stat(uri)).size;
   }
 
   async hash(algorithm?: Algorithm): Promise<string | undefined> {

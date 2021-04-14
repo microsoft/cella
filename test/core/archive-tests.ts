@@ -3,9 +3,11 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Unpacker, ZipUnpacker } from '@microsoft/cella.core';
+import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
+
+const isWindows = process.platform === 'win32';
 
 describe('Unpacker', () => {
   it('StripsPaths', () => {
@@ -44,8 +46,11 @@ class PercentageChecker {
   }
 
   test() {
-    strict.ok(this.seenZero);
     strict.equal(this.lastSeen, 100);
+  }
+
+  testRequireZero() {
+    strict.ok(this.seenZero);
   }
 
   reset() {
@@ -78,7 +83,7 @@ class ProgressCheckerEntry {
   test() {
     strict.ok(this.seenUnpacked);
     strict.ok(this.seenZero);
-    this.filePercentage.test();
+    this.filePercentage.testRequireZero();
   }
 }
 
@@ -306,5 +311,117 @@ describe('ZipUnpacker', () => {
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
     progressChecker.test(11);
+  });
+});
+
+async function checkExtractedTar(targetUri: Uri) : Promise<void> {
+  strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+  strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T09:31:14.000Z'));
+  strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+  strict.equal((await targetUri.readFile('executable.sh')).toString(), '#/bin/sh\necho "Hello world!"\n\n');
+  if (!isWindows) {
+    // executable must be executable
+    const execStat = await targetUri.stat('executable.sh');
+    strict.ok((execStat.mode & 0o111) !== 0);
+  }
+  strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
+    'This content is only not in the directory.\n');
+  strict.equal((await targetUri.readFile('a-directory/a.txt')).toString(), 'The contents of a.txt.\n');
+  strict.equal((await targetUri.readFile('a-directory/b.txt')).toString(), 'The contents of b.txt.\n');
+  strict.equal((await targetUri.readFile('a-directory/only-directory.txt')).toString(),
+    'This content is only in the directory.\n');
+  strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
+    'This content is only doubly nested.\n');
+}
+
+const transformedTarUnpackOptions = {
+  strip: 1,
+  transform: ['s/a\\.txt/ehh\\.txt/']
+};
+
+async function checkExtractedTransformedTar(targetUri: Uri) : Promise<void> {
+  strict.equal((await targetUri.readFile('ehh.txt')).toString(), 'The contents of a.txt.\n');
+  strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
+  strict.equal((await targetUri.readFile('only-directory.txt')).toString(),
+    'This content is only in the directory.\n');
+  strict.equal((await targetUri.readFile('inner/only-directory-directory.txt')).toString(),
+    'This content is only doubly nested.\n');
+}
+
+describe('TarUnpacker', () => {
+  const local = new SuiteLocal();
+  const fs = local.fs;
+
+  after(local.after.bind(local));
+  const unpacker = new TarUnpacker(local.session);
+  const progressChecker = new ProgressChecker();
+  unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
+  const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar');
+  it('UnpacksLegitimateSmallTar', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar');
+    await unpacker.unpack(archiveUri, targetUri, {});
+    await checkExtractedTar(targetUri);
+    progressChecker.test(8);
+  });
+  it('ImplementsUnpackOptions', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar-transformed');
+    await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
+    await checkExtractedTransformedTar(targetUri);
+    progressChecker.test(8);
+  });
+});
+
+describe('TarBzUnpacker', () => {
+  const local = new SuiteLocal();
+  const fs = local.fs;
+
+  after(local.after.bind(local));
+  const unpacker = new TarBzUnpacker(local.session);
+  const progressChecker = new ProgressChecker();
+  unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
+  const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar.bz2');
+  it('UnpacksLegitimateSmallTarBz', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar-bz');
+    await unpacker.unpack(archiveUri, targetUri, {});
+    await checkExtractedTar(targetUri);
+    progressChecker.test(8);
+  });
+  it('ImplementsUnpackOptions', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar-bz2-transformed');
+    await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
+    await checkExtractedTransformedTar(targetUri);
+    progressChecker.test(8);
+  });
+});
+
+describe('TarGzUnpacker', () => {
+  const local = new SuiteLocal();
+  const fs = local.fs;
+
+  after(local.after.bind(local));
+  const unpacker = new TarGzUnpacker(local.session);
+  const progressChecker = new ProgressChecker();
+  unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
+  const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar.gz');
+  it('UnpacksLegitimateSmallTarGz', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar-gz');
+    await unpacker.unpack(archiveUri, targetUri, {});
+    await checkExtractedTar(targetUri);
+    progressChecker.test(8);
+  });
+  it('ImplementsUnpackOptions', async () => {
+    progressChecker.reset();
+    const targetUri = local.tempFolderUri.join('example-tar-gz-transformed');
+    await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
+    await checkExtractedTransformedTar(targetUri);
+    progressChecker.test(8);
   });
 });

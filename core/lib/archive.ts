@@ -5,8 +5,10 @@
 
 import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
-import { Readable } from 'stream';
-import { Entry, fromRandomAccessReader, RandomAccessReader, ZipFile } from 'yauzl';
+import { Readable, Transform } from 'stream';
+import { extract as tarExtract, Headers } from 'tar-stream';
+import { Entry as ZipEntry, fromRandomAccessReader as yauzlFromRandomAccessReader, RandomAccessReader as YauzlRandomAccessReader, ZipFile } from 'yauzl';
+import { createGunzip } from 'zlib';
 import { ReadHandle } from './filesystem';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
@@ -14,6 +16,7 @@ import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { pipeline } = require('stream/promises');
+const bz2 = require('unbzip2-stream');
 
 interface FileEntry {
   archiveUri: Uri;
@@ -121,7 +124,7 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
   }
 }
 
-class YauzlRandomAccessAdapter extends RandomAccessReader {
+class YauzlRandomAccessAdapter extends YauzlRandomAccessReader {
   constructor(private readonly file: ReadHandle) {
     super();
   }
@@ -168,7 +171,7 @@ export class ZipUnpacker extends Unpacker {
   private static openFromRandomAccessReader(adapter: YauzlRandomAccessAdapter, size: number): Promise<ZipFile> {
     return new Promise((resolve, reject) => {
       // validateEntrySizes is set to false to workaround https://github.com/thejoshwolfe/yauzl/pull/123
-      fromRandomAccessReader(adapter, size, { lazyEntries: true, autoClose: false, validateEntrySizes: false },
+      yauzlFromRandomAccessReader(adapter, size, { lazyEntries: true, autoClose: false, validateEntrySizes: false },
         (err?: Error | undefined, zipFile?: ZipFile | undefined) => {
           if (zipFile) {
             resolve(zipFile);
@@ -179,7 +182,7 @@ export class ZipUnpacker extends Unpacker {
     });
   }
 
-  private static openZipEntryDataStream(entry: Entry, zipFile: ZipFile): Promise<Readable> {
+  private static openZipEntryDataStream(entry: ZipEntry, zipFile: ZipFile): Promise<Readable> {
     return new Promise((resolve, reject) => {
       zipFile.openReadStream(entry, (err?: Error, stream?: Readable | undefined) => {
         if (stream) {
@@ -191,7 +194,7 @@ export class ZipUnpacker extends Unpacker {
     });
   }
 
-  async maybeUnpackEntry(entry: Entry, common: UnpackEntryCommon): Promise<void> {
+  async maybeUnpackEntry(entry: ZipEntry, common: UnpackEntryCommon): Promise<void> {
     const path = entry.fileName;
     let extractPath = !path || path.endsWith('/') ? undefined : path;
 
@@ -229,7 +232,7 @@ export class ZipUnpacker extends Unpacker {
       const progressStream = new ProgressTrackingStream(0, entry.uncompressedSize);
       progressStream.on('progress', (filePercentage) =>
         this.progress(fileEntry, filePercentage, thisFilePercentageScaler.scalePosition(filePercentage)));
-      const writeStream = await destination.writeStream({mtime:entry.getLastModDate()});
+      const writeStream = await destination.writeStream({ mtime: entry.getLastModDate() });
       await pipeline(readStream, progressStream, writeStream);
     }
 
@@ -242,9 +245,9 @@ export class ZipUnpacker extends Unpacker {
     const openedFile = await archiveUri.openFile();
     const adapter = new YauzlRandomAccessAdapter(openedFile);
     const zipFile = await ZipUnpacker.openFromRandomAccessReader(adapter, await openedFile.size());
-    const common = {zipFile, archiveUri, outputUri, options, filePercentageScaler: new PercentageScaler(0, zipFile.entryCount)};
+    const common = { zipFile, archiveUri, outputUri, options, filePercentageScaler: new PercentageScaler(0, zipFile.entryCount) };
     return new Promise<void>((resolve, reject) => {
-      zipFile.on('entry', (entry: Entry) =>
+      zipFile.on('entry', (entry: ZipEntry) =>
         this.maybeUnpackEntry(entry, common)
           .then(() => zipFile.readEntry(), reject));
       zipFile.on('error', reject);
@@ -254,5 +257,91 @@ export class ZipUnpacker extends Unpacker {
       });
       zipFile.readEntry();
     });
+  }
+}
+
+abstract class BasicTarUnpacker extends Unpacker {
+  constructor(protected readonly session: Session) {
+    super();
+  }
+
+  async maybeUnpackEntry(archiveUri: Uri, outputUri: Uri, options: OutputOptions, archiveProgress: ProgressTrackingStream, header: Headers, stream: Readable) : Promise<void> {
+    const streamPromise = new Promise((accept, reject) => {
+      stream.on('end', accept);
+      stream.on('error', reject);
+    });
+
+    try {
+      if (header?.type !== 'file') {
+        this.session.channels.debug(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
+        return;
+      }
+
+      const extractPath = Unpacker.implementOutputOptions(header.name, options);
+      let destination: Uri | undefined = undefined;
+      if (extractPath) {
+        destination = outputUri.join(extractPath);
+      }
+
+      const fileEntry = {
+        archiveUri: archiveUri,
+        destination: destination,
+        path: header.name,
+        extractPath: extractPath
+      };
+
+      this.session.channels.debug(`unpacking TAR ${archiveUri}/${header.name} => ${destination}`);
+      this.progress(fileEntry, 0, archiveProgress.currentPercentage);
+      if (destination && header.size) {
+        const parentDirectory = destination.parent();
+        await parentDirectory.createDirectory();
+        const fileProgress = new ProgressTrackingStream(0, header.size);
+        fileProgress.on('progress', (filePercentage) => this.progress(fileEntry, filePercentage, archiveProgress.currentPercentage));
+        const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
+        await pipeline(stream, fileProgress, writeStream);
+      }
+
+      this.progress(fileEntry, 100, archiveProgress.currentPercentage);
+      this.unpacked(fileEntry);
+    } finally {
+      stream.resume();
+      await streamPromise;
+    }
+  }
+
+  protected async unpackTar(archiveUri: Uri, outputUri: Uri, options: OutputOptions, decompressor?: Transform): Promise<void> {
+    const archiveSize = await archiveUri.size();
+    const archiveFileStream = await archiveUri.readStream(0, archiveSize);
+    const archiveProgress = new ProgressTrackingStream(0, archiveSize);
+    const tarExtractor = tarExtract();
+    tarExtractor.on('entry', (header, stream, next) =>
+      this.maybeUnpackEntry(archiveUri, outputUri, options, archiveProgress, header, stream)
+        .then(next, (err) => (<any>next)(err)));
+    if (decompressor) {
+      await pipeline(archiveFileStream, archiveProgress, decompressor, tarExtractor);
+    } else {
+      await pipeline(archiveFileStream, archiveProgress, tarExtractor);
+    }
+  }
+}
+
+export class TarUnpacker extends BasicTarUnpacker {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+    this.session.channels.debug(`unpacking TAR ${archiveUri} => ${outputUri}`);
+    return this.unpackTar(archiveUri, outputUri, options);
+  }
+}
+
+export class TarGzUnpacker extends BasicTarUnpacker {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+    this.session.channels.debug(`unpacking TAR.GZ ${archiveUri} => ${outputUri}`);
+    return this.unpackTar(archiveUri, outputUri, options, createGunzip());
+  }
+}
+
+export class TarBzUnpacker extends BasicTarUnpacker {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+    this.session.channels.debug(`unpacking TAR.BZ2 ${archiveUri} => ${outputUri}`);
+    return this.unpackTar(archiveUri, outputUri, options, bz2());
   }
 }

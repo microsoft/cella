@@ -37,6 +37,9 @@ class LocalFileStats implements FileStat {
   get size() {
     return this.stats.size;
   }
+  get mode() {
+    return this.stats.mode;
+  }
 }
 
 
