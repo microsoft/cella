@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 /** @internal */
@@ -12,8 +12,11 @@ export function isPrimitive(value: any): value is (string | number | boolean) {
   }
   return false;
 }
+<<<<<<< HEAD
 
 /** @internal */
 export function isIterable<T>(source: any): source is Iterable<T> {
   return !!source && typeof (source) !== 'string' && !!source[Symbol.iterator];
 }
+=======
+>>>>>>> f221c2db894875ce656e9b932045b08bdb2355a1

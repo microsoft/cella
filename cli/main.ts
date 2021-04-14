@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /*---------------------------------------------------------------------------------------------
- *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
@@ -27,7 +27,7 @@ setLocale(commandline.lang, `${__dirname}/i18n/`);
 function header() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   console.log(`${green.bold(`${cli} command line utility`)} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
-  console.log(i`(C) Copyright 2021 Microsoft Corporation`);
+  console.log(i`(C) Copyright Microsoft Corporation`);
   console.log('https://github.com/microsoft/cella');
   console.log('');
 }
@@ -95,4 +95,3 @@ async function main() {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 main();
-
