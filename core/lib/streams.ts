@@ -37,4 +37,8 @@ export class ProgressTrackingStream extends Transform implements ProgressTrackin
     this.emit('progress', this.scaler.scalePosition(this.currentPosition), this.currentPosition, this.stopwatch.total);
     return callback(null, chunk);
   }
+
+  get currentPercentage() {
+    return this.scaler.scalePosition(this.currentPosition);
+  }
 }
