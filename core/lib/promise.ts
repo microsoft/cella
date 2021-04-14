@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { ManualPromise } from './manual-promise';
+
 /** a precrafted failed Promise */
 const waiting = Promise.reject(0xDEFACED);
 waiting.catch(() => { /** */ });
@@ -70,3 +72,81 @@ export async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value:
   // give them the first to suceed
   return first;
 }
+
+
+export class Queue {
+  private total = 0;
+  private active = 0;
+  private tail: Promise<any> | undefined;
+  private whenZero: ManualPromise<number> | undefined;
+
+  constructor(private maxConcurency = 8) {
+  }
+
+  get count() {
+    return this.total;
+  }
+
+  get done() {
+    return this.zero();
+  }
+
+  /** Will block until the queue hits the zero mark */
+  private async zero(): Promise<number> {
+    if (this.active) {
+      this.whenZero = this.whenZero || new ManualPromise<number>();
+      await this.whenZero;
+    }
+    this.whenZero = undefined;
+    return this.total;
+  }
+
+  /**
+   * Queues up actions for throttling the number of concurrent async tasks running at a given time.
+   *
+   * If the process has reached max concurrency, the action is deferred until the last item
+   * The last item
+   * @param action
+   */
+  enqueue<T>(action: () => Promise<T>): Promise<T> {
+    this.active++;
+    this.total++;
+
+    if (this.active < this.maxConcurency) {
+      this.tail = action();
+      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
+      return this.tail;
+    }
+
+    const result = new ManualPromise<T>();
+    this.tail!.finally(() => {
+      this.tail = action().then(r => { result.resolve(r); }, e => result.reject(e));
+      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
+    });
+
+    return result;
+  }
+
+  enqueueMany<S, T>(array: Array<S>, fn: (v: S) => Promise<T>) {
+    for (const each of array) {
+      this.active++;
+      this.total++;
+
+      if (this.active < this.maxConcurency) {
+        this.tail = fn(each);
+        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
+        continue;
+      }
+
+      const result = new ManualPromise<T>();
+      this.tail!.finally(() => {
+        this.tail = fn(each).then(r => { result.resolve(r); }, e => result.reject(e));
+        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
+      });
+
+      continue;
+    }
+    return this;
+  }
+}
+

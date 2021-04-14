@@ -7,7 +7,7 @@ import { strict } from 'assert';
 import { Range, SemVer } from 'semver';
 import BTree from 'sorted-btree';
 import { intersect } from './intersect';
-import { Dictionary, items, keys } from './linq';
+import { Dictionary, items, keys, ManyMap } from './linq';
 import { isIterable } from './util/checks';
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -76,9 +76,9 @@ export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>
   /** inserts an object into the index */
   insert(content: TGraph, target: string) {
     const n = this.indexOfTargets.push(target) - 1;
-    let key = '';
+    const start = process.uptime() * 1000;
     for (const indexKey of this.index.mapOfKeyObjects.values()) {
-      key += indexKey.insert(content, n);
+      indexKey.insert(content, n);
     }
   }
 
@@ -397,14 +397,10 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
 
   doneInsertion() {
     // go thru each of the values, find short name for each.
-    const ids = new Map<string, Array<[string, Set<number>]>>();
+    const ids = new ManyMap<string, [string, Set<number>]>();
 
     for (const idAndIndexNumber of this.values.entries()) {
-      const sn = shortName(idAndIndexNumber[0], 1);
-      if (!ids.has(sn)) {
-        ids.set(sn, []);
-      }
-      ids.get(sn)!.push(idAndIndexNumber);
+      ids.push(shortName(idAndIndexNumber[0], 1), idAndIndexNumber);
     }
 
     let n = 1;
@@ -420,11 +416,7 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
           this.idShortName.set(artifacts[0][0], snKey);
         } else {
           for (const each of artifacts) {
-            const sn = shortName(each[0], n);
-            if (!ids.has(sn)) {
-              ids.set(sn, []);
-            }
-            ids.get(sn)!.push(each);
+            ids.push(shortName(each[0], n), each);
           }
         }
       }

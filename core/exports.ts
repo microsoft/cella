@@ -1,3 +1,6 @@
+import { ManyMap } from './lib/linq';
+import { Queue } from './lib/promise';
+
 /*---------------------------------------------------------------------------------------------
  *  Copyright 2021 (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
@@ -78,12 +81,39 @@ declare global {
       */
     remove(start: number, deleteCount?: number): Array<T>;
 
+    /**
+     * Iterates on a collection to create a Queue that will throttle
+     * the async operation 'fn' to a reasonable degree of parallelism.
+     * @param fn the async Fn to call on each
+     */
+    forEachAsync<S>(fn: (v: T) => Promise<S>): Queue;
+
     selectMany<U>(callbackfn: (value: T, index: number, array: Array<T>) => U): Array<U extends ReadonlyArray<infer InnerArr> ? InnerArr : U>;
     groupByMap<TKey, TValue>(keySelector: (each: T) => TKey, selector: (each: T) => TValue): Map<TKey, Array<TValue>>;
     groupBy<TValue>(keySelector: (each: T) => string, selector: (each: T) => TValue): { [s: string]: Array<TValue> };
     readonly last: T | undefined;
     readonly first: T | undefined;
   }
+}
+
+declare global {
+  interface Map<K, V> {
+    getOrDefault(key: K, defaultValue: V): V;
+  }
+}
+
+if (!Map.prototype.getOrDefault) {
+  Object.defineProperties(Map.prototype, {
+    getOrDefault: {
+      value: function (key: any, defaultValue: any) {
+        let v = this.get(key);
+        if (!v) {
+          this.set(key, v = defaultValue);
+        }
+        return v;
+      }
+    }
+  });
 }
 
 if (!Array.prototype.insert) {
@@ -99,13 +129,9 @@ if (!Array.prototype.insert) {
     selectMany: { value: Array.prototype.flatMap },
     groupByMap: {
       value: function (keySelector: (each: any) => any, selector: (each: any) => any) {
-        const result = new Map<any, Array<any>>();
+        const result = new ManyMap<any, any>();
         for (const each of this) {
-          const key = keySelector(each);
-          if (!result.has(key)) {
-            result.set(key, new Array<any>());
-          }
-          result.get(key)!.push(selector(each));
+          result.push(keySelector(each), selector(each));
         }
         return result;
       }
@@ -129,9 +155,11 @@ if (!Array.prototype.insert) {
       get() {
         return this[0];
       }
+    },
+    forEachAsync: {
+      value: function (fn: (i: any) => Promise<any>) {
+        return new Queue().enqueueMany(this, fn);
+      }
     }
-
-
   });
-
 }

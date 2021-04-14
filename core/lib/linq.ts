@@ -239,15 +239,10 @@ function toMap<TElement, TValue, TKey>(this: Iterable<TElement>, keySelector: (e
   return result;
 }
 
-
 function groupBy<TElement, TValue, TKey>(this: Iterable<TElement>, keySelector: (each: TElement) => TKey, selector: (each: TElement) => TValue): Map<TKey, TValue[]> {
-  const result = new Map<TKey, TValue[]>();
+  const result = new ManyMap<TKey, TValue>();
   for (const each of this) {
-    const key = keySelector(each);
-    if (!result.has(key)) {
-      result.set(key, new Array<TValue>())
-    }
-    result.get(key)?.push(selector(each));
+    result.push(keySelector(each), selector(each));
   }
   return result;
 }
@@ -413,4 +408,16 @@ function duplicates<T>(this: Iterable<T>, selector?: (each: T) => any): Iterable
       }
     }
   }.bind(this)());
+}
+
+/** A Map of Key: Array<Value>  */
+export class ManyMap<K, V> extends Map<K, Array<V>> {
+  /**
+   * Push the value into the array at key
+   * @param key the unique key in the map
+   * @param value the value to push to the collection at 'key'
+   */
+  push(key: K, value: V) {
+    this.getOrDefault(key, []).push(value);
+  }
 }

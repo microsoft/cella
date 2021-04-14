@@ -260,7 +260,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param destination The destination location.
    * @param options Defines if existing files should be overwritten.
    */
-  abstract copy(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<void>;
+  abstract copy(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<number>;
 
   /** checks to see if the target exists */
   async exists(uri: Uri) {

@@ -79,7 +79,7 @@ describe('Repository Tests', () => {
 
   before(async () => {
     // creates a bunch of artifacts, with multiple versions
-    const pkgs = 100;
+    const pkgs = 1000;
 
     for (let i = 0; i < pkgs; i++) {
       const versions = rnd(1, 5);
@@ -93,7 +93,6 @@ describe('Repository Tests', () => {
         await target.writeFile(Buffer.from(serialize(p), 'utf8'));
       }
     }
-
     // now copy the files from the test folder
     await local.fs.copy(local.rootFolderUri.join('resources', 'repo'), local.session.repo);
   });
@@ -113,12 +112,28 @@ describe('Repository Tests', () => {
     strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one.');
   });
 
-  it('Create index from some data', async () => {
+  it('Loads a bunch items', async () => {
     const repository = new Repository(local.session);
     await repository.regenerate();
+
+    const all = await repository.open(repository.where.items);
+    const items = [...all.values()].flat();
+    strict.equal(items.length, repository.count, 'Should have loaded everything.');
+
+  });
+
+  it('Create index from some data', async () => {
+    const start = process.uptime() * 1000;
+
+    const repository = new Repository(local.session);
+    local.session.channels.on('debug', (d, x, m) => console.log(`${m}msec : ${d}`));
+    await repository.regenerate();
     await repository.save();
+
     const arm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(arm.length, 3, 'should be 3 results');
+
+    local.session.channels.on('debug', (t) => console.log(t));
 
     const map = await repository.open(arm);
     strict.equal(map.size, 1, 'Should have one pkg id');

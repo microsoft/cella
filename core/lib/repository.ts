@@ -10,8 +10,8 @@ import { http } from './acquire';
 import { ZipUnpacker } from './archive';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
-import { linq } from './linq';
 import { MetadataFile, parseConfiguration } from './metadata-format';
+import { Queue } from './promise';
 import { Session } from './session';
 import { Uri } from './uri';
 import { isYAML, serialize } from './util/yaml';
@@ -19,7 +19,7 @@ import { isYAML, serialize } from './util/yaml';
 class RepoIndex extends Index<MetadataFile, RepoIndex> {
   id = new IdentityKey(this, (i) => i.info.id)
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
-  description = new StringKey(this, (i) => i.info.description);
+  // description = new StringKey(this, (i) => i.info.description);
   summary = new StringKey(this, (i) => i.info.summary);
 }
 
@@ -39,31 +39,37 @@ export class Repository {
   }
 
   async regenerate(): Promise<void> {
-    const $ = this;
+    const repo = this;
+    const q = new Queue();
+    async function processFile(uri: Uri) {
+
+      const content = repo.session.utf8(await uri.readFile());
+      if (content.startsWith(MAGIC_STRING)) {
+        return;
+      }
+      try {
+        const amf = parseConfiguration(uri.fsPath, content);
+        repo.catalog.insert(amf, repo.session.repo.relative(uri));
+      } catch (e) {
+        repo.session.channels.warning(`skipping invalid metadata file ${uri.fsPath}`);
+      }
+    }
+
     async function process(folder: Uri) {
-      const processing = new Array<Promise<void>>();
-      for (const each of await folder.readDirectory()) {
-        if (each[1] & FileType.Directory) {
-          processing.push(process(each[0]));
+      for (const [entry, type] of await folder.readDirectory()) {
+        if (type & FileType.Directory) {
+          await process(entry);
           continue;
         }
-        if (each[1] & FileType.File && isYAML(each[0].path)) {
-          const content = $.session.utf8(await each[0].readFile());
-          if (content.startsWith(MAGIC_STRING)) {
-            continue;
-          }
-          $.session.channels.debug(`index processing ${each[0].fsPath}`);
-          try {
-            const amf = parseConfiguration(each[0].fsPath, content);
-            $.catalog.insert(amf, $.session.repo.relative(each[0]));
-          } catch (e) {
-            $.session.channels.warning(`skipping invalid metadata file ${each[0].fsPath}`);
-          }
+
+        if (type & FileType.File && isYAML(entry.path)) {
+          void q.enqueue(() => processFile(entry));
         }
       }
-      await Promise.all(processing);
     }
+
     await process(this.session.repo);
+    await q.done;
 
     // we're done inserting values
     this.catalog.doneInsertion();
@@ -75,7 +81,7 @@ export class Repository {
   }
 
   async save(): Promise<void> {
-    await this.indexYaml.writeFile(Buffer.from(`${MAGIC_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1').replace(/\s*(\d*,)\n/g, '$1')}`)); //.replace(/,\s+(\d)/g, ', $1').replace(/,\s+/g, ' ').replace(/:\n\s*\[/g, ': [').replace(/\n\s*\]/g, ']')
+    await this.indexYaml.writeFile(Buffer.from(`${MAGIC_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
   }
 
   get where(): RepoIndex {
@@ -91,52 +97,20 @@ export class Repository {
   }
 
   async open(manifests: Array<string>) {
-    // how many to do concurrently
-    const batch = 10;
+    let metadataFiles = new Array<MetadataFile>();
 
-    const metadataFiles = new Array<MetadataFile>();
+    // load them up async, but throttled with the queue
+    await manifests.forEachAsync(async (manifest) => {
+      const manifestUri = this.session.repo.join(manifest);
+      const content = this.session.utf8(await manifestUri.readFile());
+      metadataFiles.push(parseConfiguration(manifestUri.fsPath, content));
+    }).done;
 
-    for (let i = 0; i < manifests.length; i += batch) {
-      const group = manifests.slice(i, Math.min(manifests.length, i + batch));
+    // sort the contents by version before grouping.
+    metadataFiles = metadataFiles.sort((a, b) => compare(a.info.version, b.info.version));
 
-      // parallel so we don't have a long delay loading
-      await Promise.all(group.map(async manifest => {
-        const manifestUri = this.session.repo.join(manifest);
-        const content = this.session.utf8(await manifestUri.readFile());
-
-        insertManifest(metadataFiles, parseConfiguration(manifestUri.fsPath, content));
-      }));
-    }
     // return a map.
-    return linq.values(metadataFiles).groupBy(m => m.info.id, metadata => ({ shortName: this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id, metadata }));
+    return metadataFiles.groupByMap(m => m.info.id, metadata => ({ shortName: this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id, metadata }));
   }
 }
 
-function insertManifest(sortedArray: Array<MetadataFile>, element: MetadataFile, lowerBound = 0, upperBound = sortedArray.length - 1): Array<MetadataFile> {
-  const band = upperBound - lowerBound;
-  switch (band) {
-    case -1:
-      sortedArray.push(element);
-      return sortedArray;
-
-    case 0:
-    case 1:
-      if (compare(element.info.version, sortedArray[lowerBound].info.version) < 0) {
-        sortedArray.splice(lowerBound, 0, element);
-        return sortedArray;
-      }
-
-      if (compare(element.info.version, sortedArray[upperBound].info.version) > 0) {
-        sortedArray.splice(upperBound + 1, 0, element);
-        return sortedArray;
-      }
-
-      sortedArray.splice(upperBound, 0, element);
-      return sortedArray;
-  }
-  const halfway = lowerBound + Math.floor(band / 2);
-
-  return compare(element.info.version, sortedArray[halfway].info.version) < 0
-    ? insertManifest(sortedArray, element, lowerBound, halfway)
-    : insertManifest(sortedArray, element, halfway, upperBound);
-}
