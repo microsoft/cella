@@ -19,7 +19,6 @@ import { isYAML, serialize } from './util/yaml';
 class RepoIndex extends Index<MetadataFile, RepoIndex> {
   id = new IdentityKey(this, (i) => i.info.id)
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
-  // description = new StringKey(this, (i) => i.info.description);
   summary = new StringKey(this, (i) => i.info.summary);
 }
 

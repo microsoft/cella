@@ -79,7 +79,7 @@ describe('Repository Tests', () => {
 
   before(async () => {
     // creates a bunch of artifacts, with multiple versions
-    const pkgs = 1000;
+    const pkgs = 100;
 
     for (let i = 0; i < pkgs; i++) {
       const versions = rnd(1, 5);

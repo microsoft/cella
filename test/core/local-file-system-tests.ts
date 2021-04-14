@@ -202,11 +202,11 @@ describe('LocalFileSystemTests', () => {
     strict.ok(!(await fs.isFile(outputFile)), `the file ${outputFile.fsPath} should not exist`);
   });
 
-  it('copy ', async () => {
+  it('can copy files', async () => {
     // now copy the files from the test folder
 
     const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
-    strict.ok(files > 7000, 'there should be at least 6k files copied.');
+    strict.ok(files > 7000, 'there should be at least 7k files copied.');
 
   });
 });
