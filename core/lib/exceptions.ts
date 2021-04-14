@@ -13,3 +13,10 @@ export class RemoteFileUnavailable extends Error {
     super();
   }
 }
+
+export class TargetFileCollision extends Error {
+  constructor(public uri: Uri, message: string) {
+    super(message);
+  }
+}
+

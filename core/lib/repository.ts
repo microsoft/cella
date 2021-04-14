@@ -22,7 +22,7 @@ class RepoIndex extends Index<MetadataFile, RepoIndex> {
   summary = new StringKey(this, (i) => i.info.summary);
 }
 
-const MAGIC_STRING = '# MANIFEST-INDEX';
+const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
 export class Repository {
 
@@ -43,7 +43,8 @@ export class Repository {
     async function processFile(uri: Uri) {
 
       const content = repo.session.utf8(await uri.readFile());
-      if (content.startsWith(MAGIC_STRING)) {
+      // if you see this, it's an index, and we can skip even trying.
+      if (content.startsWith(THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING)) {
         return;
       }
       try {
@@ -80,7 +81,7 @@ export class Repository {
   }
 
   async save(): Promise<void> {
-    await this.indexYaml.writeFile(Buffer.from(`${MAGIC_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
+    await this.indexYaml.writeFile(Buffer.from(`${THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
   }
 
   get where(): RepoIndex {

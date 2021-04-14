@@ -11,11 +11,11 @@ import { basename, join } from 'path';
 import { Readable, Writable } from 'stream';
 import { promisify } from 'util';
 import { delay } from './events';
+import { TargetFileCollision } from './exceptions';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { i } from './i18n';
 import { Queue } from './promise';
 import { Uri } from './uri';
-
 
 function getFileType(stats: Stats) {
   return FileType.Unknown |
@@ -143,7 +143,9 @@ export class LocalFileSystem extends FileSystem {
     }
 
     // if it's a folder, then the target has to be a folder, or not exist
-    strict.ok(!targetIsFile, `Copy failed: source (${source.fsPath}) is a folder, target (${target}) is a file.`);
+    if (!targetIsFile) {
+      throw new TargetFileCollision(target, i`Copy failed: source (${source.fsPath}) is a folder, target (${target.fsPath}) is a file.`);
+    }
 
     // make sure the target folder exists
     await target.createDirectory();
