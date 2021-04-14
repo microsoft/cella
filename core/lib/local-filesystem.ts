@@ -143,7 +143,7 @@ export class LocalFileSystem extends FileSystem {
     }
 
     // if it's a folder, then the target has to be a folder, or not exist
-    if (!targetIsFile) {
+    if (targetIsFile) {
       throw new TargetFileCollision(target, i`Copy failed: source (${source.fsPath}) is a folder, target (${target.fsPath}) is a file.`);
     }
 
