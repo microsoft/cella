@@ -5,7 +5,6 @@
 
 import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { platform } from 'os';
 import { SuiteLocal } from './SuiteLocal';
 
 const isWindows = process.platform === 'win32';
@@ -136,7 +135,7 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example');
     await unpacker.unpack(zipUri, targetUri, {});
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
-    if (platform() === 'win32') {
+    if (isWindows) {
       strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T16:31:14.000Z'));
     }
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
@@ -317,9 +316,11 @@ describe('ZipUnpacker', () => {
   });
 });
 
-async function checkExtractedTar(targetUri: Uri) : Promise<void> {
+async function checkExtractedTar(targetUri: Uri): Promise<void> {
   strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
-  strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T09:31:14.000Z'));
+  if (isWindows) {
+    strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T09:31:14.000Z'));
+  }
   strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
   strict.equal((await targetUri.readFile('executable.sh')).toString(), '#/bin/sh\necho "Hello world!"\n\n');
   if (!isWindows) {
@@ -342,7 +343,7 @@ const transformedTarUnpackOptions = {
   transform: ['s/a\\.txt/ehh\\.txt/']
 };
 
-async function checkExtractedTransformedTar(targetUri: Uri) : Promise<void> {
+async function checkExtractedTransformedTar(targetUri: Uri): Promise<void> {
   strict.equal((await targetUri.readFile('ehh.txt')).toString(), 'The contents of a.txt.\n');
   strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
   strict.equal((await targetUri.readFile('only-directory.txt')).toString(),
