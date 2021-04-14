@@ -370,7 +370,7 @@ export class StringKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
       return 1;
     }
     if (b) {
-      return 1;
+      return -1;
     }
     return 0;
   }
