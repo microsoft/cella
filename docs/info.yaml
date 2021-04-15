@@ -66,6 +66,7 @@ sources:
 requires:                               # artifacts required to be installed to fulfill this
   compilers/microsoft/msvc: 1.2.3       # requires is one or more pkg-identity: version-range keypairs
   tools/cmake: ~3.0.0                   # a semver version range (this means 3.0.*)
+  nxp:some/package/from/there: 2.3.4    # a package from an alternative source
 
 see-also:                               # you can think of 'see-also' as a set of  'optional' packages 
   tools/mylinker: 1.0.0

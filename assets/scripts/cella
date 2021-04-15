@@ -408,13 +408,13 @@ cella() {
 
   if [ ! -f $CELLA_NODE ]; then
     echo The installation of nodejs $CELLA_NODE that cella is using is missing
-    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh)'
+    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh -L)'
     echo or fix your nodejs installation.
   fi
 
   if [ ! -d $CELLA_MAIN ]; then
     echo The installation of cella is corrupted. $CELLA_MAIN
-    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh)'
+    echo You may need to reacquire cella with '. <(curl aka.ms/cella.sh -L)'
   fi
 
   # set the response file

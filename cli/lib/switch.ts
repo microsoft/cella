@@ -14,6 +14,10 @@ export abstract class Switch implements Help {
     command.switches.push(this);
   }
 
+  get values() {
+    return this.command.commandLine.switches[this.switch] || [];
+  }
+
   get active(): boolean {
     return !!this.command.commandLine.switches[this.switch];
   }

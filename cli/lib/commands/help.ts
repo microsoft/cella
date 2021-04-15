@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
-import { Argument } from './argument';
-import { Command } from './command';
-import { blank, cli } from './constants';
-import { Debug } from './debug';
-import { error, indent, log } from './styling';
+import { Argument } from '../argument';
+import { Command } from '../command';
+import { blank, cli } from '../constants';
+import { error, indent, log } from '../styling';
+import { Debug } from '../switches/debug';
 
 class CommandName extends Argument {
   argument = 'command';

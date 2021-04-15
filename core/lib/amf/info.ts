@@ -5,10 +5,10 @@
 
 import { fail } from 'assert';
 import { parse as parseSemver } from 'semver';
-import { YAMLMap } from 'yaml/types';
+import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Info, ValidationError } from '../metadata-format';
-import { column, createNode, line } from '../util/yaml';
+import { createNode } from '../util/yaml';
 
 /** @internal */
 export class InfoNode implements Info {
@@ -17,7 +17,7 @@ export class InfoNode implements Info {
   }
 
   get id(): string {
-    return this.node.get('id');
+    return <string>this.node.get('id');
   }
 
   set id(value: string) {
@@ -25,7 +25,7 @@ export class InfoNode implements Info {
   }
 
   get version(): string {
-    return this.node.get('version');
+    return <string>this.node.get('version');
   }
 
   set version(value: string) {
@@ -34,7 +34,7 @@ export class InfoNode implements Info {
   }
 
   get summary(): string | undefined {
-    return this.node.get('summary') || undefined;
+    return <string>this.node.get('summary') || undefined;
   }
 
   set summary(value: string | undefined) {
@@ -42,33 +42,29 @@ export class InfoNode implements Info {
   }
 
   get description(): string | undefined {
-    return this.node.get('description') || undefined;
+    return <string>this.node.get('description') || undefined;
   }
   set description(value: string | undefined) {
     this.node.set('description', value);
   }
 
-
-  protected get line(): number {
-    return line(this.node);
-  }
-  protected get column(): number {
-    return column(this.node);
+  protected get range(): [number, number] {
+    return <any>this.node.range!;
   }
 
   *validate(): Iterable<ValidationError> {
 
     if (!(this.node instanceof YAMLMap)) {
-      yield { message: i`Incorrect type for '${'info'}' - should be an object`, line: this.line, column: this.column, category: ErrorKind.IncorrectType };
+      yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this.range, category: ErrorKind.IncorrectType };
       return; // stop processing in this block
     }
 
     if (!this.node.has('id')) {
-      yield { message: i`Missing identity '${'info.id'}'`, line: this.line, column: this.column, category: ErrorKind.FieldMissing };
+      yield { message: i`Missing identity '${'info.id'}'`, range: this.range, category: ErrorKind.FieldMissing };
     }
 
     if (!this.node.has('version')) {
-      yield { message: i`Missing version '${'info.version'}'`, line: this.line, column: this.column, category: ErrorKind.FieldMissing };
+      yield { message: i`Missing version '${'info.version'}'`, range: this.range, category: ErrorKind.FieldMissing };
     }
   }
 

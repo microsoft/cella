@@ -4,14 +4,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strict } from 'assert';
+import { COPYFILE_EXCL } from 'constants';
 import { close, createReadStream, createWriteStream, futimes, open as openFd, Stats } from 'fs';
-import { FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
+import { basename, join } from 'path';
 import { Readable, Writable } from 'stream';
 import { promisify } from 'util';
 import { delay } from './events';
+import { TargetFileCollision } from './exceptions';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { i } from './i18n';
+import { Queue } from './promise';
 import { Uri } from './uri';
 
 function getFileType(stats: Stats) {
@@ -59,11 +62,14 @@ export class LocalFileSystem extends FileSystem {
     let retval!: Promise<Array<[Uri, FileType]>>;
     try {
       const folder = uri.fsPath;
-      const items = (await readdir(folder)).map(async each => {
-        const path = uri.join(each);
-        return <[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(path.fsPath))];
-      });
-      return retval = Promise.all(items);
+      const retval = new Array<[Uri, FileType]>();
+
+      // use forEachAsync instead so we can throttle this appropriately.
+      await (await readdir(folder)).forEachAsync(async each => {
+        retval.push(<[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(uri.join(each).fsPath))]);
+      }).done;
+
+      return retval;
     } finally {
       // log that.
       this.directoryRead(uri, retval);
@@ -84,8 +90,9 @@ export class LocalFileSystem extends FileSystem {
     }
   }
 
-  writeFile(uri: Uri, content: Uint8Array): Promise<void> {
+  async writeFile(uri: Uri, content: Uint8Array): Promise<void> {
     try {
+      await uri.parent().createDirectory();
       return writeFile(uri.fsPath, content);
     } finally {
       this.write(uri, content);
@@ -114,13 +121,54 @@ export class LocalFileSystem extends FileSystem {
     }
   }
 
-  async copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
-    // if (source.fileSystem === target.fileSystem) {
-    //  options = options || {};
-    //  return await copyFile(source.fsPath, target.fsPath, options.overwrite ? 0 : constants.COPYFILE_EXCL);
-    // }
+  async copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<number> {
+    const { type } = await source.stat();
+    const opts = <any>(options || {});
+    const overwrite = opts.overwrite ? 0 : COPYFILE_EXCL;
 
-    throw new Error('cross filesystem copynot implemented yet.');
+    if (type & FileType.File) {
+      // make sure the target folder is there
+      await target.parent().createDirectory();
+      await copyFile(source.fsPath, target.fsPath, overwrite);
+      return 1;
+    }
+
+    strict.ok(type & FileType.Directory, 'Unknown file type should never happen during copy.');
+
+    let targetIsFile = false;
+    try {
+      targetIsFile = !!((await target.stat()).type & FileType.File);
+    } catch {
+      // not a file
+    }
+
+    // if it's a folder, then the target has to be a folder, or not exist
+    if (targetIsFile) {
+      throw new TargetFileCollision(target, i`Copy failed: source (${source.fsPath}) is a folder, target (${target.fsPath}) is a file.`);
+    }
+
+    // make sure the target folder exists
+    await target.createDirectory();
+
+    // only the initial call gets to wait for everybody to finish.
+    let queue: Queue | undefined;
+
+    // track the count, starting at the base folder.
+    if (opts.queue === undefined) {
+      queue = opts.queue = new Queue();
+    }
+
+    // loop thru the contents of this folder
+    for (const [sourceUri, fileType] of await source.readDirectory()) {
+      const targetUri = target.join(basename(sourceUri.path));
+      if (fileType & FileType.Directory) {
+        await this.copy(sourceUri, targetUri, opts);
+        continue;
+      }
+      // queue up the copy file
+      void opts.queue.enqueue(() => copyFile(sourceUri.fsPath, targetUri.fsPath, overwrite));
+    }
+    return queue ? queue.done : -1 /* innerloop */;
   }
 
   async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {

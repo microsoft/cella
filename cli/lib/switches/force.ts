@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
-import { Switch } from './switch';
+import { Switch } from '../switch';
 
 export class Force extends Switch {
   switch = 'force';

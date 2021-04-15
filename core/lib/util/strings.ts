@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Scalar, YAMLMap } from 'yaml/types';
+import { Scalar, YAMLMap } from 'yaml';
 import { isPrimitive } from './checks';
 import { createNode } from './yaml';
 
@@ -12,12 +12,12 @@ export class Strings {
   #property: string;
 
   private get node(): YAMLMap {
-    return this.#parent.get(this.#property);
+    return <YAMLMap>this.#parent.get(this.#property);
   }
 
-  private get unboxed() {
+  private get unboxed(): Array<string> {
     const n = this.node;
-    return n ? isPrimitive(n) ? [n.toString()] : n.items.map(each => each.value) : [];
+    return n ? isPrimitive(n) ? [n.toString()] : n.items.map(each => <string>each.value) : [];
   }
 
   constructor(parent: YAMLMap, property: string) {
@@ -76,14 +76,14 @@ export class Strings {
   reduce<U>(callbackfn: (previousValue: U, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => U, initialValue: U): U;
   reduce(callbackfn: (previousValue: string, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => string): string;
   reduce(callbackfn: (previousValue: string, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => string, initialValue?: string): string {
-    return this.unboxed.reduce(callbackfn, initialValue);
+    return this.unboxed.reduce(callbackfn, <string>initialValue);
   }
 
 
   reduceRight<U>(callbackfn: (previousValue: U, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => U, initialValue: U): U;
   reduceRight(callbackfn: (previousValue: string, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => string): string;
   reduceRight(callbackfn: (previousValue: string, currentValue: string, currentIndex: number, array: ReadonlyArray<string>) => string, initialValue?: string): string {
-    return this.unboxed.reduceRight(callbackfn, initialValue);
+    return this.unboxed.reduceRight(callbackfn, <string>initialValue);
   }
 
   find<S extends string>(predicate: (this: void, value: string, index: number, obj: ReadonlyArray<string>) => value is S, thisArg?: any): S | undefined;
@@ -120,7 +120,7 @@ export class Strings {
   }
 
   flat<A, D extends number = 1>(depth?: D): Array<FlatArray<A, D>> {
-    return this.unboxed.flat(depth);
+    return <any>this.unboxed.flat(depth);
   }
 
   add(value: string): void {

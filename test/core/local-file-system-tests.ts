@@ -5,10 +5,11 @@
 
 import { FileType, hash } from '@microsoft/cella.core';
 import { strict } from 'assert';
-import { Writable } from 'stream';
+import { pipeline as origPipeline, Writable } from 'stream';
+import { promisify } from 'util';
 import { SuiteLocal } from './SuiteLocal';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { pipeline } = require('stream/promises');
+
+const pipeline = promisify(origPipeline);
 
 function writeAsync(writable: Writable, chunk: Buffer): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -201,7 +202,12 @@ describe('LocalFileSystemTests', () => {
     strict.ok(!(await fs.isFile(outputFile)), `the file ${outputFile.fsPath} should not exist`);
   });
 
-  it('copy ', async () => {
-    // tbw
+  it('can copy files', async () => {
+    // now copy the files from the test folder
+
+    const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
+    console.log(files);
+    strict.ok(files > 6800, 'there should be at least 6800 files copied.');
+
   });
 });

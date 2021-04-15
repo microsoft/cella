@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { default as got, Headers, HTTPError, Response } from 'got';
+import { Credentials } from './credentials';
 import { anyWhere } from './promise';
 import { Uri } from './uri';
 
@@ -35,8 +36,9 @@ export async function resolveRedirect(location: Uri) {
  * @param location the target URL
  * @param headers any headers to put in the request.
  */
-export async function head(location: Uri, headers: Headers = {}): Promise<Response<string>> {
+export async function head(location: Uri, headers: Headers = {}, credentials?: Credentials): Promise<Response<string>> {
   try {
+    setCredentials(headers, location, credentials);
     // on a successful HEAD request, do nothing different
     return await got.head(location.toUrl(), { timeout: 15000, headers });
   } catch (E) {
@@ -76,9 +78,10 @@ export async function head(location: Uri, headers: Headers = {}): Promise<Respon
 }
 
 /** HTTP Get request, returns a buffer  */
-export function get(location: Uri, options?: { start?: number, end?: number }) {
+export function get(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, options?.end);
+  headers = setCredentials(headers, location, options?.credentials);
 
   return got.get(location.toUrl(), { headers });
 }
@@ -91,10 +94,28 @@ function setRange(headers: Headers | undefined, start?: number, end?: number) {
   return headers;
 }
 
+
+function setCredentials(headers: Headers | undefined, target: Uri, credentials?: Credentials) {
+  if (credentials) {
+    if (credentials.githubToken) {
+      switch (target.authority) {
+        case 'github.com':
+        case 'raw.githubusercontent.com':
+          headers = headers || {};
+          headers['Authorization'] = `token ${credentials.githubToken}`;
+          break;
+      }
+
+    }
+  }
+  return headers;
+}
+
 /** HTTP Get request, returns a stream  */
-export function getStream(location: Uri, options?: { start?: number, end?: number }) {
-  let headers: Headers | undefined = undefined;
+export function getStream(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
+  let headers: Headers | undefined = options?.headers;
   headers = setRange(headers, options?.start, undefined);
+  headers = setCredentials(headers, location, options?.credentials);
 
   return got.get(location.toUrl(), { isStream: true, retry: 3, headers });
 }
@@ -144,12 +165,12 @@ function digest(headers: Headers) {
 */
 export class RemoteFile {
   info: Array<Promise<Info>>;
-  constructor(protected locations: Array<Uri>) {
+  constructor(protected locations: Array<Uri>, options?: { credentials?: Credentials }) {
     this.info = locations.map(location => {
-      return head(location, {
+      return head(location, setCredentials({
         'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
-      }).then(data => {
+      }, location, options?.credentials)).then(data => {
         if (data.statusCode === 200) {
           const { hash, algorithm } = digest(data.headers);
           return {
@@ -160,14 +181,20 @@ export class RemoteFile {
             algorithm,
           };
         }
-        return {
-          location,
-          resumeable: false,
-          contentLength: -1,
-          failed: true
-        };
+        this.failures.push({
+          code: data.statusCode,
+          reason: `A non-ok status code was returned: ${data.statusMessage}`
+        });
+        throw new Error(`A non-ok status code was returned: ${data.statusCode}`);
+      }, err => {
+        this.failures.push({
+          code: err?.response?.statusCode,
+          reason: `A non-ok status code was returned: ${err?.response?.statusMessage}`
+        });
+        throw err;
       });
     });
+
 
     // lazy properties (which do not throw on errors.)
     this.availableLocation = Promise.any(this.info).then(success => success.location, fail => undefined);
@@ -176,7 +203,6 @@ export class RemoteFile {
     this.contentLength = anyWhere(this.info, each => !!each.contentLength).then(success => success.contentLength, fail => -2);
     this.hash = anyWhere(this.info, each => !!each.hash).then(success => success.hash, fail => undefined);
     this.algorithm = anyWhere(this.info, each => !!each.algorithm).then(success => success.algorithm, fail => undefined);
-
   }
 
   resumable: Promise<boolean>;
@@ -185,6 +211,7 @@ export class RemoteFile {
   algorithm: Promise<string | undefined>;
   availableLocation: Promise<Uri | undefined>;
   resumableLocation: Promise<Uri | undefined>;
+  failures = new Array<{ code: number, reason: string }>();
 }
 
 /**

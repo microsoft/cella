@@ -4,12 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail } from 'assert';
-import { Document } from 'yaml';
-import { YAMLMap } from 'yaml/types';
+import { Document, isMap, LineCounter, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { parseQuery } from '../mediaquery/media-query';
 import { ArtifactSource, Contact, Demands, DictionaryOf, ErrorKind, Info, Installer, MetadataFile, ProfileBase, Settings, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
-import { column, getOrCreateMap, getPair, isMap, line } from '../util/yaml';
+import { getOrCreateMap, getPair } from '../util/yaml';
 import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
@@ -22,7 +21,7 @@ import { getVersionRef, setVersionRef } from './version-reference';
 /** @internal */
 export class Amf extends DictionaryImpl<Demands> implements ProfileBase, DictionaryOf<Demands> {
   /** @internal */
-  constructor(protected readonly document: Document.Parsed, public readonly filename: string) {
+  constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
     super(<YAMLMap>document.contents);
   }
   setProxy(proxy: MetadataFile) {
@@ -62,7 +61,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   }
 
   get error(): string | undefined {
-    return this.document.get('error');
+    return <string>this.document.get('error');
   }
 
   set error(errorMessage: string | undefined) {
@@ -70,14 +69,14 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   }
 
   get warning(): string | undefined {
-    return this.document.get('warning');
+    return <string>this.document.get('warning');
   }
   set warning(warningMessage: string | undefined) {
     this.document.set('warning', warningMessage);
   }
 
   get message(): string | undefined {
-    return this.document.get('message');
+    return <string>this.document.get('message');
   }
   set message(message: string | undefined) {
     this.document.set('message', message);
@@ -110,16 +109,16 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
 
   #globalSettings!: DictionaryOf<string>;
   get globalSettings(): DictionaryOf<string> {
-    return this.#globalSettings || (this.#globalSettings = proxyDictionary(getOrCreateMap(this.node, 'global'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
+    return this.#globalSettings || (this.#globalSettings = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'global'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
   #errors!: Array<string>;
   get yamlErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
-      each.makePretty();
-      const line = each.linePos?.start.line || 1;
-      const column = each.linePos?.start.col || 1;
+
+      const line = each.linePos?.line || 1;
+      const column = each.linePos?.col || 1;
       return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
     }));
   }
@@ -133,8 +132,10 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     if (this.#validationErrors) {
       return this.#validationErrors;
     }
+
     this.#validationErrors = new Array<string>();
-    for (const { message, line, column, category } of this.validate()) {
+    for (const { message, range, rangeOffset, category } of this.validate()) {
+      const { line, column } = this.positionAt(range, rangeOffset);
       if (line) {
         this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
       } else {
@@ -144,10 +145,19 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#validationErrors;
   }
 
+  private positionAt(range?: [number, number], offset?: { line: number, column: number }) {
+    const { line, col } = this.lineCounter.linePos(range?.[0] || 0);
+    return {
+      // adds the offset values (which can come from the mediaquery parser) to the line & column. If MQ doesn't have a position, it's zero.
+      line: line + (offset?.line || 0),
+      column: col + (offset?.column || 0),
+    };
+  }
+
   *validate(): Iterable<ValidationError> {
     // verify that we have info
     if (!this.document.has('info')) {
-      yield { message: i`Missing section '${'info'}'`, line: 0, column: 0, category: ErrorKind.SectionNotFound };
+      yield { message: i`Missing section '${'info'}'`, range: [0, 0], category: ErrorKind.SectionNotFound };
     } else {
       yield* this.info.validate();
     }
@@ -187,13 +197,13 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       const { key, value } = getPair(this.node, each)!;
 
       if (!isMap(value)) {
-        yield { message: i`Conditional demand '${each}' is not an object`, line: line(key), column: column(key), category: ErrorKind.IncorrectType };
+        yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };
         continue;
       }
 
       const query = parseQuery(each);
       if (!query.isValid) {
-        yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, line: line(key, query.error), column: column(key, query.error), category: ErrorKind.ParseError };
+        yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
         continue;
       }
 

@@ -352,7 +352,7 @@ doskey cella="%CELLA_HOME%\node_modules\.bin\cella.cmd" $*
 :POSTSCRIPT
 :: Call the post-invocation script if it is present, then delete it.
 :: This allows the invocation to potentially modify the caller's environment (e.g. PATH).
-IF NOT EXIST "%CELLA_POSTSCRIPT%" GOTO :CLEANUP
+IF NOT EXIST "%CELLA_POSTSCRIPT%" GOTO :fin
 CALL "%CELLA_POSTSCRIPT%"
 DEL "%CELLA_POSTSCRIPT%"
 

@@ -5,13 +5,13 @@
 import { i, Version } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { parse } from 'semver';
-import { Version as cliVersion } from '../exports';
-import { session } from '../main';
-import { Command } from './command';
-import { cli } from './constants';
-import { Debug } from './debug';
-import { debug, error, log } from './styling';
-import { Switch } from './switch';
+import { Version as cliVersion } from '../../exports';
+import { session } from '../../main';
+import { Command } from '../command';
+import { cli } from '../constants';
+import { debug, error, log } from '../styling';
+import { Switch } from '../switch';
+import { Debug } from '../switches/debug';
 
 class Check extends Switch {
   switch = 'check';

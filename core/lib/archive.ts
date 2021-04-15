@@ -5,8 +5,9 @@
 
 import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
-import { Readable, Transform } from 'stream';
+import { pipeline as origPipeline, Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
+import { promisify } from 'util';
 import { Entry as ZipEntry, fromRandomAccessReader as yauzlFromRandomAccessReader, RandomAccessReader as YauzlRandomAccessReader, ZipFile } from 'yauzl';
 import { createGunzip } from 'zlib';
 import { ReadHandle } from './filesystem';
@@ -14,8 +15,9 @@ import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
+
+const pipeline = promisify(origPipeline);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { pipeline } = require('stream/promises');
 const bz2 = require('unbzip2-stream');
 
 interface FileEntry {
@@ -265,7 +267,7 @@ abstract class BasicTarUnpacker extends Unpacker {
     super();
   }
 
-  async maybeUnpackEntry(archiveUri: Uri, outputUri: Uri, options: OutputOptions, archiveProgress: ProgressTrackingStream, header: Headers, stream: Readable) : Promise<void> {
+  async maybeUnpackEntry(archiveUri: Uri, outputUri: Uri, options: OutputOptions, archiveProgress: ProgressTrackingStream, header: Headers, stream: Readable): Promise<void> {
     const streamPromise = new Promise((accept, reject) => {
       stream.on('end', accept);
       stream.on('error', reject);

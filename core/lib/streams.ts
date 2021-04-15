@@ -18,10 +18,10 @@ export interface ProgressTrackingEvents extends EventEmitter {
 
 export class ProgressTrackingStream extends Transform implements ProgressTrackingEvents {
   private readonly stopwatch = new Stopwatch;
-  private readonly scaler : PercentageScaler;
-  private currentPosition : number;
+  private readonly scaler: PercentageScaler;
+  private currentPosition: number;
 
-  constructor(start: number, end:number) {
+  constructor(start: number, end: number) {
     super();
     this.scaler = new PercentageScaler(start, end);
     this.currentPosition = start;

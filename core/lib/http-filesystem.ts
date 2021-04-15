@@ -43,7 +43,7 @@ export class HttpFileSystem extends FileSystem {
   rename(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<void> {
+  copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<number> {
     throw new Error('Method not implemented.');
   }
   async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {

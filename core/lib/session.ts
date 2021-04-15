@@ -37,12 +37,16 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
+  readonly repoUri: Uri;
+  readonly tmpFolder: Uri;
+  repo: Uri;
   readonly globalConfig: Uri;
   readonly cache: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
-  readonly utf8 = new TextDecoder('utf-8').decode;
+  #decoder = new TextDecoder('utf-8');
+  readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
 
   constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -53,10 +57,15 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
+    // this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    this.repoUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
+    const repositoryFolder = environment['repositoryFolder'];
+    this.repo = repositoryFolder ? this.fileSystem.file(repositoryFolder) : this.cellaHome.join('repo');
+    this.tmpFolder = this.cellaHome.join('tmp');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }

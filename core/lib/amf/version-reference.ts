@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Range, SemVer } from 'semver';
-import { Document } from 'yaml';
-import { Collection, YAMLMap } from 'yaml/types';
+import { Document, YAMLMap, YAMLSeq } from 'yaml';
 import { ValidationError, VersionReference } from '../metadata-format';
 import { createNode } from '../util/yaml';
 
@@ -35,11 +34,11 @@ export function getVersionRef(map: YAMLMap, property: string) {
 /** @internal */
 export class VRef implements VersionReference {
   /** @internal */
-  constructor(private node: Document.Parsed | Collection, private prop: string) {
+  constructor(private node: Document.Parsed | YAMLMap | YAMLSeq, private prop: string) {
   }
   private split(): [Range, SemVer | undefined] {
 
-    const v = <string>this.node.get(this.prop)?.toString().trim();
+    const v = <string>(<any>this.node).get(this.prop)?.toString().trim();
     if (v) {
 
       const [, a, b] = /(.+)\s+([\d\\.]+)/.exec(v) || [];
@@ -102,7 +101,7 @@ export class VRef implements VersionReference {
   }
 
   get raw(): string {
-    return this.node.get(this.prop);
+    return <string>this.node.get(this.prop);
   }
 
   toString() {

@@ -3,8 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Document } from 'yaml';
-import { Scalar, YAMLMap } from 'yaml/types';
+import { Document, isDocument, Scalar, YAMLMap } from 'yaml';
 import { DictionaryOf } from '../metadata-format';
 
 export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode: YAMLMap, prop: string) => T, onSet: (thisNode: YAMLMap, prop: string, value: T) => void, instance: any = new DictionaryImpl(thisNode)): DictionaryOf<T> {
@@ -62,9 +61,9 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
 }
 
 export class DictionaryImpl<T> implements DictionaryOf<T> {
-
-  constructor(protected readonly node: YAMLMap | Document.Parsed) {
-
+  protected readonly node: YAMLMap;
+  constructor(node: YAMLMap | Document.Parsed) {
+    this.node = isDocument(node) ? <YAMLMap>node.contents : node;
   }
 
   [key: string]: any;

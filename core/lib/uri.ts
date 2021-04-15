@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { dirname, join } from 'path';
+import { strict } from 'assert';
+import { dirname, join, relative } from 'path';
 import { Readable, Writable } from 'stream';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
@@ -120,6 +121,11 @@ bad.fragment === '/project1';
    * */
   join(...paths: Array<string>) {
     return new Uri(this.fileSystem, this.with({ path: join(this.path, ...paths).replace(/\\/g, '/') }));
+  }
+
+  relative(target: Uri): string {
+    strict.ok(target.authority === this.authority, `Uris '${target.toString()}' and '${this.toString()}' are not of the same base.`);
+    return relative(this.path, target.path).replace(/\\/g, '/');
   }
 
   /**

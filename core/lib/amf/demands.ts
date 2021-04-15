@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail } from 'assert';
-import { YAMLMap } from 'yaml/types';
+import { YAMLMap } from 'yaml';
 import { DictionaryOf, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
@@ -22,7 +22,7 @@ export class DemandNode extends NodeBase {
   }
 
   get error(): string | undefined {
-    return this.node.get('error');
+    return <string>this.node.get('error');
   }
 
   set error(errorMessage: string | undefined) {
@@ -30,14 +30,14 @@ export class DemandNode extends NodeBase {
   }
 
   get warning(): string | undefined {
-    return this.node.get('warning');
+    return <string>this.node.get('warning');
   }
   set warning(warningMessage: string | undefined) {
     this.node.set('warning', warningMessage);
   }
 
   get message(): string | undefined {
-    return this.node.get('message');
+    return <string>this.node.get('message');
   }
   set message(message: string | undefined) {
     this.node.set('message', message);

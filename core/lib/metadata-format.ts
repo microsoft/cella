@@ -5,8 +5,7 @@
 
 import { fail } from 'assert';
 import { Range, SemVer } from 'semver';
-import { parseDocument } from 'yaml';
-import { YAMLMap } from 'yaml/types';
+import { LineCounter, parseDocument, YAMLMap } from 'yaml';
 import { DemandNode } from './amf/demands';
 import { DictionaryImpl, proxyDictionary } from './amf/dictionary';
 import { Amf } from './amf/metadata-file';
@@ -18,9 +17,9 @@ export { Range, SemVer };
 export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
 
 export function parseConfiguration(filename: string, content: string): MetadataFile {
-  const doc = parseDocument(content, { prettyErrors: false, keepCstNodes: true });
-
-  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename));
+  const lc = new LineCounter();
+  const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
+  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename, lc));
 }
 
 /**
@@ -62,6 +61,9 @@ export interface ProfileBase extends Demands {
 
   /** what are the valiation check errors? */
   readonly validationErrors: Array<string>;
+
+  /** @internal */
+  readonly lineCounter: LineCounter;
 }
 
 /**
@@ -128,8 +130,8 @@ export interface Demands extends Validation {
 /** @internal */
 export interface ValidationError {
   message: string;
-  line: number;
-  column: number;
+  range?: [number, number];
+  rangeOffset?: { line: number, column: number };
   category: ErrorKind;
 }
 

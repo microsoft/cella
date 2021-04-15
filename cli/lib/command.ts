@@ -15,7 +15,6 @@ export abstract class Command implements Help {
   readonly abstract command: string;
   readonly abstract argumentsHelp: Array<string>;
 
-
   readonly switches = new Array<Switch>();
   readonly arguments = new Array<Argument>();
 
@@ -39,6 +38,9 @@ export abstract class Command implements Help {
     commandLine.addCommand(this);
   }
 
+  get inputs() {
+    return this.commandLine.inputs.slice(1);
+  }
 
   get help() {
     return [

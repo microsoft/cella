@@ -4,9 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
-import { Readable } from 'stream';
+import { pipeline as origPipeline, Readable } from 'stream';
+import { promisify } from 'util';
 import { Credentials } from './credentials';
 import { Emitter, EventForwarder } from './events';
+import { RemoteFileUnavailable } from './exceptions';
 import { Algorithm, Hash } from './hash';
 import { get, getStream, RemoteFile, resolveRedirect } from './https';
 import { i } from './i18n';
@@ -14,8 +16,8 @@ import { intersect } from './intersect';
 import { Session } from './session';
 import { Progress } from './streams';
 import { Uri } from './uri';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { pipeline } = require('stream/promises');
+
+const pipeline = promisify(origPipeline);
 
 const size32K = 1 << 15;
 const size64K = 1 << 16;
@@ -49,7 +51,7 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
 
     // start this peeking at the target uris.
     session.channels.debug(`Acquire '${outputFilename}': checking remote connections.`);
-    const locations = new RemoteFile(uris);
+    const locations = new RemoteFile(uris, { credentials: options?.credentials });
     let url: Uri | undefined;
 
     // is there a file in the cache
@@ -68,7 +70,17 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
       const contentLength = await locations.contentLength;
       session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
       const onDiskSize = await outputFile.size();
+      if (!await locations.availableLocation) {
+        if (locations.failures.all(each => each.code === 404)) {
+          let msg = i`Unable to download file`;
+          if (options?.credentials) {
+            msg += (i` - It could be that your authentication credentials are not correct.`);
+          }
 
+          session.channels.error(msg);
+          throw new RemoteFileUnavailable(uris);
+        }
+      }
       // first, make sure that there is a remote that is accessible.
       strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
 
@@ -106,8 +118,8 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
             // looks like there could be more remotely than we have.
             // lets compare the first 32k and the last 32k of what we have
             // against what they have and see if they match.
-            const top = (await get(url, { start: 0, end: size32K - 1 })).rawBody;
-            const bottom = (await get(url, { start: onDiskSize - size32K, end: onDiskSize - 1 })).rawBody;
+            const top = (await get(url, { start: 0, end: size32K - 1, credentials: options?.credentials })).rawBody;
+            const bottom = (await get(url, { start: onDiskSize - size32K, end: onDiskSize - 1, credentials: options?.credentials })).rawBody;
 
             const onDiskTop = await outputFile.readBlock(0, size32K - 1);
             const onDiskBottom = await outputFile.readBlock(onDiskSize - size32K, onDiskSize - 1);
@@ -141,11 +153,11 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
     session.channels.debug(`Acquire '${outputFilename}': initiating download.`);
     const length = await locations.contentLength;
 
-    const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined });
+    const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined, credentials: options?.credentials });
     // bubble up access to the events to the consumer if they want them
     fwd.register(inputStream);
 
-    const outputStream = await outputFile.writeStream({append:true});
+    const outputStream = await outputFile.writeStream({ append: true });
 
     // whoooosh. write out the file
     await pipeline(inputStream, outputStream);

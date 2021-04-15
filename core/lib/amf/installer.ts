@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { YAMLMap } from 'yaml/types';
+import { isMap, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
-import { getOrCreateMap, getPair, isMap } from '../util/yaml';
+import { getOrCreateMap, getPair } from '../util/yaml';
 import { NodeBase } from './base';
 
 /** @internal */
@@ -26,7 +26,7 @@ export function createInstallerNode(node: YAMLMap, name: string): Installer {
       return new GitCloneNode(n, name);
     }
   }
-  return new InvalidInstallerNode(getPair(node, name)!.key, name);
+  return new InvalidInstallerNode(<any>getPair(node, name)!.key, name);
 }
 
 
@@ -40,7 +40,7 @@ class InvalidInstallerNode extends InstallerNode {
   readonly kind = 'invalid';
 
   *validate(): Iterable<ValidationError> {
-    yield { message: i`Install node is not a valid installation declaration`, line: this.line, column: this.column, category: ErrorKind.IncorrectType };
+    yield { message: i`Install node is not a valid installation declaration`, range: this.node.range!, category: ErrorKind.IncorrectType };
   }
 }
 
