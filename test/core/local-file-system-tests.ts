@@ -207,7 +207,7 @@ describe('LocalFileSystemTests', () => {
 
     const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
     console.log(files);
-    strict.ok(files > 7000, 'there should be at least 7k files copied.');
+    strict.ok(files > 6800, 'there should be at least 6800 files copied.');
 
   });
 });
