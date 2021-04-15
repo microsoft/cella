@@ -5,11 +5,10 @@
 
 import { strict } from 'assert';
 import { COPYFILE_EXCL } from 'constants';
-import { close, createReadStream, createWriteStream, futimes, open as openFd, Stats } from 'fs';
+import { close, createReadStream, createWriteStream, futimes, NoParamCallback, open as openFd, Stats, write as writeFd, writev as writevFd } from 'fs';
 import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import { Readable, Writable } from 'stream';
-import { promisify } from 'util';
 import { delay } from './events';
 import { TargetFileCollision } from './exceptions';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
@@ -179,22 +178,25 @@ export class LocalFileSystem extends FileSystem {
   async writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     this.write(uri);
     const flags = options?.append ? 'a' : 'w';
-    let theFd: number | undefined;
-    theFd = await promisify(openFd)(uri.fsPath, flags, options?.mode ?? 0o666);
-    try {
-      if (options?.mtime) {
-        const mtime = options.mtime;
-        await promisify(futimes)(theFd, new Date(), mtime);
-      }
-
-      const rawWriteStream = createWriteStream(uri.fsPath, { flags, autoClose: true, fd: theFd });
-      theFd = undefined;
-      return rawWriteStream;
-    } finally {
-      if (theFd) {
-        await promisify(close)(theFd);
-      }
+    const createWriteOptions: any = { flags, mode: options?.mode };
+    if (options?.mtime) {
+      const mtime = options.mtime;
+      // inject futimes call as part of close
+      createWriteOptions.fs = {
+        open: openFd,
+        write: writeFd,
+        writev: writevFd,
+        close: (fd: number, callback: NoParamCallback) => {
+          futimes(fd, new Date(), mtime, (futimesErr) => {
+            close(fd, (closeErr) => {
+              callback(futimesErr || closeErr);
+            });
+          });
+        }
+      };
     }
+
+    return createWriteStream(uri.fsPath, createWriteOptions);
   }
 
   async openFile(uri: Uri): Promise<ReadHandle> {
