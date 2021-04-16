@@ -199,14 +199,14 @@ export class ZipUnpacker extends Unpacker {
   private static dosDateTimeToDateUTC(date: number, time: number): Date {
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/index.js#L594
     // except using Date.UTC
-    var day = date & 0x1f; // 1-31
-    var month = (date >> 5 & 0xf) - 1; // 1-12, 0-11
-    var year = (date >> 9 & 0x7f) + 1980; // 0-128, 1980-2108
+    const day = date & 0x1f; // 1-31
+    const month = (date >> 5 & 0xf) - 1; // 1-12, 0-11
+    const year = (date >> 9 & 0x7f) + 1980; // 0-128, 1980-2108
 
-    var millisecond = 0;
-    var second = (time & 0x1f) * 2; // 0-29, 0-58 (even numbers)
-    var minute = time >> 5 & 0x3f; // 0-59
-    var hour = time >> 11 & 0x1f; // 0-23
+    const millisecond = 0;
+    const second = (time & 0x1f) * 2; // 0-29, 0-58 (even numbers)
+    const minute = time >> 5 & 0x3f; // 0-59
+    const hour = time >> 11 & 0x1f; // 0-23
 
     return new Date(Date.UTC(year, month, day, hour, minute, second, millisecond));
   }
