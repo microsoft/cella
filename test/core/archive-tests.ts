@@ -5,6 +5,7 @@
 
 import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
 import { strict } from 'assert';
+import { statSync } from 'fs';
 import { SuiteLocal } from './SuiteLocal';
 
 const isWindows = process.platform === 'win32';
@@ -135,6 +136,9 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example');
     await unpacker.unpack(zipUri, targetUri, {});
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
+    const aStr = targetUri.join('a.txt').fsPath;
+    const aStat = statSync(aStr);
+    strict.equal('', `The file's uid is ${aStat.uid}, the process id is ${process.geteuid()}`);
     strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T16:31:14.000Z'));
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
