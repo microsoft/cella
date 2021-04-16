@@ -43,8 +43,12 @@ jobs:
             npx @microsoft/rush rebuild 
             # rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
             
-            npx @microsoft/rush test 
+            # npx @microsoft/rush test 
+            # rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
+            pushd test
+            npm test
             rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
+            popd 
 
             npx @microsoft/rush lint
             rc=$?; if [ $rc -ne 0 ]; then exit $rc ; fi
