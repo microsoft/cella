@@ -135,7 +135,7 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example');
     await unpacker.unpack(zipUri, targetUri, {});
     strict.equal((await targetUri.readFile('a.txt')).toString(), 'The contents of a.txt.\n');
-    strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T16:31:14.000Z'));
+    strict.equal((await targetUri.stat('a.txt')).mtime, Date.parse('2021-03-23T09:31:14.000Z'));
     strict.equal((await targetUri.readFile('b.txt')).toString(), 'The contents of b.txt.\n');
     strict.equal((await targetUri.readFile('c.txt')).toString(), 'The contents of c.txt.\n');
     strict.equal((await targetUri.readFile('only-not-directory.txt')).toString(),
