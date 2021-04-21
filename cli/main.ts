@@ -5,11 +5,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { i, Session, setLocale, Version } from '@microsoft/cella.core';
+import { delay, i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
+import { AcquireCommand } from './lib/commands/acquire';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
@@ -22,7 +23,7 @@ import { debug, error, initStyling, log } from './lib/styling';
 const commandline = parseArgs(argv.slice(2));
 
 // try to set the locale based on the users's settings.
-setLocale(commandline.lang, `${__dirname}/i18n/`);
+setLocale(commandline.language, `${__dirname}/i18n/`);
 
 function header() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -55,6 +56,7 @@ async function main() {
   const regenerate = new RegenerateCommand(commandline);
   const update = new UpdateCommand(commandline);
   const find = new FindCommand(commandline);
+  const acquire = new AcquireCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 
@@ -92,6 +94,8 @@ async function main() {
 
   return process.exitCode = (result ? 0 : 1);
 }
+void delay(10000);
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 main();
+

@@ -2,6 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { i } from '@microsoft/cella.core';
+import { strict } from 'assert';
 import { Command } from './command';
 import { Help } from './command-line';
 
@@ -14,11 +16,19 @@ export abstract class Switch implements Help {
     command.switches.push(this);
   }
 
+  #values?: Array<string>;
   get values() {
-    return this.command.commandLine.switches[this.switch] || [];
+    return this.#values || (this.#values = this.command.commandLine.claim(this.switch) || []);
+  }
+
+  get value(): string | undefined {
+    const v = this.values;
+    strict.ok(v.length < 2, i`Expected a single value for '--${this.switch}' -- found multiple.`);
+    return v[0];
   }
 
   get active(): boolean {
-    return !!this.command.commandLine.switches[this.switch];
+    const v = this.values;
+    return !!v && v[0] !== 'false';
   }
 }

@@ -76,13 +76,16 @@ class QueryList {
       queries: for (const query of this.queries) {
         for (const { feature, constant, not } of query.expressions) {
 
-          if ((feature in properties) || (not && constant === undefined)) {
+          const p = stringValue(properties[feature]);
+
+          if (p || (not && constant === undefined)) {
             if (constant === undefined) {
               // if they didn't give a constant for 'foo' and there is a foo property, we're good.
               continue;
             }
+            const p = stringValue(properties[feature]);
 
-            if (constant == properties[feature] || not && constant != properties[feature]) {
+            if (constant == p || not && constant != p) {
               continue;
             }
 
@@ -100,6 +103,19 @@ class QueryList {
     // no query matched.
     return false;
   }
+}
+
+function stringValue(value: unknown): string | undefined {
+  switch (typeof value) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+      return value.toString();
+
+    case 'object':
+      return Array.isArray(value) ? stringValue(value[0]) : undefined;
+  }
+  return undefined;
 }
 
 class Query {

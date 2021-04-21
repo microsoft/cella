@@ -53,8 +53,8 @@ export class DemandNode extends NodeBase {
     return this.#settings || (this.#settings = <SettingsNode>proxyDictionary<any>(getOrCreateMap(this.node, 'settings'), getOrCreateMap, () => { fail('no.'); }, new SettingsNode(getOrCreateMap(this.node, 'settings'))));
   }
 
-  #install!: Installer;
-  get install(): Installer {
+  #install?: Installer;
+  get install(): Installer | undefined {
     return this.#install || (this.#install = createInstallerNode(this.node, 'install'));
   }
   get use(): DictionaryOf<StringOrStrings> | undefined {
@@ -69,7 +69,7 @@ export class DemandNode extends NodeBase {
         yield* this.settings.validate();
       }
 
-      if (this.node.has('install')) {
+      if (this.node.has('install') && this.install) {
         yield* this.install.validate();
       }
 

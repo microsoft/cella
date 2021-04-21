@@ -92,8 +92,8 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#settings || (this.#settings = <Settings>proxyDictionary<any>(getOrCreateMap(<YAMLMap>this.document.contents, 'settings'), getOrCreateMap, () => { fail('no.'); }, new SettingsNode(getOrCreateMap(this.document, 'settings'))));
   }
 
-  #install!: Installer;
-  get install(): Installer {
+  #install?: Installer;
+  get install(): Installer | undefined {
     return this.#install || (this.#install = createInstallerNode(<YAMLMap>this.document.contents, 'install'));
   }
   get use(): DictionaryOf<StringOrStrings> | undefined {
@@ -162,7 +162,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       yield* this.info.validate();
     }
 
-    if (this.document.has('install')) {
+    if (this.document.has('install') && this.install) {
       yield* this.install.validate();
     }
 

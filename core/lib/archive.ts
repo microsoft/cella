@@ -5,18 +5,37 @@
 
 import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
-import { pipeline as origPipeline, Readable, Transform } from 'stream';
+import { Readable, Transform, Writable } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
-import { promisify } from 'util';
 import { Entry as ZipEntry, fromRandomAccessReader as yauzlFromRandomAccessReader, RandomAccessReader as YauzlRandomAccessReader, ZipFile } from 'yauzl';
 import { createGunzip } from 'zlib';
 import { ReadHandle } from './filesystem';
+import { ManualPromise } from './manual-promise';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
 
-const pipeline = promisify(origPipeline);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+//const { pipeline } = require('stream/promises');
+function pipeline(readable: Readable, ...writeable: Array<Writable>) {
+
+  const p = new ManualPromise();
+  const m = new ManualPromise();
+  writeable.last?.on('close', () => {
+    m.resolve();
+    readable.destroy();
+  });
+  readable.on('end', () => { p.resolve(); });
+  let r = readable;
+  for (const w of writeable) {
+    r.pipe(w);
+    r = <Readable><any>w;
+  }
+  // return p;
+}
+
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bz2 = require('unbzip2-stream');
 
@@ -154,6 +173,7 @@ class YauzlRandomAccessAdapter extends YauzlRandomAccessReader {
 
   close(callback: (err?: Error) => void): void {
     this.file.close().catch(callback);
+    callback();
   }
 }
 
@@ -231,7 +251,7 @@ export class ZipUnpacker extends Unpacker {
       extractPath: extractPath
     };
 
-    this.session.channels.debug(`unpacking ZIP ${common.archiveUri}/${path} => ${destination}`);
+    this.session.channels.debug(`unpacking ZIP file ${common.archiveUri}/${path} => ${destination}`);
 
     const entriesRead = common.zipFile.entriesRead;
     const thisFilePercentageScaler = new PercentageScaler(
@@ -252,7 +272,9 @@ export class ZipUnpacker extends Unpacker {
       const writeStream = await destination.writeStream({
         mtime: ZipUnpacker.dosDateTimeToDateUTC(entry.lastModFileDate, entry.lastModFileTime)
       });
+
       await pipeline(readStream, progressStream, writeStream);
+
     }
 
     this.progress(fileEntry, 100, thisFilePercentageScaler.highestPercentage);

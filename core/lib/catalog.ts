@@ -407,7 +407,6 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
       for (const [snKey, artifacts] of [...ids.entries()]) {
         // remove it from the list.
         ids.delete(snKey);
-
         if (artifacts.length === 1) {
           // keep this one, it's unique
           this.identities.set(snKey, artifacts[0][1]);
@@ -421,15 +420,25 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
     }
   }
 
+  /** @internal */
+  cloneKey(from: this) {
+    super.cloneKey(from);
+    this.identities = from.identities.greedyClone();
+    this.idShortName = new Map(from.idShortName);
+  }
+
   getShortNameOf(id: string) {
     return this.idShortName.get(id);
   }
 
-  shortName(value: string): TIndex {
+  nameOrShortNameIs(value: string): TIndex {
     if (value !== undefined && value !== '') {
-      const matches = this.identities.get(value.toString());
+      const matches = this.identities.get(value);
       if (matches) {
         this.index.filter(matches);
+      }
+      else {
+        return this.equals(value);
       }
     }
     return this.index;

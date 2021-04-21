@@ -8,6 +8,7 @@ import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
 import { http } from './acquire';
 import { ZipUnpacker } from './archive';
+import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
 import { MetadataFile, parseConfiguration } from './metadata-format';
@@ -89,28 +90,41 @@ export class Repository {
   }
 
   async update(ghAuthToken: string) {
-    const file = await http(this.session, [this.session.repoUri], 'repository.zip', { credentials: { githubToken: ghAuthToken } });
+    const file = await http(this.session, [this.session.remoteRepositoryUri], 'repository.zip', { credentials: { githubToken: ghAuthToken } });
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.session.repo, { strip: 1 });
     }
   }
 
-  async open(manifests: Array<string>) {
-    let metadataFiles = new Array<MetadataFile>();
+  async resolveDependencies(manifests: Array<string>) {
+    // open all the ones that are listed
+    // go thru each one, and add in the dependencies
+    //
+  }
 
-    // load them up async, but throttled with the queue
-    await manifests.forEachAsync(async (manifest) => {
-      const manifestUri = this.session.repo.join(manifest);
-      const content = this.session.utf8(await manifestUri.readFile());
-      metadataFiles.push(parseConfiguration(manifestUri.fsPath, content));
-    }).done;
+  private async openManifest(manifestPath: string) {
+    const manifestUri = this.session.repo.join(manifestPath);
+    const content = this.session.utf8(await manifestUri.readFile());
+    return parseConfiguration(manifestUri.fsPath, content);
+  }
+
+  async openArtifact(manifestPath: string) {
+    const metadata = await this.openManifest(manifestPath);
+    return createArtifact(this.session, metadata, this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id);
+  }
+
+  async openArtifacts(manifestPaths: Array<string>) {
+    let metadataFiles = new Array<Artifact>();
+
+    // load them up async, but throttled via a queue
+    await manifestPaths.forEachAsync(async (manifest) => metadataFiles.push(await this.openArtifact(manifest))).done;
 
     // sort the contents by version before grouping.
     metadataFiles = metadataFiles.sort((a, b) => compare(a.info.version, b.info.version));
 
     // return a map.
-    return metadataFiles.groupByMap(m => m.info.id, metadata => ({ shortName: this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id, metadata }));
+    return metadataFiles.groupByMap(m => m.info.id, artifact => artifact);
   }
 }
 

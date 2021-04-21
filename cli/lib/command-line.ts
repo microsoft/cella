@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { intersect } from '@microsoft/cella.core';
+import { Context, Environment, i, intersect } from '@microsoft/cella.core';
+import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { Command } from './command';
@@ -12,29 +13,70 @@ export type switches = {
   [key: string]: Array<string>;
 }
 
-function onlyOne(values: Array<string>, errorMessage: string) {
-  switch (values?.length ?? 0) {
-    case 0:
-      return undefined;
-    case 1:
-      return values[0];
-  }
-  throw new Error(errorMessage);
-}
-
 export interface Help {
   readonly help: Array<string>;
   readonly title: string;
+}
+
+function createContext(cmdline: CommandLine): Context {
+  return <any>intersect(new Ctx(cmdline), cmdline.switches);
+}
+class Ctx {
+  constructor(cmdline: CommandLine) {
+    this.os =
+      cmdline.switches['windows'] ? 'win32' :
+        cmdline.switches['osx'] ? 'darwin' :
+          cmdline.switches['linux'] ? 'linux' :
+            cmdline.switches['freebsd'] ? 'freebsd' :
+              process.platform;
+    this.arch = cmdline.switches['x64'] ? 'x64' :
+      cmdline.switches['x86'] ? 'x32' :
+        cmdline.switches['arm'] ? 'arm' :
+          cmdline.switches['arm64'] ? 'arm64' :
+            process.arch;
+  }
+
+  readonly os: string;
+  readonly arch: string;
+
+  get windows(): boolean {
+    return this.os === 'win32';
+  }
+
+  get linux(): boolean {
+    return this.os === 'linux';
+  }
+
+  get freebsd(): boolean {
+    return this.os === 'freebsd';
+  }
+
+  get osx(): boolean {
+    return this.os === 'darwin';
+  }
+
+  get x64(): boolean {
+    return this.arch === 'x64';
+  }
+
+  get x86(): boolean {
+    return this.arch === 'x32';
+  }
+
+  get arm(): boolean {
+    return this.arch === 'arm';
+  }
+
+  get arm64(): boolean {
+    return this.arch === 'arm64';
+  }
 }
 
 export class CommandLine {
   readonly commands = new Array<Command>();
   readonly inputs = new Array<string>();
   readonly switches: switches = {};
-
-  switch(name: string, errorMessage: string) {
-    return onlyOne(this.switches[name], errorMessage);
-  }
+  readonly context = intersect(new Ctx(this), this.switches);
 
   #home?: string;
   get cella_home() {
@@ -61,13 +103,21 @@ export class CommandLine {
     return !!this.switches['debug'];
   }
 
-  get lang() {
-    return onlyOne(this.switches['language'], '--language specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
+  get language() {
+    const l = this.switches['language'] || [];
+    strict.ok(l?.length || 0 < 2, i`Expected a single value for '--${'language'}' -- found multiple.`);
+    return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
-  #environment?: { [key: string]: string | undefined; };
-  get environment(): { [key: string]: string | undefined; } {
+  #environment?: Environment;
+  get environment(): Environment {
     return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
+  }
+
+  claim(sw: string) {
+    const v = this.switches[sw];
+    delete this.switches[sw];
+    return v;
   }
 
   addCommand(command: Command) {

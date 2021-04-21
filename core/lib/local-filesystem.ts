@@ -178,7 +178,7 @@ export class LocalFileSystem extends FileSystem {
   async writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     this.write(uri);
     const flags = options?.append ? 'a' : 'w';
-    const createWriteOptions : any = { flags, mode: options?.mode };
+    const createWriteOptions: any = { flags, mode: options?.mode, autoClose: true, emitClose: true };
     if (options?.mtime) {
       const mtime = options.mtime;
       // inject futimes call as part of close

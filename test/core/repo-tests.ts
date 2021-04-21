@@ -116,7 +116,7 @@ describe('Repository Tests', () => {
     const repository = new Repository(local.session);
     await repository.regenerate();
 
-    const all = await repository.open(repository.where.items);
+    const all = await repository.openArtifacts(repository.where.items);
     const items = [...all.values()].flat();
     strict.equal(items.length, repository.count, 'Should have loaded everything.');
 
@@ -135,7 +135,7 @@ describe('Repository Tests', () => {
 
     local.session.channels.on('debug', (t) => console.log(t));
 
-    const map = await repository.open(arm);
+    const map = await repository.openArtifacts(arm);
     strict.equal(map.size, 1, 'Should have one pkg id');
 
     const versions = map.get('compilers/gnu/gcc/arm-none-eabi');

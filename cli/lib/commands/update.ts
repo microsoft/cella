@@ -5,9 +5,9 @@
 import { i, RemoteFileUnavailable, Repository } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { log, writeException } from '../styling';
+import { parseArgs } from '../command-line';
+import { error, log, writeException } from '../styling';
 import { Repo } from '../switches/repo';
-
 export class UpdateCommand extends Command {
   readonly command = 'update';
   seeAlso = [];
@@ -38,6 +38,33 @@ export class UpdateCommand extends Command {
         return false;
       }
       writeException(e);
+      return false;
+    }
+    return true;
+  }
+
+  static async update(repository: Repository) {
+    log(i`Artifact repository data is not loaded.`);
+    log(i`Attempting to update artifact repository.`);
+    const update = new UpdateCommand(parseArgs([]));
+
+    let success = true;
+    try {
+      success = await update.run();
+    } catch (e) {
+      writeException(e);
+      success = false;
+    }
+    if (!success) {
+      error(i`Unable to load repository index.`);
+      return false;
+    }
+    try {
+      await repository.load();
+    } catch (e) {
+      writeException(e);
+      // it just doesn't want to load.
+      error(i`Unable to load repository index.`);
       return false;
     }
     return true;

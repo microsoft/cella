@@ -25,7 +25,7 @@ export function rootFolder(from = __dirname): string {
 }
 
 export class SuiteLocal {
-  readonly rootFolder : string = rootFolder();
+  readonly rootFolder: string = rootFolder();
   readonly rootFolderUri: Uri;
   readonly tempFolder: string;
   readonly tempFolderUri: Uri;
@@ -36,6 +36,9 @@ export class SuiteLocal {
     this.tempFolder = uniqueTempFolder();
     this.session = new Session(this.tempFolder, {
       cella_home: join(this.tempFolder, 'cella_home'),
+      context: <any>{
+
+      }
     });
 
     this.fs = new LocalFileSystem(this.session);

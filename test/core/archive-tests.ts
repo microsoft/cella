@@ -39,6 +39,7 @@ class PercentageChecker {
     }
 
     if (this.lastSeen !== undefined) {
+      console.log(`${percentage} vs ${this.lastSeen}`);
       strict.ok(percentage >= this.lastSeen);
     }
 

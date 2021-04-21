@@ -65,8 +65,8 @@ export function http(session: Session, uris: Array<Uri>, outputFilename: string,
           return outputFile;
         }
       }
-      // it doesn't match a known hash.
 
+      // it doesn't match a known hash.
       const contentLength = await locations.contentLength;
       session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
       const onDiskSize = await outputFile.size();

@@ -3,15 +3,20 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { strict } from 'assert';
+import { fail, strict } from 'assert';
 import { TextDecoder } from 'util';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
+import { GitInstaller } from './installer/git';
+import { NupkgInstaller } from './installer/nupkg';
+import { UntarInstaller } from './installer/untar';
+import { UnzipInstaller } from './installer/unzip';
+import { VsixInstaller } from './installer/vsix';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
-import { MetadataFile, parseConfiguration } from './metadata-format';
+import { Installer, MetadataFile, parseConfiguration } from './metadata-format';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
@@ -23,6 +28,22 @@ global:
 `;
 
 const profileName = ['cella.yaml', 'cella.yml', 'cella.json'];
+export type Context = { [key: string]: Array<string> | undefined; } & {
+  readonly os: string;
+  readonly arch: string;
+  readonly windows: boolean;
+  readonly osx: boolean;
+  readonly linux: boolean;
+  readonly freebsd: boolean;
+  readonly x64: boolean;
+  readonly x86: boolean;
+  readonly arm: boolean;
+  readonly arm64: boolean;
+}
+
+export type Environment = { [key: string]: string | undefined; } & {
+  context: Context;
+};
 
 /**
  * The Session class is used to hold a reference to the
@@ -37,8 +58,10 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
-  readonly repoUri: Uri;
+  readonly remoteRepositoryUri: Uri;
   readonly tmpFolder: Uri;
+  readonly installFolder: Uri;
+
   repo: Uri;
   readonly globalConfig: Uri;
   readonly cache: Uri;
@@ -48,7 +71,7 @@ export class Session {
   #decoder = new TextDecoder('utf-8');
   readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
 
-  constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
+  constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
       register('file', new LocalFileSystem(this)).
       register(['http', 'https'], new HttpFileSystem(this)
@@ -57,8 +80,8 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
-    // this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    this.repoUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
+    // this.remoteRepositoryUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    this.remoteRepositoryUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
@@ -66,6 +89,7 @@ export class Session {
     const repositoryFolder = environment['repositoryFolder'];
     this.repo = repositoryFolder ? this.fileSystem.file(repositoryFolder) : this.cellaHome.join('repo');
     this.tmpFolder = this.cellaHome.join('tmp');
+    this.installFolder = this.cellaHome.join('artifacts');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
   }
@@ -146,5 +170,26 @@ export class Session {
     // (We'll defer actually this until we get to #23: Create Bug Report)
     //
     // this.FileSystem.on('deleted', (uri) => { console.log(uri) })
+  }
+
+  createInstaller(installer: Installer) {
+    switch (installer.kind) {
+      case 'nupkg':
+        return new NupkgInstaller(this);
+
+      case 'unzip':
+        return new UnzipInstaller(this);
+
+      case 'untar':
+        return new UntarInstaller(this);
+
+      case 'git':
+        return new GitInstaller(this);
+
+      case 'vsix':
+        return new VsixInstaller(this);
+    }
+
+    fail(i`Unknown installer type ${installer.kind}`);
   }
 }
