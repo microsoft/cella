@@ -113,7 +113,7 @@ function stringValue(value: unknown): string | undefined {
       return value.toString();
 
     case 'object':
-      return Array.isArray(value) ? stringValue(value[0]) : undefined;
+      return value === null ? 'true' : Array.isArray(value) ? stringValue(value[0]) || 'true' : 'true';
   }
   return undefined;
 }

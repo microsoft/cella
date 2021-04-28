@@ -209,7 +209,7 @@ class LocalReadHandle extends ReadHandle {
     super();
   }
 
-  read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
+  read<TBuffer extends Uint8Array>(buffer: TBuffer, offset = 0, length = buffer.byteLength, position: number | null = null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
     return this.handle.read(buffer, offset, length, position);
   }
 

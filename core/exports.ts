@@ -23,6 +23,7 @@ export * from './lib/metadata-format';
 export * from './lib/repository';
 export * from './lib/session';
 export * from './lib/unified-filesystem';
+export * from './lib/unzip';
 export * from './lib/uri';
 export * from './lib/util/percentage-scaler';
 export * from './lib/util/yaml';

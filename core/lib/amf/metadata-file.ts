@@ -117,8 +117,8 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
 
-      const line = each.linePos?.line || 1;
-      const column = each.linePos?.col || 1;
+      const line = each.linePos?.[0] || 1;
+      const column = each.linePos?.[0] || 1;
       return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
     }));
   }
@@ -145,7 +145,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#validationErrors;
   }
 
-  private positionAt(range?: [number, number], offset?: { line: number, column: number }) {
+  private positionAt(range?: [number, number, number?], offset?: { line: number, column: number }) {
     const { line, col } = this.lineCounter.linePos(range?.[0] || 0);
     return {
       // adds the offset values (which can come from the mediaquery parser) to the line & column. If MQ doesn't have a position, it's zero.
@@ -157,7 +157,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   *validate(): Iterable<ValidationError> {
     // verify that we have info
     if (!this.document.has('info')) {
-      yield { message: i`Missing section '${'info'}'`, range: [0, 0], category: ErrorKind.SectionNotFound };
+      yield { message: i`Missing section '${'info'}'`, range: [0, 0, 0], category: ErrorKind.SectionNotFound };
     } else {
       yield* this.info.validate();
     }

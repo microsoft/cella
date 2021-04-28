@@ -61,12 +61,6 @@
       "projectFolder": "./test",
       "reviewCategory": "production",
       "shouldPublish": false
-    },
-    {
-      "packageName": "yaml",
-      "projectFolder": "./yaml",
-      "reviewCategory": "production",
-      "shouldPublish": false
     }
   ]
 }

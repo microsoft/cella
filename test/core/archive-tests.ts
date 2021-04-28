@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
-import { strict } from 'assert';
+import { FileEntry, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
+import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
 const isWindows = process.platform === 'win32';
@@ -39,8 +39,7 @@ class PercentageChecker {
     }
 
     if (this.lastSeen !== undefined) {
-      console.log(`${percentage} vs ${this.lastSeen}`);
-      strict.ok(percentage >= this.lastSeen);
+      strict.ok(percentage >= this.lastSeen, `${percentage} vs ${this.lastSeen}`);
     }
 
     this.lastSeen = percentage;
@@ -82,8 +81,8 @@ class ProgressCheckerEntry {
   }
 
   test() {
-    strict.ok(this.seenUnpacked);
-    strict.ok(this.seenZero);
+    strict.ok(this.seenUnpacked, 'Should have got an unpacked message');
+    strict.ok(this.seenZero, 'Should have seen a zero progress.');
     this.filePercentage.testRequireZero();
   }
 }
@@ -92,7 +91,7 @@ class ProgressChecker {
   seenEntries = new Map<string, ProgressCheckerEntry>();
   archivePercentage = new PercentageChecker();
 
-  onProgress(entry: any, filePercentage: number, archivePercentage: number) {
+  onFileProgress(entry: any, filePercentage: number) {
     let checkerEntry = this.seenEntries.get(entry.path);
     if (!checkerEntry) {
       checkerEntry = new ProgressCheckerEntry(entry.path, entry);
@@ -100,12 +99,15 @@ class ProgressChecker {
     }
 
     checkerEntry.onProgress(entry, filePercentage);
+  }
+
+  onProgress(archivePercentage: number) {
     this.archivePercentage.recordPercent(archivePercentage);
   }
 
-  onUnpacked(entry: any) {
+  onUnpacked(entry: FileEntry) {
     const checkerEntry = this.seenEntries.get(entry.path);
-    strict.ok(checkerEntry);
+    strict.ok(checkerEntry, `Did not find unpack progress entries for ${entry.path}`);
     checkerEntry.onUnpacked(entry);
   }
 
@@ -115,7 +117,7 @@ class ProgressChecker {
   }
 
   test(entryCount: number) {
-    strict.equal(entryCount, this.seenEntries.size);
+    strict.equal(entryCount, this.seenEntries.size, `Should have unpacked ${entryCount}, actually unpacked ${this.seenEntries.size}`);
     this.seenEntries.forEach((value) => value.test());
     this.archivePercentage.test();
   }
@@ -129,6 +131,7 @@ describe('ZipUnpacker', () => {
   const unpacker = new ZipUnpacker(local.session);
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('fileProgress', progressChecker.onFileProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
   it('UnpacksLegitimateSmallZips', async () => {
     progressChecker.reset();
@@ -148,7 +151,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(9); // only files
   });
 
   it('Truncates', async () => {
@@ -170,7 +173,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(9); // just files
   });
 
   it('UnpacksZipsWithCompression', async () => {
@@ -186,10 +189,6 @@ describe('ZipUnpacker', () => {
     progressChecker.test(1);
   });
 
-  // This test is currently disabled due to a bug in yauzl which causes it to not propagate errors correctly, leading
-  // to hangs. See https://github.com/thejoshwolfe/yauzl/pull/123 for a potential fix; the test will pass once yauzl
-  // merges that PR.
-  /*
   it('FailsToUnpackMalformed', async () => {
     // wrong-entry-sizes.zip is an example input from yauzl:
     // https://github.com/thejoshwolfe/yauzl/blob/96f0eb552c560632a754ae0e1701a7edacbda389/test/wrong-entry-sizes/wrong-entry-sizes.zip
@@ -198,7 +197,6 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('wrong-entry-sizes');
     await rejects(unpacker.unpack(zipUri, targetUri, {}));
   });
-  */
 
   it('Strips1', async () => {
     progressChecker.reset();
@@ -212,7 +210,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(5);
   });
 
   it('Strips2', async () => {
@@ -222,7 +220,7 @@ describe('ZipUnpacker', () => {
     await unpacker.unpack(zipUri, targetUri, { strip: 2 });
     strict.equal((await targetUri.readFile('only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(1);
   });
 
   it('StripsAll', async () => {
@@ -231,7 +229,7 @@ describe('ZipUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-strip-all');
     await unpacker.unpack(zipUri, targetUri, { strip: 3 });
     strict.ok(!await targetUri.exists());
-    progressChecker.test(11);
+    progressChecker.test(0);
   });
 
   it('TransformsOne', async () => {
@@ -251,7 +249,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(9);
   });
 
   it('TransformsArray', async () => {
@@ -278,7 +276,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-/inner/only--.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(9);
   });
 
   it('StripsThenTransforms', async () => {
@@ -293,7 +291,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(5);
   });
 
   it('AllowsTransformToNotExtract', async () => {
@@ -311,7 +309,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(11);
+    progressChecker.test(8);
   });
 });
 
@@ -357,6 +355,7 @@ describe('TarUnpacker', () => {
   const unpacker = new TarUnpacker(local.session);
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('fileProgress', progressChecker.onFileProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
   const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar');
   it('UnpacksLegitimateSmallTar', async () => {
@@ -383,6 +382,7 @@ describe('TarBzUnpacker', () => {
   const unpacker = new TarBzUnpacker(local.session);
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('fileProgress', progressChecker.onFileProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
   const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar.bz2');
   it('UnpacksLegitimateSmallTarBz', async () => {
@@ -409,6 +409,7 @@ describe('TarGzUnpacker', () => {
   const unpacker = new TarGzUnpacker(local.session);
   const progressChecker = new ProgressChecker();
   unpacker.on('progress', progressChecker.onProgress.bind(progressChecker));
+  unpacker.on('fileProgress', progressChecker.onFileProgress.bind(progressChecker));
   unpacker.on('unpacked', progressChecker.onUnpacked.bind(progressChecker));
   const archiveUri = local.rootFolderUri.join('resources', 'example-tar.tar.gz');
   it('UnpacksLegitimateSmallTarGz', async () => {

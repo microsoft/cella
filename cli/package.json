@@ -47,7 +47,7 @@
     "@types/marked": "1.2.2"
   },
   "dependencies": {
-    "yaml": "~2.0.0-4",
+    "yaml": "2.0.0-5",
     "semver": "~7.3.4",
     "chalk": "4.1.0",
     "@microsoft/cella.core": "~0.1.0",

@@ -79,6 +79,8 @@ export class Queue {
   private active = 0;
   private tail: Promise<any> | undefined;
   private whenZero: ManualPromise<number> | undefined;
+  private rejections = new Array<any>();
+  private resolves = new Array<any>();
 
   constructor(private maxConcurency = 8) {
   }
@@ -97,6 +99,9 @@ export class Queue {
       this.whenZero = this.whenZero || new ManualPromise<number>();
       await this.whenZero;
     }
+    if (this.rejections.length > 0) {
+      throw new AggregateError(this.rejections);
+    }
     this.whenZero = undefined;
     return this.total;
   }
@@ -113,14 +118,14 @@ export class Queue {
     this.total++;
 
     if (this.active < this.maxConcurency) {
-      this.tail = action();
+      this.tail = action().catch(async (e) => { this.rejections.push(e); throw e; });
       this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
       return this.tail;
     }
 
     const result = new ManualPromise<T>();
     this.tail!.finally(() => {
-      this.tail = action().then(r => { result.resolve(r); }, e => result.reject(e));
+      this.tail = action().then(r => { result.resolve(r); }, e => { result.reject(e); this.rejections.push(e); });
       this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
     });
 

@@ -130,7 +130,7 @@ describe('Amf', () => {
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
-    strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
+    strict.equal(doc.validationErrors.length, 4, `Expecting four errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
 
     console.log(doc.validationErrors);
   });

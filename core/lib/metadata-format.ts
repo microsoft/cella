@@ -130,7 +130,7 @@ export interface Demands extends Validation {
 /** @internal */
 export interface ValidationError {
   message: string;
-  range?: [number, number];
+  range?: [number, number, number];
   rangeOffset?: { line: number, column: number };
   category: ErrorKind;
 }
