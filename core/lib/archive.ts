@@ -3,12 +3,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { EventEmitter } from 'ee-ts';
 import { sed } from 'sed-lite';
 import { pipeline as origPipeline, Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
 import { promisify } from 'util';
 import { createGunzip } from 'zlib';
+import { ExtendedEmitter } from './events';
 import { Queue } from './promise';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
@@ -29,7 +29,7 @@ export interface FileEntry {
 }
 
 /** The event definitions for for unpackers */
-interface UnpackEvents {
+export interface UnpackEvents {
   progress(archivePercentage: number): void;
   fileProgress(entry: Readonly<FileEntry>, filePercentage: number): void;
   unpacked(entry: Readonly<FileEntry>): void;
@@ -51,8 +51,9 @@ export interface OutputOptions {
   transform?: Array<string>;
 }
 
+
 /** Unpacker base class definition */
-export abstract class Unpacker extends EventEmitter<UnpackEvents> {
+export abstract class Unpacker extends ExtendedEmitter<UnpackEvents> {
   /* Event Emitters */
 
   /** EventEmitter: progress, at least once per file */
@@ -62,13 +63,12 @@ export abstract class Unpacker extends EventEmitter<UnpackEvents> {
   protected fileProgress(entry: Readonly<FileEntry>, filePercentage: number): void {
     this.emit('fileProgress', entry, filePercentage);
   }
-
   /** EventEmitter: unpacked, emitted per file (not per archive)  */
   protected unpacked(entry: Readonly<FileEntry>) {
     this.emit('unpacked', entry);
   }
 
-  abstract unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void>;
+  abstract unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void>;
 
   /**
  * Returns a new path string such that the path has prefixCount path elements removed, and directory
@@ -158,7 +158,7 @@ export class ZipUnpacker extends Unpacker {
     return new Date(Date.UTC(year, month, day, hour, minute, second, millisecond));
   }
 
-  async unpackFile(file: ZipEntry, archiveUri: Uri, outputUri: Uri, options: OutputOptions, archivePercentageScaler: PercentageScaler, count: number) {
+  async unpackFile(file: ZipEntry, archiveUri: Uri, outputUri: Uri, options: OutputOptions) {
     const extractPath = Unpacker.implementOutputOptions(file.name, options);
     if (extractPath) {
       const destination = outputUri.join(extractPath);
@@ -170,6 +170,7 @@ export class ZipUnpacker extends Unpacker {
       };
 
       this.fileProgress(fileEntry, 0);
+      this.fileProgress(fileEntry, 1);
       this.session.channels.debug(`unpacking ZIP file ${archiveUri}/${file.name} => ${destination}`);
       await destination.parent().createDirectory();
       const readStream = await file.read();
@@ -182,22 +183,31 @@ export class ZipUnpacker extends Unpacker {
     }
   }
 
-  async unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
-    this.session.channels.debug(`unpacking ZIP ${archiveUri} => ${outputUri}`);
-    const openedFile = await archiveUri.openFile();
-    const zipFile = await ZipFile.read(openedFile);
+  async unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
+    this.subscribe(listener);
+    try {
+      this.session.channels.debug(`unpacking ZIP ${archiveUri} => ${outputUri}`);
 
-    const archiveProgress = new PercentageScaler(0, zipFile.files.size);
-    const q = new Queue();
-    let count = 0;
-    for (const file of zipFile.files.values()) {
-      await q.enqueue(async () => {
-        await this.unpackFile(file, archiveUri, outputUri, options, archiveProgress, count);
-        this.progress(archiveProgress.scalePosition(count++));
-      });
+      const openedFile = await archiveUri.openFile();
+      const zipFile = await ZipFile.read(openedFile);
+
+      const archiveProgress = new PercentageScaler(0, zipFile.files.size);
+      this.progress(0);
+      const q = new Queue();
+      let count = 0;
+      for (const file of zipFile.files.values()) {
+
+        void q.enqueue(async () => {
+          await this.unpackFile(file, archiveUri, outputUri, options);
+          this.progress(archiveProgress.scalePosition(count++));
+        });
+      }
+      await q.done;
+      this.progress(100);
+      await zipFile.close();
+    } finally {
+      this.unsubscribe(listener);
     }
-    await q.done;
-    this.progress(100);
   }
 }
 
@@ -242,7 +252,6 @@ abstract class BasicTarUnpacker extends Unpacker {
         const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
         await pipeline(stream, fileProgress, writeStream);
       }
-      console.log(header.name);
       this.fileProgress(fileEntry, 100);
       this.unpacked(fileEntry);
     } finally {
@@ -272,21 +281,21 @@ abstract class BasicTarUnpacker extends Unpacker {
 }
 
 export class TarUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options);
   }
 }
 
 export class TarGzUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR.GZ ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options, createGunzip());
   }
 }
 
 export class TarBzUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR.BZ2 ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options, bz2());
   }

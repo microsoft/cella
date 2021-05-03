@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { i, Repository } from '@microsoft/cella.core';
+import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { Table } from '../markdown-table';
@@ -30,7 +30,7 @@ export class FindCommand extends Command {
   }
 
   async run() {
-    const repository = new Repository(session);
+    const repository = session.getSource('default');
     try {
       await repository.load();
     } catch (e) {

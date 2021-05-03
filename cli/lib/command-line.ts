@@ -99,6 +99,11 @@ export class CommandLine {
     return !!this.switches['force'];
   }
 
+  #githubAuthToken?: string;
+  get githubAuthToken() {
+    return this.#githubAuthToken || (this.#githubAuthToken = this.switches['github_auth_token']?.[0] || this.switches['github-auth-token']?.[0] || process.env['github-auth-token'] || process.env['github_auth_token'] || '');
+  }
+
   get debug() {
     return !!this.switches['debug'];
   }

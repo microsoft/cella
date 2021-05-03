@@ -7,12 +7,14 @@ import { session } from '../../main';
 import { Command } from '../command';
 import { parseArgs } from '../command-line';
 import { error, log, writeException } from '../styling';
+import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 export class UpdateCommand extends Command {
   readonly command = 'update';
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
+  ghAuth = new GithubAuthToken(this);
 
   get summary() {
     return i`update the repository from the remote`;
@@ -20,16 +22,19 @@ export class UpdateCommand extends Command {
 
   get description() {
     return [
-      i`This downloads the latest contents of the repository from github.`,
+      i`This downloads the latest contents of the repository from the remote service.`,
     ];
   }
 
   async run() {
 
-    const repository = new Repository(session);
+    const repository = session.getSource('default');
+    if (!repository) {
+      throw new Error('Repository is not accessible.');
+    }
     try {
       log(i`Downloading repository data`);
-      await repository.update('');
+      await repository.update();
       await repository.load();
       log(i`Repository update complete. Repository contains \`${repository.count}\` metadata files.`);
     } catch (e) {

@@ -1,6 +1,5 @@
-import { http } from '../acquire';
-import { ZipUnpacker } from '../archive';
-import { delay } from '../events';
+import { AcquireEvents, http } from '../acquire';
+import { UnpackEvents, ZipUnpacker } from '../archive';
 import { UnZip } from '../metadata-format';
 import { InstallerImpl } from './installer';
 
@@ -9,26 +8,22 @@ import { InstallerImpl } from './installer';
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 export class UnzipInstaller extends InstallerImpl {
-  async install(id: string, version: string, install: UnZip): Promise<void> {
+  async install(install: UnZip, listener: Partial<UnpackEvents & AcquireEvents> = {}): Promise<void> {
     //
     const locations = install.location ? (typeof install.location === 'string' ? [install.location] : [...install.location]) : [];
     if (!locations.length) {
       throw new Error('missing locations');
     }
-    const name = `${id.replace(/[^\w]+/g, '.')}-${version}`;
-    const targetFile = `${name}.zip`;
-    const progress = http(this.session, locations.map(each => this.session.fileSystem.parse(each)), targetFile);
 
-    const file = await progress;
+    const targetFile = `${this.artifact.name}.zip`;
+    const file = await http(this.session, locations.map(each => this.session.fileSystem.parse(each)), targetFile, listener);
 
     const unpacker = new ZipUnpacker(this.session);
     try {
-      await unpacker.unpack(file, this.session.installFolder.join(name), { strip: install.strip, transform: install.transform ? [...install.transform] : undefined });
+      await unpacker.unpack(file, this.artifact.targetLocation, listener, { strip: install.strip, transform: install.transform ? [...install.transform] : undefined });
     } catch (e) {
       console.log(e);
     }
-    await delay(10000);
-    console.log('hi');
   }
 }
 

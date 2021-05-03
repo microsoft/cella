@@ -82,3 +82,44 @@ export function completed(stream: Stream): Promise<void> {
     stream.once('error', reject);
   });
 }
+
+
+const ignore = new Set([
+  'constructor',
+  '__defineGetter__',
+  '__defineSetter__',
+  'hasOwnProperty',
+  '__lookupGetter__',
+  '__lookupSetter__',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+  'toString',
+  'valueOf',
+  'toLocaleString'
+]);
+
+function getMethods<T>(obj: T) {
+  const properties = new Set<string>();
+  let current = obj;
+  do {
+    Object.getOwnPropertyNames(current).map(item => properties.add(item));
+  } while ((current = Object.getPrototypeOf(current)));
+  return [...properties].filter(item => (!ignore.has(item)) && typeof (<any>obj)[item] === 'function');
+}
+
+export class ExtendedEmitter<T> extends eventemitter<T> {
+  subscribe(listener?: Partial<T>) {
+    if (listener) {
+      for (const each of getMethods(listener)) {
+        this.on(<any>each, (<any>listener)[each]);
+      }
+    }
+  }
+  unsubscribe(listener?: Partial<T>) {
+    if (listener) {
+      for (const each of getMethods(listener)) {
+        this.off(<any>each, (<any>listener)[each]);
+      }
+    }
+  }
+}

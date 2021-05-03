@@ -9,9 +9,6 @@
     },
     {
       "path": "test/tsconfig.json"
-    },
-    {
-      "path": "yaml/tsconfig.json"
     }
   ]
 }

@@ -5,7 +5,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { delay, i, Session, setLocale, Version } from '@microsoft/cella.core';
+import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
@@ -94,7 +94,6 @@ async function main() {
 
   return process.exitCode = (result ? 0 : 1);
 }
-void delay(10000);
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 main();

@@ -7,6 +7,7 @@ import { Queue } from './lib/promise';
  *--------------------------------------------------------------------------------------------*/
 export * from './lib/acquire';
 export * from './lib/archive';
+export * from './lib/artifact';
 export * from './lib/catalog';
 export * from './lib/channels';
 export * from './lib/events';
@@ -99,7 +100,7 @@ declare global {
 
 declare global {
   interface Map<K, V> {
-    getOrDefault(key: K, defaultValue: V): V;
+    getOrDefault(key: K, defaultValue: V | (() => V)): V;
   }
 }
 
@@ -109,7 +110,7 @@ if (!Map.prototype.getOrDefault) {
       value: function (key: any, defaultValue: any) {
         let v = this.get(key);
         if (!v) {
-          this.set(key, v = defaultValue);
+          this.set(key, v = typeof defaultValue === 'function' ? defaultValue() : defaultValue);
         }
         return v;
       }

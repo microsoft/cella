@@ -2,15 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { AcquireEvents } from '../acquire';
-import { UnpackEvents } from '../archive';
-import { Installer } from '../metadata-format';
-import { InstallerImpl } from './installer';
+import { i } from '@microsoft/cella.core';
+import { Switch } from '../switch';
 
-
-export class UntarInstaller extends InstallerImpl {
-  async install(install: Installer, listener?: Partial<UnpackEvents & AcquireEvents>): Promise<void> {
-    //
+export class GithubAuthToken extends Switch {
+  switch = 'github-auth-token';
+  get help() {
+    return [
+      i`specify a github authentication token to access protected github repositories/urls`
+    ];
   }
-
 }

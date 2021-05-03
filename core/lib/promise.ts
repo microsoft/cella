@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ManualPromise } from './manual-promise';
+import { ManualPromise, PromiseToExectue } from './manual-promise';
 
 /** a precrafted failed Promise */
 const waiting = Promise.reject(0xDEFACED);
@@ -77,10 +77,10 @@ export async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value:
 export class Queue {
   private total = 0;
   private active = 0;
+  private queue = new Array<PromiseToExectue<any>>();
   private tail: Promise<any> | undefined;
   private whenZero: ManualPromise<number> | undefined;
   private rejections = new Array<any>();
-  private resolves = new Array<any>();
 
   constructor(private maxConcurency = 8) {
   }
@@ -106,6 +106,13 @@ export class Queue {
     return this.total;
   }
 
+  private next() {
+    (--this.active) || this.whenZero?.resolve(0);
+    if (this.queue.length) {
+      this.queue.pop()?.execute().catch(async (e) => { this.rejections.push(e); throw e; }).finally(() => this.next());
+    }
+  }
+
   /**
    * Queues up actions for throttling the number of concurrent async tasks running at a given time.
    *
@@ -113,27 +120,23 @@ export class Queue {
    * The last item
    * @param action
    */
-  enqueue<T>(action: () => Promise<T>): Promise<T> {
+  async enqueue<T>(action: () => Promise<T>): Promise<T> {
     this.active++;
     this.total++;
 
-    if (this.active < this.maxConcurency) {
-      this.tail = action().catch(async (e) => { this.rejections.push(e); throw e; });
-      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-      return this.tail;
+    if (this.queue.length || this.active >= this.maxConcurency) {
+      const result = new PromiseToExectue<T>(action);
+      this.queue.push(result);
+      return result;
     }
 
-    const result = new ManualPromise<T>();
-    this.tail!.finally(() => {
-      this.tail = action().then(r => { result.resolve(r); }, e => { result.reject(e); this.rejections.push(e); });
-      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-    });
-
-    return result;
+    return action().catch(async (e) => { this.rejections.push(e); throw e; }).finally(() => this.next());
   }
 
   enqueueMany<S, T>(array: Array<S>, fn: (v: S) => Promise<T>) {
     for (const each of array) {
+      void this.enqueue(() => fn(each));
+      /*
       this.active++;
       this.total++;
 
@@ -150,6 +153,7 @@ export class Queue {
       });
 
       continue;
+      */
     }
     return this;
   }

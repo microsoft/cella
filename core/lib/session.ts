@@ -5,11 +5,13 @@
 
 import { fail, strict } from 'assert';
 import { TextDecoder } from 'util';
+import { Artifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
 import { GitInstaller } from './installer/git';
+import { InstallerImpl } from './installer/installer';
 import { NupkgInstaller } from './installer/nupkg';
 import { UntarInstaller } from './installer/untar';
 import { UnzipInstaller } from './installer/unzip';
@@ -17,6 +19,7 @@ import { VsixInstaller } from './installer/vsix';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
 import { Installer, MetadataFile, parseConfiguration } from './metadata-format';
+import { DefaultRepository, Repository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
@@ -58,11 +61,9 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
-  readonly remoteRepositoryUri: Uri;
   readonly tmpFolder: Uri;
   readonly installFolder: Uri;
 
-  repo: Uri;
   readonly globalConfig: Uri;
   readonly cache: Uri;
   currentDirectory: Uri;
@@ -70,6 +71,8 @@ export class Session {
 
   #decoder = new TextDecoder('utf-8');
   readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
+
+  private readonly sources: Map<string, Repository>;
 
   constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -80,19 +83,36 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
-    // this.remoteRepositoryUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    this.remoteRepositoryUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
-    const repositoryFolder = environment['repositoryFolder'];
-    this.repo = repositoryFolder ? this.fileSystem.file(repositoryFolder) : this.cellaHome.join('repo');
+
     this.tmpFolder = this.cellaHome.join('tmp');
     this.installFolder = this.cellaHome.join('artifacts');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
+
+    // built in repository
+
+    this.sources = new Map<string, Repository>([
+      ['default', new DefaultRepository(this)]
+    ]);
   }
+
+  get sourceNames() {
+    return this.sources.keys();
+  }
+
+  getSource(name = 'default') {
+    const result = this.sources.get(name);
+
+    if (!result) {
+      throw new Error(i`Unknown repository '${name}'`);
+    }
+    return result;
+  }
+
 
   get telemetryEnabled() {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
@@ -172,24 +192,23 @@ export class Session {
     // this.FileSystem.on('deleted', (uri) => { console.log(uri) })
   }
 
-  createInstaller(installer: Installer) {
-    switch (installer.kind) {
-      case 'nupkg':
-        return new NupkgInstaller(this);
-
-      case 'unzip':
-        return new UnzipInstaller(this);
-
-      case 'untar':
-        return new UntarInstaller(this);
-
-      case 'git':
-        return new GitInstaller(this);
-
-      case 'vsix':
-        return new VsixInstaller(this);
+  createInstaller(artifact: Artifact, installer: Installer) {
+    const ctor = Session.Installers.get(installer.kind);
+    if (ctor) {
+      return new ctor(this, artifact, installer);
     }
-
     fail(i`Unknown installer type ${installer.kind}`);
   }
+
+  get installedArtifacts() {
+    return [];
+  }
+
+  static Installers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
+    ['nupkg', NupkgInstaller],
+    ['unzip', UnzipInstaller],
+    ['untar', UntarInstaller],
+    ['git', GitInstaller],
+    ['vsix', VsixInstaller],
+  ])
 }

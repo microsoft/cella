@@ -25,13 +25,26 @@ class RepoIndex extends Index<MetadataFile, RepoIndex> {
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
-export class Repository {
+export interface Repository {
+  readonly count: number;
+  readonly where: RepoIndex;
+
+  load(): Promise<void>;
+  save(): Promise<void>;
+  update(): Promise<void>;
+  regenerate(): Promise<void>;
+  openArtifact(manifestPath: string): Promise<Artifact>;
+  openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
+  readonly baseFolder: Uri;
+}
+
+export class CellaRepository implements Repository {
 
   private catalog = new Catalog(RepoIndex);
   private indexYaml: Uri;
 
-  constructor(private session: Session) {
-    this.indexYaml = session.repo.join('index.yaml');
+  constructor(private session: Session, readonly baseFolder: Uri, readonly remoteLocation: Uri) {
+    this.indexYaml = baseFolder.join('index.yaml');
   }
 
   get count() {
@@ -50,7 +63,7 @@ export class Repository {
       }
       try {
         const amf = parseConfiguration(uri.fsPath, content);
-        repo.catalog.insert(amf, repo.session.repo.relative(uri));
+        repo.catalog.insert(amf, repo.baseFolder.relative(uri));
       } catch (e) {
         repo.session.channels.warning(`skipping invalid metadata file ${uri.fsPath}`);
       }
@@ -69,7 +82,7 @@ export class Repository {
       }
     }
 
-    await process(this.session.repo);
+    await process(this.baseFolder);
     await q.done;
 
     // we're done inserting values
@@ -89,11 +102,15 @@ export class Repository {
     return this.catalog.where;
   }
 
-  async update(ghAuthToken: string) {
-    const file = await http(this.session, [this.session.remoteRepositoryUri], 'repository.zip', { credentials: { githubToken: ghAuthToken } });
+  async update() {
+    const file = await http(this.session, [this.remoteLocation], 'repository.zip', {}, {
+      credentials: {
+        githubToken: this.session.environment['githubAuthToken']
+      }
+    });
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
-      await unpacker.unpack(file, this.session.repo, { strip: 1 });
+      await unpacker.unpack(file, this.baseFolder, {}, { strip: 1 });
     }
   }
 
@@ -104,7 +121,7 @@ export class Repository {
   }
 
   private async openManifest(manifestPath: string) {
-    const manifestUri = this.session.repo.join(manifestPath);
+    const manifestUri = this.baseFolder.join(manifestPath);
     const content = this.session.utf8(await manifestUri.readFile());
     return parseConfiguration(manifestUri.fsPath, content);
   }
@@ -128,3 +145,12 @@ export class Repository {
   }
 }
 
+export class DefaultRepository extends CellaRepository {
+  constructor(session: Session) {
+    const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
+    //('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    const repositoryFolder = session.environment['repositoryFolder'];
+    const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.cellaHome.join('repo', 'default');
+    super(session, localUri, remoteUri);
+  }
+}

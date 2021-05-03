@@ -126,7 +126,6 @@ describe('LocalFileSystemTests', () => {
     strict.equal(await hash(await fs.readStream(path), 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'hash should match');
     strict.equal(await hash(await fs.readStream(path), 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'hash should match');
     strict.equal(await hash(await fs.readStream(path), 'md5'), 'c82b854702262508e9210c678282d5a4', 'hash should match');
-
   });
 
   it('reads blocks via open', async () => {
@@ -206,8 +205,8 @@ describe('LocalFileSystemTests', () => {
     // now copy the files from the test folder
 
     const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
-    console.log(files);
-    strict.ok(files > 3000, 'there should be at least 3000 files copied.');
+
+    strict.ok(files > 3000, `There should be at least 3000 files copied. Only copied ${files}`);
 
   });
 });

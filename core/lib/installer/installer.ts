@@ -1,3 +1,5 @@
+import { UnpackEvents } from '../archive';
+import { Artifact } from '../artifact';
 import { Installer } from '../metadata-format';
 import { Session } from '../session';
 
@@ -6,11 +8,11 @@ import { Session } from '../session';
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 export abstract class InstallerImpl {
-  constructor(protected session: Session) {
-
+  constructor(protected session: Session, protected artifact: Artifact, protected installInfo: Installer) {
   }
 
-  abstract install(id: string, version: string, install: Installer): Promise<void>;
+
+  abstract install(install: Installer, listener?: Partial<UnpackEvents>): Promise<void>;
 
 
 }

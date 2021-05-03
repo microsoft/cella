@@ -49,6 +49,10 @@ export class ZipFile {
     return result;
   }
 
+  close() {
+    return this.readHandle.close();
+  }
+
   private constructor(private readHandle: ReadHandle) {
   }
 
