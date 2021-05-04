@@ -5,7 +5,7 @@
 
 import { fail, strict } from 'assert';
 import { TextDecoder } from 'util';
-import { Artifact } from './artifact';
+import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
@@ -200,8 +200,22 @@ export class Session {
     fail(i`Unknown installer type ${installer.kind}`);
   }
 
-  get installedArtifacts() {
-    return [];
+  async getInstalledArtifacts() {
+    const result = new Array<{ folder: Uri, id: string, artifact: Artifact }>();
+    if (! await this.installFolder.exists()) {
+      return result;
+    }
+    for (const [folder, stat] of await this.installFolder.readDirectory()) {
+
+      const content = this.utf8(await folder.readFile('artifact.yaml'));
+      const metadata = parseConfiguration(folder.fsPath, content);
+      result.push({
+        folder,
+        id: metadata.info.id,
+        artifact: createArtifact(this, metadata, '')
+      });
+    }
+    return result;
   }
 
   static Installers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([

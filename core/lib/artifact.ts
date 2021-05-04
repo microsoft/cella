@@ -77,13 +77,15 @@ class ArtifactInfo {
   }
 
   get isInstalled() {
-    return false;
+
+    return this.targetLocation.exists('artifact.yaml');
   }
 
   async install(listener: Partial<UnpackEvents & AcquireEvents>, options?: { force?: boolean }) {
 
     // is it installed?
-    if (!(options?.force) && this.isInstalled) {
+    if (await this.isInstalled && !(options?.force)) {
+      console.log(`Artifact ${this.id} is installed already`);
       return;
     }
 
@@ -119,8 +121,6 @@ class ArtifactInfo {
       const installer = this.session.createInstaller(this.artifact, installInfo);
       await installer.install(<any>installInfo, listener);
     }
-
-
   }
 
   get name() {
@@ -133,14 +133,14 @@ class ArtifactInfo {
 
 
   async writeManifest() {
-    const content = this.artifact.toString();
-    await this.targetLocation.parent().createDirectory();
-    await this.targetLocation.writeFile(Buffer.from(content));
+    const content = this.metadata.content;
+    await this.targetLocation.createDirectory();
+    await this.targetLocation.join('artifact.yaml').writeFile(Buffer.from(content));
   }
 
   async uninstall() {
     //
-    await this.targetLocation.parent().delete({ recursive: true, useTrash: false });
+    await this.targetLocation.delete({ recursive: true, useTrash: false });
   }
 
 

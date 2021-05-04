@@ -108,7 +108,7 @@ describe('Repository Tests', () => {
     await repository.regenerate();
     await repository.save();
 
-    const anotherRepository = new CellaRepository(local.session, local.tempFolderUri.join('other'), local.tempFolderUri);
+    const anotherRepository = new CellaRepository(local.session, local.session.cellaHome.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one.');
   });
@@ -143,7 +143,7 @@ describe('Repository Tests', () => {
     strict.ok(versions, 'should have some versions');
     strict.equal(versions.length, 3, 'should have three versions of the package');
 
-    const anotherRepository = new CellaRepository(local.session, local.tempFolderUri.join('other'), local.tempFolderUri);
+    const anotherRepository = new CellaRepository(local.session, local.session.cellaHome.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     const anotherArm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(anotherArm.length, 3, 'should be 3 results');

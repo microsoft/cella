@@ -14,7 +14,7 @@ import { getOrCreateMap } from './util/yaml';
 
 export { Range, SemVer };
 
-export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
+export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly content: string };
 
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();

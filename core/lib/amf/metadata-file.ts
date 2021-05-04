@@ -34,6 +34,9 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.document.toString();
   }
 
+  get content() {
+    return this.document.toString();
+  }
   /* Profile */
   #info!: Info;
   get info(): Info {

@@ -153,14 +153,20 @@ export async function http(session: Session, uris: Array<Uri>, outputFilename: s
   const length = await locations.contentLength;
 
   const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined, credentials: options?.credentials });
-
-  const progressStream = new ProgressTrackingStream(0, length);
-  progressStream.on('progress', (filePercentage) => ee.emit('download', outputFilename, filePercentage));
+  let progressStream;
+  if (length > 0) {
+    progressStream = new ProgressTrackingStream(0, length);
+    progressStream.on('progress', (filePercentage) => ee.emit('download', outputFilename, filePercentage));
+  }
   const outputStream = await outputFile.writeStream({ append: true });
   ee.emit('download', outputFilename, 0);
 
   // whoooosh. write out the file
-  await pipeline(inputStream, progressStream, outputStream);
+  if (progressStream) {
+    await pipeline(inputStream, progressStream, outputStream);
+  } else {
+    await pipeline(inputStream, outputStream);
+  }
 
   // we've downloaded the file, let's see if it matches the hash we have.
   if (options?.algorithm) {
