@@ -38,6 +38,10 @@ export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>
     this.index = new indexConstructor(this);
   }
 
+  reset() {
+    this.index = new this.indexConstructor(this);
+  }
+
   /**
    * Serializes the catalog to a javascript object graph that can be persisted.
    */

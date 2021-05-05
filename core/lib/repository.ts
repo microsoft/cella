@@ -81,7 +81,7 @@ export class CellaRepository implements Repository {
         }
       }
     }
-
+    this.catalog.reset();
     await process(this.baseFolder);
     await q.done;
 
