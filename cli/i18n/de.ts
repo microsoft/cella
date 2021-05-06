@@ -209,5 +209,101 @@ export const map: language = {
   'a version or version range to match': () => {
     // autotranslated using Azure Translator via 'translate-strings' tool ('a version or version range to match')
     return 'eine Version oder ein entsprechender Versionsbereich';
+  },
+  'Expected a single value for \'--${0}\' -- found multiple.': (p0: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Expected a single value for '--${p0}' -- found multiple.`)
+    return `Erwartet einen einzelnen Wert für '--${p0}' -- gefunden mehrere.`;
+  },
+  'Acquire artifacts in the repository.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Acquire artifacts in the repository.')
+    return 'Erwerben Sie Artefakte im Repository.';
+  },
+  'This allows the consumer to acquire (download and unpack) artifacts. Artifacts must be activated to be used.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('This allows the consumer to acquire (download and unpack) artifacts. Artifacts must be activated to be used.')
+    return 'Dies ermöglicht es dem Verbraucher, Artefakte zu erwerben (herunterladen und zu entpacken). Artefakte müssen aktiviert werden, um verwendet zu werden.';
+  },
+  'Multiple packages specified, but not an equal number of \'--verison=\' switches. ': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Multiple packages specified, but not an equal number of \'--verison=\' switches. ')
+    return 'Mehrere Pakete angegeben, aber nicht eine gleiche Anzahl von Schaltern von \'--verison=\'. ';
+  },
+  'Artifact identity \'${0}\' could not be found.': (each: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Artifact identity '${each}' could not be found.`)
+    return `Artefaktidentität '${each}' konnte nicht gefunden werden.`;
+  },
+  'Artifact identity \'${0}\' matched more than one result. This should never happen.': (each: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Artifact identity '${each}' matched more than one result. This should never happen.`)
+    return `Artefaktidentität '${each}' stimmte mit mehr als einem Ergebnis überein. Das darf niemals geschehen.`;
+  },
+  'Artifact': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Artifact')
+    return 'Artefakt';
+  },
+  'Version': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Version')
+    return 'Version';
+  },
+  'Summary': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Summary')
+    return 'Zusammenfassung';
+  },
+  'No artifacts are being acquired.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('No artifacts are being acquired.')
+    return 'Es werden keine Artefakte erworben.';
+  },
+  'verified': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('verified')
+    return 'verifiziert';
+  },
+  'verifying': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('verifying')
+    return 'Verifizieren';
+  },
+  'downloading': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('downloading')
+    return 'Herunterladen';
+  },
+  'unpacking': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('unpacking')
+    return 'Auspacken';
+  },
+  'unpacked': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('unpacked')
+    return 'ausgepackt';
+  },
+  'Installation completed successfuly': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Installation completed successfuly')
+    return 'Installation erfolgreich abgeschlossen';
+  },
+  'Manages the download cache.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Manages the download cache.')
+    return 'Verwaltet den Download-Cache.';
+  },
+  'Cache folder cleared (${0}) ': (p0: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Cache folder cleared (${p0}) `)
+    return `Cache-Ordner gelöscht (${p0}) `;
+  },
+  'Deletes an artifact from the artifact folder.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('Deletes an artifact from the artifact folder.')
+    return 'Löscht ein Artefakt aus dem Artefaktordner.';
+  },
+  'This allows the consumer to remove an artifact from disk.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('This allows the consumer to remove an artifact from disk.')
+    return 'Dadurch kann der Verbraucher ein Artefakt vom Datenträger entfernen.';
+  },
+  'Deleting artifact ${0} from ${1}': (id: string, p1: string) => {
+    // autotranslated using Azure Translator via 'translate-strings' tool (`Deleting artifact ${id} from ${p1}`)
+    return `Artefakt ${id} von ${p1} löschen`;
+  },
+  'This downloads the latest contents of the repository from the remote service.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('This downloads the latest contents of the repository from the remote service.')
+    return 'Dadurch werden die neuesten Inhalte des Repositorys vom Remotedienst heruntergeladen.';
+  },
+  'specify a github authentication token to access protected github repositories/urls': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('specify a github authentication token to access protected github repositories/urls')
+    return 'Geben Sie ein Github-Authentifizierungstoken an, um auf geschützte Github-Repositorys/URls zuzugreifen';
+  },
+  'removes all files in the local cache.': () => {
+    // autotranslated using Azure Translator via 'translate-strings' tool ('removes all files in the local cache.')
+    return 'entfernt alle Dateien im lokalen Cache.';
   }
 };

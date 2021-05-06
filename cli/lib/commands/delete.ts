@@ -9,6 +9,7 @@ import { Version } from '../switches/version';
 
 export class DeleteCommand extends Command {
   readonly command = 'delete';
+  readonly aliases = ['uninstall'];
   seeAlso = [];
   argumentsHelp = [];
   version = new Version(this)

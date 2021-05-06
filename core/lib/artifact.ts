@@ -77,16 +77,23 @@ class ArtifactInfo {
   }
 
   get isInstalled() {
-
     return this.targetLocation.exists('artifact.yaml');
   }
 
-  async install(listener: Partial<UnpackEvents & AcquireEvents>, options?: { force?: boolean }) {
+  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }) {
 
     // is it installed?
     if (await this.isInstalled && !(options?.force)) {
-      console.log(`Artifact ${this.id} is installed already`);
+      //console.log(`Artifact ${this.id} is installed already`);
       return;
+    }
+
+    if (options?.force) {
+      try {
+        await this.uninstall();
+      } catch {
+        // if a file is locked, it may not get removed. We'll deal with this later.
+      }
     }
 
     const d = this.demands;
@@ -112,15 +119,15 @@ class ArtifactInfo {
       this.session.channels.message(each);
     }
 
-    // write out the installed manifest
-    await this.writeManifest();
-
     // ok, let's install this.
     const installInfo = d.install;
     if (installInfo) {
       const installer = this.session.createInstaller(this.artifact, installInfo);
-      await installer.install(<any>installInfo, listener);
+      await installer.install(installInfo, options);
     }
+
+    // after we unpack it, write out the installed manifest
+    await this.writeManifest();
   }
 
   get name() {
@@ -130,7 +137,6 @@ class ArtifactInfo {
   get targetLocation() {
     return this.session.installFolder.join(this.name);
   }
-
 
   async writeManifest() {
     const content = this.metadata.content;
@@ -142,6 +148,5 @@ class ArtifactInfo {
     //
     await this.targetLocation.delete({ recursive: true, useTrash: false });
   }
-
 
 }

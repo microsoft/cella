@@ -24,18 +24,73 @@ const size64K = 1 << 16;
 export interface AcquireOptions extends Hash {
   /** force a redownload even if it's in cache */
   force?: boolean;
-  credentials: Credentials;
+  credentials?: Credentials;
+  events?: Partial<AcquireEvents>
 }
 
 export interface AcquireEvents extends Progress {
   download(file: string, percent: number): void;
+  verifying(file: string, percent: number): void;
   complete(): void;
 }
 
+export async function acquireArtifactFile(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
+  await session.cache.createDirectory();
+  const outputFile = session.cache.join(outputFilename);
+  session.channels.debug(`Acquire file '${outputFilename}' from [${uris.map(each => each.toString()).join(',')}]`);
+
+  if (options?.algorithm && options?.value) {
+    session.channels.debug(`We have a hash: ${options.algorithm}/${options.value}`);
+
+    // if we have hash data, check to see if the output file is good.
+    if (await outputFile.isFile()) {
+      session.channels.debug(`There is an output file already, verifying: ${outputFile.fsPath}`);
+
+      if (await outputFile.hashValid(options)) {
+        session.channels.debug(`Cached file matched hash: ${outputFile.fsPath}`);
+        return outputFile;
+      }
+    }
+  }
+
+
+  // is the file present on a local filesystem?
+  for (const uri of uris) {
+    if (uri.isLocal) {
+      // we have a local file
+
+      if (options?.algorithm && options?.value) {
+        // we have a hash.
+        // is it valid?
+        if (uri.hashValid(options)) {
+          session.channels.debug(`Local file matched hash: ${uri.fsPath}`);
+          return uri;
+        }
+      } else {
+        // we don't have a hash, but the file is local, and it exists.
+        // we have to return it
+        session.channels.debug(`Using local file (no hash, unable to verify): ${uri.fsPath}`);
+        return uri;
+      }
+      // do we have a filename
+    }
+  }
+
+  // we don't have a local file
+  // http/https is all that we know at the moment.
+  const httpUris = uris.where(each => each.isHttp);
+  if (httpUris.length === 0) {
+    // wait, no http uris?
+    throw new RemoteFileUnavailable(uris);
+  }
+
+  return http(session, httpUris, outputFilename, options);
+}
+
 /** */
-export async function http(session: Session, uris: Array<Uri>, outputFilename: string, listener?: Partial<AcquireEvents>, options?: AcquireOptions) {
+async function http(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
   const ee = new ExtendedEmitter<AcquireEvents>();
-  ee.subscribe(listener);
+  ee.subscribe(options?.events);
   session.channels.debug(`Attempting to download file '${outputFilename}' from [${uris.map(each => each.toString()).join(',')}]`);
 
   let resumeAtOffset = 0;
@@ -95,7 +150,7 @@ export async function http(session: Session, uris: Array<Uri>, outputFilename: s
           const algorithm = <Algorithm>(await locations.algorithm);
           const value = await locations.hash;
           session.channels.debug(`Acquire '${outputFilename}': remote alg/hash: '${algorithm}'/'${value}.`);
-          if (algorithm && value && outputFile.hashValid({ algorithm, value })) {
+          if (algorithm && value && outputFile.hashValid({ algorithm, value, ...options })) {
             session.channels.debug(`Acquire '${outputFilename}': on disk file hash matches the server hash.`);
             // so *we* don't have the hash, but ... if the server has a hash, we could see if what we have is what they have?
             // it does match what the server has.
@@ -197,8 +252,8 @@ export async function resolveNugetUrl(session: Session, pkg: string) {
   return url;
 }
 
-export async function nuget(session: Session, pkg: string, outputFilename: string, listener?: Partial<AcquireEvents>, options?: AcquireOptions): Promise<Uri> {
-  return http(session, [await resolveNugetUrl(session, pkg)], outputFilename, listener, options);
+export async function nuget(session: Session, pkg: string, outputFilename: string, options?: AcquireOptions): Promise<Uri> {
+  return http(session, [await resolveNugetUrl(session, pkg)], outputFilename, options);
 }
 
 /** @internal */

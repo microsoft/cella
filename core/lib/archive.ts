@@ -49,6 +49,8 @@ export interface OutputOptions {
    * A regular expression to transform filenames during unpack. If the resulting file name is empty, it is not emitted.
    */
   transform?: Array<string>;
+
+  events?: Partial<UnpackEvents>;
 }
 
 
@@ -68,7 +70,7 @@ export abstract class Unpacker extends ExtendedEmitter<UnpackEvents> {
     this.emit('unpacked', entry);
   }
 
-  abstract unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void>;
+  abstract unpack(archiveUri: Uri, outputUri: Uri, options?: OutputOptions): Promise<void>;
 
   /**
  * Returns a new path string such that the path has prefixCount path elements removed, and directory
@@ -183,8 +185,8 @@ export class ZipUnpacker extends Unpacker {
     }
   }
 
-  async unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
-    this.subscribe(listener);
+  async unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
+    this.subscribe(options?.events);
     try {
       this.session.channels.debug(`unpacking ZIP ${archiveUri} => ${outputUri}`);
 
@@ -203,10 +205,10 @@ export class ZipUnpacker extends Unpacker {
         });
       }
       await q.done;
-      this.progress(100);
       await zipFile.close();
+      this.progress(100);
     } finally {
-      this.unsubscribe(listener);
+      this.unsubscribe(options?.events);
     }
   }
 }
@@ -281,21 +283,21 @@ abstract class BasicTarUnpacker extends Unpacker {
 }
 
 export class TarUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options);
   }
 }
 
 export class TarGzUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR.GZ ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options, createGunzip());
   }
 }
 
 export class TarBzUnpacker extends BasicTarUnpacker {
-  unpack(archiveUri: Uri, outputUri: Uri, listener: Partial<UnpackEvents>, options: OutputOptions): Promise<void> {
+  unpack(archiveUri: Uri, outputUri: Uri, options: OutputOptions): Promise<void> {
     this.session.channels.debug(`unpacking TAR.BZ2 ${archiveUri} => ${outputUri}`);
     return this.unpackTar(archiveUri, outputUri, options, bz2());
   }

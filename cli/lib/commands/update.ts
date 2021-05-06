@@ -11,6 +11,7 @@ import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 export class UpdateCommand extends Command {
   readonly command = 'update';
+  readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);

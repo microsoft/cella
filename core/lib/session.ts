@@ -206,14 +206,18 @@ export class Session {
       return result;
     }
     for (const [folder, stat] of await this.installFolder.readDirectory()) {
+      try {
 
-      const content = this.utf8(await folder.readFile('artifact.yaml'));
-      const metadata = parseConfiguration(folder.fsPath, content);
-      result.push({
-        folder,
-        id: metadata.info.id,
-        artifact: createArtifact(this, metadata, '')
-      });
+        const content = this.utf8(await folder.readFile('artifact.yaml'));
+        const metadata = parseConfiguration(folder.fsPath, content);
+        result.push({
+          folder,
+          id: metadata.info.id,
+          artifact: createArtifact(this, metadata, '')
+        });
+      } catch {
+        // not a valid install.
+      }
     }
     return result;
   }

@@ -12,6 +12,7 @@ import { Repo } from '../switches/repo';
 
 export class RegenerateCommand extends Command {
   readonly command = 'regenerate';
+  readonly aliases = ['regen'];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);

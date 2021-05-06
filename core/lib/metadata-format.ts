@@ -211,8 +211,10 @@ export interface GitArtifactSource extends ArtifactSourceBase {
 /** values that can be either a single string, or an array of strings */
 export type StringOrStrings = string | Array<string>;
 
-/** refers to a location of a resource. If an array is specified, they are considered mirrors */
-type ResourceLocation = string | ReadonlyArray<string> | Strings;
+/** refers to a location of a resource. If an array is specified, they are considered mirrors
+ *
+*/
+export type ResourceLocation = string | ReadonlyArray<string> | Strings;
 
 /**
  * a mapped dictionary of string:T

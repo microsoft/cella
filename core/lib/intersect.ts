@@ -54,17 +54,19 @@ export function intersect<T extends object, T2 extends object>(primary: T, secon
         };
       }
 
+
       if (Object.getOwnPropertyNames(target.primary).indexOf(propertyName) > -1) {
         return (<any>target.primary)[property];
       }
-      if (Object.getOwnPropertyNames(target.secondary).indexOf(propertyName) > -1) {
-        return (<any>target.secondary)[property];
-      }
-
       // try binding member function
       if (typeof ((<any>target.primary)[property]) === 'function') {
         return (<any>target.primary)[property].bind(primary);
       }
+
+      if (Object.getOwnPropertyNames(target.secondary).indexOf(propertyName) > -1) {
+        return (<any>target.secondary)[property];
+      }
+
       if (typeof ((<any>target.secondary)[property]) === 'function') {
         return (<any>target.secondary)[property].bind(secondary);
       }

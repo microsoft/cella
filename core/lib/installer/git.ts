@@ -9,7 +9,7 @@ import { InstallerImpl } from './installer';
 
 
 export class GitInstaller extends InstallerImpl {
-  async install(install: Installer, listener?: Partial<UnpackEvents & AcquireEvents>): Promise<void> {
+  async install(install: Installer, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
     //
   }
 }

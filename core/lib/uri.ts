@@ -128,6 +128,14 @@ bad.fragment === '/project1';
     return relative(this.path, target.path).replace(/\\/g, '/');
   }
 
+  /** returns true if the uri represents a file:// resource. */
+  get isLocal(): boolean {
+    return this.scheme === 'file';
+  }
+
+  get isHttp(): boolean {
+    return this.scheme === 'https' || this.scheme === 'http';
+  }
   /**
    * Returns a string representing the corresponding file system path of this URI.
    * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
@@ -264,14 +272,15 @@ bad.fragment === '/project1';
 
   async hash(algorithm?: Algorithm): Promise<string | undefined> {
     if (algorithm) {
-      return await hash(await this.fileSystem.readStream(this), algorithm);
+
+      return await hash(await this.fileSystem.readStream(this), this, await this.size(), algorithm);
     }
     return undefined;
   }
 
   async hashValid(matchOptions?: Hash) {
     if (matchOptions?.algorithm && await this.exists()) {
-      return matchOptions.value?.toLowerCase() === await hash(await this.readStream(), matchOptions.algorithm);
+      return matchOptions.value?.toLowerCase() === await hash(await this.readStream(), this, await this.size(), matchOptions.algorithm, matchOptions);
     }
     return false;
   }

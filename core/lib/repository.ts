@@ -6,7 +6,7 @@
 import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
-import { http } from './acquire';
+import { acquireArtifactFile } from './acquire';
 import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
@@ -103,14 +103,14 @@ export class CellaRepository implements Repository {
   }
 
   async update() {
-    const file = await http(this.session, [this.remoteLocation], 'repository.zip', {}, {
+    const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {
       credentials: {
         githubToken: this.session.environment['githubAuthToken']
       }
     });
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
-      await unpacker.unpack(file, this.baseFolder, {}, { strip: 1 });
+      await unpacker.unpack(file, this.baseFolder, { strip: 1 });
     }
   }
 

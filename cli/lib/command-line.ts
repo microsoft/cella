@@ -131,7 +131,7 @@ export class CommandLine {
 
   /** parses the command line and returns the command that has been requested */
   get command() {
-    return this.commands.find(each => each.command === this.inputs[0]);
+    return this.commands.find(cmd => cmd.command === this.inputs[0] || !!cmd.aliases.find(alias => alias === this.inputs[0]));
   }
 }
 

@@ -11,9 +11,11 @@ import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
+import { CacheCommand } from './lib/commands/cache';
 import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
+import { ListCommand } from './lib/commands/list';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
 import { UpdateCommand } from './lib/commands/update';
 import { VersionCommand } from './lib/commands/version';
@@ -59,6 +61,8 @@ async function main() {
   const find = new FindCommand(commandline);
   const acquire = new AcquireCommand(commandline);
   const del = new DeleteCommand(commandline);
+  const list = new ListCommand(commandline);
+  const cache = new CacheCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 

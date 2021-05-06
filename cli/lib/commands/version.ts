@@ -33,6 +33,7 @@ class Update extends Switch {
 
 export class VersionCommand extends Command {
   readonly command = 'version';
+  readonly aliases = ['ver'];
   seeAlso = [];
   argumentsHelp = [];
   check = new Check(this);

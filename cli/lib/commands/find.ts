@@ -14,6 +14,7 @@ import { UpdateCommand } from './update';
 
 export class FindCommand extends Command {
   readonly command = 'find';
+  readonly aliases = ['search'];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);

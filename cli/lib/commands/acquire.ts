@@ -17,6 +17,7 @@ import { UpdateCommand } from './update';
 
 export class AcquireCommand extends Command {
   readonly command = 'acquire';
+  readonly aliases = ['install'];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
@@ -76,7 +77,6 @@ export class AcquireCommand extends Command {
         case 1:
           // found the artifact. awesome.
           artifacts.push(await repository.openArtifact(manifests[0]));
-          // artifacts.push([...linq.values((await repository.open(manifests))).selectMany(each => each)]);
           break;
 
         default:
@@ -87,7 +87,7 @@ export class AcquireCommand extends Command {
     }
 
     if (artifacts.length) {
-      const table = new Table('Artifact', 'Version', 'Summary');
+      const table = new Table(i`Artifact`, i`Version`, i`Summary`);
       for (const artifact of artifacts) {
         const latest = artifact;
         const name = formatName(latest.info.id, latest.shortName);
@@ -99,14 +99,21 @@ export class AcquireCommand extends Command {
     log();
 
     if (failing) {
-      warning('No artifacts are being acquired.');
+      warning(i`No artifacts are being acquired.`);
       return false;
     }
 
+    await this.install(artifacts);
+
+    console.log(i`Installation completed successfuly`);
+    return true;
+  }
+
+  async install(artifacts: Array<Artifact>) {
     // resolve the full set of artifacts to install.
 
     const bar = new MultiBar({
-      clearOnComplete: true, hideCursor: true, format: '{action} {bar}\u25A0 {percentage}% {name} | ETA: {eta}s | {value}/{total}',
+      clearOnComplete: true, hideCursor: true, format: '{name} {bar}\u25A0 {percentage}% {action} {current}',
       barCompleteChar: '\u25A0',
       barIncompleteChar: ' ',
       etaBuffer: 40
@@ -115,44 +122,63 @@ export class AcquireCommand extends Command {
     let p: SingleBar | undefined;
 
     for (const artifact of artifacts) {
-      await artifact.install({
-        download: (name, percent) => {
+      const id = artifact.id;
 
-          if (percent >= 100) {
-            if (dl) {
-              dl.update(percent);
-              // bar.remove(dl);
+      await artifact.install({
+        force: this.commandLine.force,
+        events: {
+          verifying: (name, percent) => {
+            if (percent >= 100) {
+              if (p) {
+                p.update(percent, { action: i`verified`, name: formatName(id), current: name });
+              }
+              p = undefined;
+              return;
             }
-            dl = undefined;
-            return;
-          }
-          if (percent) {
-            if (!dl) {
-              dl = bar.create(100, 0, { action: 'downloading', name: name });
-            }
-            dl.update(percent);
-          }
-        },
-        progress: (percent: number) => {
-          if (percent >= 100) {
-            if (p) {
+            if (percent) {
+              if (!p) {
+                p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
+              }
               p.update(percent);
-              // bar.remove(p);
             }
-            p = undefined;
-            return;
-          }
-          if (percent) {
-            if (!p) {
-              p = bar.create(100, 0, { action: 'unpacking', name: artifact.id });
+          },
+          download: (name, percent) => {
+            if (percent >= 100) {
+              if (dl) {
+                dl.update(percent);
+              }
+              dl = undefined;
+              return;
             }
-            p.update(percent);
+            if (percent) {
+              if (!dl) {
+                dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
+              }
+              dl.update(percent);
+            }
+          },
+          fileProgress: (entry) => {
+            p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
+          },
+          progress: (percent: number) => {
+            if (percent >= 100) {
+              if (p) {
+                p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
+              }
+              p = undefined;
+              return;
+            }
+            if (percent) {
+              if (!p) {
+                p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
+              }
+              p.update(percent);
+            }
           }
         }
       });
     }
+
     bar.stop();
-    console.log('success?');
-    return true;
   }
 }

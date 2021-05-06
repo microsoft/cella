@@ -93,6 +93,9 @@ export function initStyling(commandline: CommandLine, session: Session) {
   });
 }
 
-export function formatName(fullName: string, shortName: string) {
-  return `${fullName.substr(0, fullName.length - shortName.length)}${yellowBright(shortName)}`;
+export function formatName(fullName: string, shortName?: string) {
+  if (shortName) {
+    return `${fullName.substr(0, fullName.length - shortName.length)}${yellowBright(shortName)}`;
+  }
+  return yellowBright(fullName);
 }

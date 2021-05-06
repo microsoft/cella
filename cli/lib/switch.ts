@@ -29,6 +29,6 @@ export abstract class Switch implements Help {
 
   get active(): boolean {
     const v = this.values;
-    return !!v && v[0] !== 'false';
+    return !!v && v.length > 0 && v[0] !== 'false';
   }
 }

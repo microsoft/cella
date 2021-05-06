@@ -2,14 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { AcquireEvents } from '../acquire';
-import { UnpackEvents } from '../archive';
-import { UnZip } from '../metadata-format';
-import { InstallerImpl } from './installer';
+import { i } from '@microsoft/cella.core';
+import { Switch } from '../switch';
 
-
-export class VsixInstaller extends InstallerImpl {
-  async install(install: UnZip, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-    //
+export class Clear extends Switch {
+  switch = 'clear';
+  get help() {
+    return [
+      i`removes all files in the local cache.`
+    ];
   }
 }
