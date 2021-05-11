@@ -63,5 +63,5 @@ export function serialize(value: any) {
 
 export function isYAML(path: string) {
   path = path.toLowerCase();
-  return path.endsWith('.yml') || path.endsWith('.yaml');
+  return path.endsWith('.yml') || path.endsWith('.yaml') || path.endsWith('.json');
 }

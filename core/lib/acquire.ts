@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { fail, strict } from 'assert';
+import { strict } from 'assert';
 import { pipeline as origPipeline } from 'stream';
 import { promisify } from 'util';
 import { Credentials } from './credentials';
@@ -229,7 +229,7 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
     // does it match the hash that we have?
     if (!await outputFile.hashValid(options)) {
       await outputFile.delete();
-      fail(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}:${options.value}) `);
+      throw new Error(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}:${options.value}) `);
     }
     session.channels.debug(`Acquire '${outputFilename}': downloaded file hash matches specified hash.`);
   }

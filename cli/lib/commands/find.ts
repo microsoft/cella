@@ -31,7 +31,7 @@ export class FindCommand extends Command {
   }
 
   async run() {
-    const repository = session.getSource('default');
+    const repository = session.getRepository('default');
     try {
       await repository.load();
     } catch (e) {

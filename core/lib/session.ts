@@ -104,13 +104,52 @@ export class Session {
     return this.sources.keys();
   }
 
-  getSource(name = 'default') {
-    const result = this.sources.get(name);
+  /** returns a repository given the name */
+  getRepository(source = 'default') {
+    const result = this.sources.get(source);
 
     if (!result) {
-      throw new Error(i`Unknown repository '${name}'`);
+      throw new Error(i`Unknown repository '${source}'`);
     }
     return result;
+  }
+
+  parseName(id: string) {
+    return id.indexOf(':') > -1 ? id.split(':') : ['default', id];
+  }
+
+  /**
+   * returns an artifact for the strongly-named artifact id/version.
+   *
+   * @param idOrShortName the identity of the artifact. If the string has no '<source>:' at the front, default source is assumed.
+   * @param version the version of the artifact
+   */
+  async getArtifact(idOrShortName: string, version: string | undefined) {
+    const [source, name] = this.parseName(idOrShortName);
+    const repository = this.getRepository(source);
+
+    const query = repository.where.id.nameOrShortNameIs(name);
+    if (version) {
+      query.version.rangeMatch(version);
+    }
+    const matches = query.items;
+
+    switch (matches.length) {
+      case 0:
+        // did not match a name or short name.
+        this.channels.error(i`Artifact identity '${idOrShortName}' could not be found.`);
+        return undefined; // nothing matched.
+
+      case 1: {
+        // found the artifact. awesome.
+        return await repository.openArtifact(matches[0]);
+      }
+
+      default:
+        // multiple matches
+        fail(i`Artifact identity '${idOrShortName}' matched more than one result. This should never happen. or is this multiple version matches?`);
+        break;
+    }
   }
 
 

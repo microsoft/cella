@@ -251,6 +251,7 @@ abstract class BasicTarUnpacker extends Unpacker {
         await parentDirectory.createDirectory();
         const fileProgress = new ProgressTrackingStream(0, header.size);
         fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
+        fileProgress.on('progress', (filePercentage) => options.events?.fileProgress?.(fileEntry, filePercentage));
         const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
         await pipeline(stream, fileProgress, writeStream);
       }
@@ -263,6 +264,7 @@ abstract class BasicTarUnpacker extends Unpacker {
   }
 
   protected async unpackTar(archiveUri: Uri, outputUri: Uri, options: OutputOptions, decompressor?: Transform): Promise<void> {
+    this.subscribe(options?.events);
     const archiveSize = await archiveUri.size();
     const archiveFileStream = await archiveUri.readStream(0, archiveSize);
     const archiveProgress = new ProgressTrackingStream(0, archiveSize);

@@ -3,13 +3,11 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { Artifact, i } from '@microsoft/cella.core';
-import { fail } from 'assert';
 import { MultiBar, SingleBar } from 'cli-progress';
-import { error } from 'console';
 import { session } from '../../main';
 import { Command } from '../command';
 import { Table } from '../markdown-table';
-import { formatName, log, warning } from '../styling';
+import { error, formatName, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
@@ -35,7 +33,7 @@ export class AcquireCommand extends Command {
   }
 
   async run() {
-    const repository = session.getSource('default');
+    const repository = session.getRepository('default');
     try {
       await repository.load();
     } catch (e) {
@@ -51,42 +49,24 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    let failing = false;
+    const failing = false;
 
-    const artifacts = new Array<Artifact>();
+    const artifacts = new Set<Artifact>();
 
     let n = 0;
-    for (const each of this.inputs) {
+    for (const identity of this.inputs) {
       const version = versions[n++];
 
-      // resolve the shortnames to full names
-      const query = repository.where.id.nameOrShortNameIs(each);
-      if (version) {
-        query.version.rangeMatch(version);
+      const artifact = await session.getArtifact(identity, version);
+      if (!artifact) {
+        throw new Error(`Unable to resolve artifact ${identity}/${version}`);
       }
 
-      const manifests = query.items;
-
-      switch (manifests.length) {
-        case 0:
-          // did not match a name or short name.
-          error(i`Artifact identity '${each}' could not be found.`);
-          failing = true; // we're not going to install, but might as well tell the user if there are other errors.
-          continue;
-
-        case 1:
-          // found the artifact. awesome.
-          artifacts.push(await repository.openArtifact(manifests[0]));
-          break;
-
-        default:
-          // too many matches. This should not happen.
-          fail(i`Artifact identity '${each}' matched more than one result. This should never happen.`);
-          break;
-      }
+      artifacts.add(artifact);
+      await artifact.resolveDependencies(artifacts);
     }
 
-    if (artifacts.length) {
+    if (artifacts.size) {
       const table = new Table(i`Artifact`, i`Version`, i`Summary`);
       for (const artifact of artifacts) {
         const latest = artifact;
@@ -103,13 +83,15 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    await this.install(artifacts);
-
-    console.log(i`Installation completed successfuly`);
+    if (await this.install(artifacts)) {
+      log(i`Installation completed successfuly`);
+    } else {
+      return false;
+    }
     return true;
   }
 
-  async install(artifacts: Array<Artifact>) {
+  async install(artifacts: Iterable<Artifact>) {
     // resolve the full set of artifacts to install.
 
     const bar = new MultiBar({
@@ -124,61 +106,67 @@ export class AcquireCommand extends Command {
     for (const artifact of artifacts) {
       const id = artifact.id;
 
-      await artifact.install({
-        force: this.commandLine.force,
-        events: {
-          verifying: (name, percent) => {
-            if (percent >= 100) {
-              if (p) {
-                p.update(percent, { action: i`verified`, name: formatName(id), current: name });
+      try {
+        await artifact.install({
+          force: this.commandLine.force,
+          events: {
+            verifying: (name, percent) => {
+              if (percent >= 100) {
+                p?.update(percent);
+                p = undefined;
+                return;
               }
-              p = undefined;
-              return;
-            }
-            if (percent) {
-              if (!p) {
-                p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
+              if (percent) {
+                if (!p) {
+                  p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
+                }
+                p.update(percent);
               }
-              p.update(percent);
-            }
-          },
-          download: (name, percent) => {
-            if (percent >= 100) {
-              if (dl) {
+            },
+            download: (name, percent) => {
+              if (percent >= 100) {
+                if (dl) {
+                  dl.update(percent);
+                }
+                dl = undefined;
+                return;
+              }
+              if (percent) {
+                if (!dl) {
+                  dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
+                }
                 dl.update(percent);
               }
-              dl = undefined;
-              return;
-            }
-            if (percent) {
-              if (!dl) {
-                dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
+            },
+            fileProgress: (entry) => {
+              p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
+            },
+            progress: (percent: number) => {
+              if (percent >= 100) {
+                if (p) {
+                  p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
+                }
+                p = undefined;
+                return;
               }
-              dl.update(percent);
-            }
-          },
-          fileProgress: (entry) => {
-            p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
-          },
-          progress: (percent: number) => {
-            if (percent >= 100) {
-              if (p) {
-                p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
+              if (percent) {
+                if (!p) {
+                  p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
+                }
+                p.update(percent);
               }
-              p = undefined;
-              return;
-            }
-            if (percent) {
-              if (!p) {
-                p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
-              }
-              p.update(percent);
             }
           }
-        }
-      });
-    }
+        });
+      } catch (e) {
+        bar.stop();
+        error(i`Error installing ${formatName(id)} - ${e} `);
+        return false;
+      }
 
-    bar.stop();
+
+      bar.stop();
+    }
+    return true;
   }
 }

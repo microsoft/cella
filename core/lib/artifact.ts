@@ -7,9 +7,9 @@ import { AcquireEvents } from './acquire';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { intersect } from './intersect';
-import { linq } from './linq';
+import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, MetadataFile } from './metadata-format';
+import { Demands, MetadataFile, VersionReference } from './metadata-format';
 import { Session } from './session';
 
 export class SetOfDemands {
@@ -25,7 +25,7 @@ export class SetOfDemands {
     }
   }
 
-  get install() {
+  get installer() {
     const install = linq.items(this.#demands).where(([query, demand]) => !!demand.install).toArray();
 
     if (install.length > 1) {
@@ -52,7 +52,17 @@ export class SetOfDemands {
     return linq.values(this.#demands).selectNonNullable(d => d.seeAlso).toArray();
   }
   get requires() {
-    return linq.values(this.#demands).selectNonNullable(d => d.requires).toArray();
+    const d = this.#demands;
+    const rq1 = linq.values(d).selectNonNullable(d => d.requires).toArray();
+    const rq = [...d.values()].map(each => each.requires).filter(each => each);
+    const result = new Dictionary<VersionReference>();
+    for (const dict of rq) {
+      for (const name of dict.keys) {
+        result[name] = dict[name];
+      }
+    }
+    // .toDictionary(([name, ver]) => name, ([name, ver]) => ver);
+    return result;
   }
 }
 
@@ -67,9 +77,9 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
 
-  readonly demands: SetOfDemands;
+  readonly applicableDemands: SetOfDemands;
   constructor(protected session: Session, protected metadata: MetadataFile, public shortName: string) {
-    this.demands = new SetOfDemands(this.metadata, this.session);
+    this.applicableDemands = new SetOfDemands(this.metadata, this.session);
   }
 
   get id() {
@@ -84,7 +94,6 @@ class ArtifactInfo {
 
     // is it installed?
     if (await this.isInstalled && !(options?.force)) {
-      //console.log(`Artifact ${this.id} is installed already`);
       return;
     }
 
@@ -96,7 +105,7 @@ class ArtifactInfo {
       }
     }
 
-    const d = this.demands;
+    const d = this.applicableDemands;
     let fail = false;
     for (const each of d.errors) {
       this.session.channels.error(each);
@@ -120,7 +129,7 @@ class ArtifactInfo {
     }
 
     // ok, let's install this.
-    const installInfo = d.install;
+    const installInfo = d.installer;
     if (installInfo) {
       const installer = this.session.createInstaller(this.artifact, installInfo);
       await installer.install(installInfo, options);
@@ -145,8 +154,25 @@ class ArtifactInfo {
   }
 
   async uninstall() {
-    //
     await this.targetLocation.delete({ recursive: true, useTrash: false });
   }
 
+  async resolveDependencies(artifacts = new Set<Artifact>()) {
+
+    // find the dependencies and add them to the set
+    for (const [id, version] of linq.items(this.applicableDemands.requires)) {
+      const dep = await this.session.getArtifact(id, version.raw);
+      if (!dep) {
+        throw new Error(`Unable to resolve dependency ${id}/${version}`);
+      }
+
+      if (!artifacts.has(dep)) {
+        artifacts.add(dep);
+        // process it's dependencies too.
+        await dep.resolveDependencies(artifacts);
+      }
+
+    }
+    return artifacts;
+  }
 }

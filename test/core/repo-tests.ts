@@ -99,12 +99,12 @@ describe('Repository Tests', () => {
   });
 
   it('fails without an index', async () => {
-    const repository = local.session.getSource('default');
+    const repository = local.session.getRepository('default');
     await rejects(async () => await repository.load(), 'Should fail when there is not an index ');
   });
 
   it('can save and load the index', async () => {
-    const repository = local.session.getSource('default');
+    const repository = local.session.getRepository('default');
     await repository.regenerate();
     await repository.save();
 
@@ -114,7 +114,7 @@ describe('Repository Tests', () => {
   });
 
   it('Loads a bunch items', async () => {
-    const repository = local.session.getSource('default');
+    const repository = local.session.getRepository('default');
     await repository.regenerate();
 
     const all = await repository.openArtifacts(repository.where.items);
@@ -126,7 +126,7 @@ describe('Repository Tests', () => {
   it('Create index from some data', async () => {
     const start = process.uptime() * 1000;
 
-    const repository = local.session.getSource('default');
+    const repository = local.session.getRepository('default');
     local.session.channels.on('debug', (d, x, m) => console.log(`${m}msec : ${d}`));
     await repository.regenerate();
     await repository.save();

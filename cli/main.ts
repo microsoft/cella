@@ -12,6 +12,7 @@ import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
 import { CacheCommand } from './lib/commands/cache';
+import { CleanCommand } from './lib/commands/clean';
 import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
@@ -63,6 +64,7 @@ async function main() {
   const del = new DeleteCommand(commandline);
   const list = new ListCommand(commandline);
   const cache = new CacheCommand(commandline);
+  const clean = new CleanCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 

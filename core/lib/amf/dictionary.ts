@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { strict } from 'assert';
 import { Document, isDocument, Scalar, YAMLMap } from 'yaml';
 import { DictionaryOf } from '../metadata-format';
 
@@ -25,10 +26,10 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
 
     // allows usage of 'Object.getOwnPropertyNames`
     ownKeys: (dummy: DictionaryOf<T>) => {
-      return thisNode.items.map(each => {
+      return thisNode.items ? thisNode.items.map(each => {
         const k = each.key;
         return (k instanceof Scalar) ? k.value : k;
-      });
+      }) : [];
     },
 
     get: (dummy: DictionaryOf<T>, property: string, unused: any) => {
@@ -63,6 +64,7 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
 export class DictionaryImpl<T> implements DictionaryOf<T> {
   protected readonly node: YAMLMap;
   constructor(node: YAMLMap | Document.Parsed) {
+    strict.notEqual(typeof node, 'string', 'The node for a requires must not be a string');
     this.node = isDocument(node) ? <YAMLMap>node.contents : node;
   }
 

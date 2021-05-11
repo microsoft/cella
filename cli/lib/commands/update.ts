@@ -29,7 +29,7 @@ export class UpdateCommand extends Command {
 
   async run() {
 
-    const repository = session.getSource('default');
+    const repository = session.getRepository('default');
     if (!repository) {
       throw new Error('Repository is not accessible.');
     }

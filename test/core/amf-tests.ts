@@ -26,6 +26,20 @@ describe('Amf', () => {
     strict.equal(doc.info.version, '1.2.3', 'version incorrect');
   });
 
+  it('reads file with nupkg', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'repo', 'sdks', 'microsoft', 'windows.yaml'))).toString('utf-8');
+    const doc = parse('windows.yaml', content);
+
+    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isValid, 'Is it valid?');
+
+    for (const index of doc.demands) {
+      const n = doc[index];
+
+      console.log(`${index}=> ${n.requires.keys}`);
+    }
+  });
+
   it('profile checks', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);

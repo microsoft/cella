@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { http, resolveNugetUrl } from '@microsoft/cella.core';
+import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -17,7 +17,7 @@ describe('Acquire', () => {
 
     const remoteFile = local.session.fileSystem.parse('https://raw.githubusercontent.com/microsoft/vscode/main/README.md');
 
-    let acq = http(local.session, [remoteFile], 'readme.md');
+    let acq = acquireArtifactFile(local.session, [remoteFile], 'readme.md');
 
     const outputFile = await acq;
 
@@ -35,7 +35,7 @@ describe('Acquire', () => {
 
     local.session.channels.debug('==== chopped the file in half, redownload');
 
-    acq = http(local.session, [remoteFile], 'readme.md');
+    acq = acquireArtifactFile(local.session, [remoteFile], 'readme.md');
     await acq;
     const newsize = await outputFile.size();
     strict.equal(newsize, size, 'the file should be the right size at the end.');
@@ -46,7 +46,7 @@ describe('Acquire', () => {
   it('larger file', async () => {
     const remoteFile = local.session.fileSystem.parse('https://user-images.githubusercontent.com/1487073/58344409-70473b80-7e0a-11e9-8570-b2efc6f8fa44.png');
 
-    let acq = http(local.session, [remoteFile], 'xyz.png');
+    let acq = acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 
     const outputFile = await acq;
 
@@ -60,7 +60,7 @@ describe('Acquire', () => {
 
     // try getting the same file again (so, should hit the cache.)
     local.session.channels.debug('==== get the same large file again. should hit cache.');
-    await http(local.session, [remoteFile], 'xyz.png');
+    await acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 
     local.session.channels.debug('==== was that ok?');
 
@@ -73,7 +73,7 @@ describe('Acquire', () => {
     await outputFile.writeFile(halfFile);
 
     local.session.channels.debug('==== chopped the large file in half, should resume.');
-    acq = http(local.session, [remoteFile], 'xyz.png');
+    acq = acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 
     await acq;
     const newsize = await outputFile.size();
@@ -98,7 +98,7 @@ describe('Acquire', () => {
 
     local.session.channels.debug('==== Downloading nuget package.');
 
-    const acq = http(local.session, [url], 'zlib-msvc.zip');
+    const acq = acquireArtifactFile(local.session, [url], 'zlib-msvc.zip');
     // or const acq = nuget(local.session, 'zlib-msvc14-x64/1.2.11.7795', 'zlib-msvc.zip');
 
     const outputFile = await acq;
@@ -112,7 +112,7 @@ describe('Acquire', () => {
     local.session.channels.debug(`==== Size: ${size}.`);
 
     // what happens if we try again? We should hit our local cache
-    await http(local.session, [url], 'zlib-msvc.zip');
+    await acquireArtifactFile(local.session, [url], 'zlib-msvc.zip');
 
   });
 
