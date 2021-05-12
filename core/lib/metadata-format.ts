@@ -19,7 +19,7 @@ export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly cont
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('fixme'), new Amf(doc, filename, lc));
+  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('Fatal Error: this should never get called.'), new Amf(doc, filename, lc));
 }
 
 /**
