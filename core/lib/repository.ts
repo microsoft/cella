@@ -63,7 +63,26 @@ export class CellaRepository implements Repository {
       }
       try {
         const amf = parseConfiguration(uri.fsPath, content);
+
+
+        if (!amf.isValidYaml) {
+          for (const err of amf.yamlErrors) {
+            repo.session.channels.warning(`Parse errors in metadata file ${err}}`);
+          }
+          throw new Error('invalid yaml');
+        }
+
+        amf.validate();
+
+        if (!amf.isValid) {
+          for (const err of amf.validationErrors) {
+            repo.session.channels.warning(`Validation errors in metadata file ${err}}`);
+          }
+          throw new Error('invalid manifest');
+        }
+
         repo.catalog.insert(amf, repo.baseFolder.relative(uri));
+
       } catch (e) {
         repo.session.channels.warning(`skipping invalid metadata file ${uri.fsPath}`);
       }

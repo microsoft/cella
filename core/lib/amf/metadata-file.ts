@@ -140,7 +140,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     for (const { message, range, rangeOffset, category } of this.validate()) {
       const { line, column } = this.positionAt(range, rangeOffset);
       if (line) {
-        this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
+        this.#validationErrors.push(`\`${this.filename}:${line}:${column}\` ${category}, ${message}`);
       } else {
         this.#validationErrors.push(`${this.filename}: ${category}, ${message}`);
       }
@@ -195,9 +195,15 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       }
     }
 
+    const set = new Set<string>();
     for (const each of this.demands) {
+
       // first, validate that the query is a valid query
       const { key, value } = getPair(this.node, each)!;
+      if (set.has(each)) {
+        yield { message: i`Duplicate Keys detected in manifest: '${each}'`, range: key.range!, category: ErrorKind.DuplicateKey };
+      }
+      set.add(each);
 
       if (!isMap(value)) {
         yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };

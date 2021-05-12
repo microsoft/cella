@@ -140,7 +140,8 @@ export enum ErrorKind {
   SectionNotFound = 'SectionMessing',
   FieldMissing = 'FieldMissing',
   IncorrectType = 'IncorrectType',
-  ParseError = 'ParseError'
+  ParseError = 'ParseError',
+  DuplicateKey = 'DuplicateKey',
 }
 
 export interface Validation {

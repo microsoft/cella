@@ -6,7 +6,7 @@
 import { Context, Environment, i, intersect } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { Command } from './command';
 
 export type switches = {
@@ -72,6 +72,10 @@ class Ctx {
   }
 }
 
+export function resolvePath(v: string | undefined) {
+  return v?.startsWith('.') ? resolve(v) : v;
+}
+
 export class CommandLine {
   readonly commands = new Array<Command>();
   readonly inputs = new Array<string>();
@@ -88,11 +92,11 @@ export class CommandLine {
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#home || (this.#home = this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella'));
+    return this.#home || (this.#home = resolvePath(this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella')));
   }
 
   get repositoryFolder() {
-    return this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined;
+    return resolvePath(this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined);
   }
 
   get force() {
