@@ -48,7 +48,7 @@ export class InfoNode implements Info {
     this.node.set('description', value);
   }
 
-  protected get range(): [number, number] {
+  protected get range(): [number, number, number] {
     return <any>this.node.range!;
   }
 
