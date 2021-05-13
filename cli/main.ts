@@ -11,6 +11,7 @@ import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
+import { ApplyVsManCommand } from './lib/commands/apply-vsman';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
 import { DeleteCommand } from './lib/commands/delete';
@@ -55,6 +56,7 @@ async function main() {
   // find a project profile.
   // console.log((await session.findProjectProfile())?.fsPath);
 
+  const zApplyVsMan = new ApplyVsManCommand(commandline);
   const help = new HelpCommand(commandline);
   const version = new VersionCommand(commandline);
   const regenerate = new RegenerateCommand(commandline);

@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
+import { LocalFileSystem, Session } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { statSync } from 'fs';
 import { rm } from 'fs/promises';
@@ -25,25 +25,20 @@ export function rootFolder(from = __dirname): string {
 }
 
 export class SuiteLocal {
-  readonly rootFolder: string = rootFolder();
-  readonly rootFolderUri: Uri;
-  readonly tempFolder: string;
-  readonly tempFolderUri: Uri;
-  readonly session: Session;
-  readonly fs: LocalFileSystem;
+  readonly tempFolder = uniqueTempFolder();
+  readonly session = new Session(this.tempFolder, {
+    cella_home: join(this.tempFolder, 'cella_home'),
+    context: <any>{
+    }
+  });
+  readonly fs = new LocalFileSystem(this.session);
+  readonly rootFolder : string = rootFolder();
+  readonly resourcesFolder = this.rootFolder + '/resources';
+  readonly rootFolderUri = this.fs.file(this.rootFolder);
+  readonly tempFolderUri = this.fs.file(this.tempFolder);
+  readonly resourcesFolderUri = this.fs.file(this.resourcesFolder);
 
   constructor() {
-    this.tempFolder = uniqueTempFolder();
-    this.session = new Session(this.tempFolder, {
-      cella_home: join(this.tempFolder, 'cella_home'),
-      context: <any>{
-
-      }
-    });
-
-    this.fs = new LocalFileSystem(this.session);
-    this.rootFolderUri = this.fs.file(this.rootFolder);
-    this.tempFolderUri = this.fs.file(this.tempFolder);
     // set the debug=1 in the environment to have the debug messages dumped during testing
     if (process.env['DEBUG'] || process.env['debug']) {
       this.session.channels.on('debug', (text, context, msec) => {
