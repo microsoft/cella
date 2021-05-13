@@ -91,7 +91,6 @@ class ArtifactInfo {
   }
 
   async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }) {
-
     // is it installed?
     if (await this.isInstalled && !(options?.force)) {
       return;

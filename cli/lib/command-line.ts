@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Context, Environment, i, intersect } from '@microsoft/cella.core';
+import { Environment, i, intersect } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
@@ -18,9 +18,6 @@ export interface Help {
   readonly title: string;
 }
 
-function createContext(cmdline: CommandLine): Context {
-  return <any>intersect(new Ctx(cmdline), cmdline.switches);
-}
 class Ctx {
   constructor(cmdline: CommandLine) {
     this.os =

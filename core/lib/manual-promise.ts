@@ -72,13 +72,13 @@ export class ManualPromise<T> implements Promise<T> {
   }
 }
 
-export class PromiseToExectue<T> extends ManualPromise<T> {
+export class LazyPromise<T> extends ManualPromise<T> {
   public constructor(private action: () => Promise<T>) {
     super();
   }
 
   execute() {
-    this.action().then((v) => this.resolve(v)).catch(e => this.reject(e));
+    this.action().then(v => this.resolve(v), e => this.reject(e));
     return this;
   }
 }

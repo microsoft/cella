@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ManualPromise, PromiseToExectue } from './manual-promise';
+import { LazyPromise, ManualPromise } from './manual-promise';
 
 /** a precrafted failed Promise */
 const waiting = Promise.reject(0xDEFACED);
@@ -77,7 +77,7 @@ export async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value:
 export class Queue {
   private total = 0;
   private active = 0;
-  private queue = new Array<PromiseToExectue<any>>();
+  private queue = new Array<LazyPromise<any>>();
   private tail: Promise<any> | undefined;
   private whenZero: ManualPromise<number> | undefined;
   private rejections = new Array<any>();
@@ -125,7 +125,7 @@ export class Queue {
     this.total++;
 
     if (this.queue.length || this.active >= this.maxConcurency) {
-      const result = new PromiseToExectue<T>(action);
+      const result = new LazyPromise<T>(action);
       this.queue.push(result);
       return result;
     }

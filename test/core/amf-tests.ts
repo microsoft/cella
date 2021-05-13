@@ -33,11 +33,7 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
-    for (const index of doc.demands) {
-      const n = doc[index];
 
-      console.log(`${index}=> ${n.requires.keys}`);
-    }
   });
 
   it('profile checks', async () => {
@@ -135,7 +131,7 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
-    strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');
+    strict.equal(doc.validationErrors[0], '`empty.yaml:1:1` SectionMessing, Missing section \'info\'', 'Should have an error about info');
   });
 
   it('validation errors', async () => {

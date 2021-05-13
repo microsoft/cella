@@ -72,6 +72,8 @@ export class AcquireCommand extends Command {
         const latest = artifact;
         const name = formatName(latest.info.id, latest.shortName);
         table.push(name, latest.info.version, latest.info.summary || '');
+        artifact.validate();
+        if (artifact.isValid && a)
       }
       log(table.toString());
     }

@@ -172,7 +172,6 @@ export class ZipUnpacker extends Unpacker {
       };
 
       this.fileProgress(fileEntry, 0);
-      this.fileProgress(fileEntry, 1);
       this.session.channels.debug(`unpacking ZIP file ${archiveUri}/${file.name} => ${destination}`);
       await destination.parent().createDirectory();
       const readStream = await file.read();
