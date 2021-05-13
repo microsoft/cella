@@ -203,10 +203,7 @@ describe('LocalFileSystemTests', () => {
 
   it('can copy files', async () => {
     // now copy the files from the test folder
-
     const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
-
     strict.ok(files > 3000, `There should be at least 3000 files copied. Only copied ${files}`);
-
   });
 });

@@ -137,7 +137,6 @@ export class Session {
     switch (matches.length) {
       case 0:
         // did not match a name or short name.
-        this.channels.error(i`Artifact identity '${idOrShortName}' could not be found.`);
         return undefined; // nothing matched.
 
       case 1: {

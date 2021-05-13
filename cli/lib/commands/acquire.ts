@@ -49,7 +49,7 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    const failing = false;
+    let failing = false;
 
     const artifacts = new Set<Artifact>();
 
@@ -59,7 +59,8 @@ export class AcquireCommand extends Command {
 
       const artifact = await session.getArtifact(identity, version);
       if (!artifact) {
-        throw new Error(`Unable to resolve artifact ${identity}/${version}`);
+        error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);
+        return false;
       }
 
       artifacts.add(artifact);
@@ -69,11 +70,16 @@ export class AcquireCommand extends Command {
     if (artifacts.size) {
       const table = new Table(i`Artifact`, i`Version`, i`Summary`);
       for (const artifact of artifacts) {
-        const latest = artifact;
-        const name = formatName(latest.info.id, latest.shortName);
-        table.push(name, latest.info.version, latest.info.summary || '');
-        artifact.validate();
-        if (artifact.isValid && a)
+
+        const name = formatName(artifact.info.id, artifact.shortName);
+        if (!artifact.isValid) {
+          failing = true;
+          for (const err of artifact.validationErrors) {
+            error(err);
+          }
+        }
+        table.push(name, artifact.info.version, artifact.info.summary || '');
+
       }
       log(table.toString());
     }

@@ -119,10 +119,9 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   get yamlErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
-
       const line = each.linePos?.[0] || 1;
-      const column = each.linePos?.[0] || 1;
-      return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
+      const column = each.linePos?.[1] || 1;
+      return `\`${this.filename}:${line}:${column}\` ${each.name}, ${message}`;
     }));
   }
 
