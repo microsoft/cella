@@ -68,7 +68,7 @@ export class AcquireCommand extends Command {
     }
 
     if (artifacts.size) {
-      const table = new Table(i`Artifact`, i`Version`, i`Summary`);
+      const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Summary`);
       for (const artifact of artifacts) {
 
         const name = formatName(artifact.info.id, artifact.shortName);
@@ -78,8 +78,7 @@ export class AcquireCommand extends Command {
             error(err);
           }
         }
-        table.push(name, artifact.info.version, artifact.info.summary || '');
-
+        table.push(name, artifact.info.version, await artifact.isInstalled ? 'installed' : 'not installed', artifact.info.summary || '');
       }
       log(table.toString());
     }

@@ -210,7 +210,7 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
   const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined, credentials: options?.credentials });
   let progressStream;
   if (length > 0) {
-    progressStream = new ProgressTrackingStream(0, length);
+    progressStream = new ProgressTrackingStream(resumeAtOffset, length);
     progressStream.on('progress', (filePercentage) => ee.emit('download', outputFilename, filePercentage));
   }
   const outputStream = await outputFile.writeStream({ append: true });

@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { strict } from 'assert';
 import { LazyPromise, ManualPromise } from './manual-promise';
 
 /** a precrafted failed Promise */
@@ -78,7 +79,6 @@ export class Queue {
   private total = 0;
   private active = 0;
   private queue = new Array<LazyPromise<any>>();
-  private tail: Promise<any> | undefined;
   private whenZero: ManualPromise<number> | undefined;
   private rejections = new Array<any>();
 
@@ -121,6 +121,8 @@ export class Queue {
    * @param action
    */
   async enqueue<T>(action: () => Promise<T>): Promise<T> {
+    strict.ok(!!this.whenZero, 'items may not be added to the queue while it is being awaited.');
+
     this.active++;
     this.total++;
 
@@ -136,24 +138,6 @@ export class Queue {
   enqueueMany<S, T>(array: Array<S>, fn: (v: S) => Promise<T>) {
     for (const each of array) {
       void this.enqueue(() => fn(each));
-      /*
-      this.active++;
-      this.total++;
-
-      if (this.active < this.maxConcurency) {
-        this.tail = fn(each);
-        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-        continue;
-      }
-
-      const result = new ManualPromise<T>();
-      this.tail!.finally(() => {
-        this.tail = fn(each).then(r => { result.resolve(r); }, e => result.reject(e));
-        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-      });
-
-      continue;
-      */
     }
     return this;
   }
