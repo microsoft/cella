@@ -33,7 +33,7 @@ describe('Willow', () => {
   it('Parses Channel Manifests', async () => {
     const local = new SuiteLocal();
     const chmanUri = local.resourcesFolderUri.join('2020-05-06-VisualStudio.16.Release.chman');
-    const chmanContent = (await chmanUri.readFile()).toString();
+    const chmanContent = local.session.utf8(await chmanUri.readFile());
     const result = parseVsManFromChannel(chmanContent);
     strict.deepStrictEqual(result, {
       fileName: 'VisualStudio.vsman',
@@ -50,7 +50,7 @@ describe('Willow', () => {
     throws(() => parseVsManFromChannel('{{{'));
     const local = new SuiteLocal();
     const chmanUri = local.resourcesFolderUri.join('2020-05-06-VisualStudio.16.Release.chman');
-    const chmanContent = (await chmanUri.readFile()).toString();
+    const chmanContent = local.session.utf8(await chmanUri.readFile());
     const test = (damage : (chmanObjects: any) => void) => {
       testMalformedChannelParse(chmanContent, damage);
     };
@@ -93,7 +93,7 @@ describe('Willow', () => {
   it('Parses VS Manifests', async() => {
     const local = new SuiteLocal();
     const vsmanUri = local.resourcesFolderUri.join('2021-05-06-VisualStudio.vsman');
-    const vsmanContent = (await vsmanUri.readFile()).toString();
+    const vsmanContent = local.session.utf8(await vsmanUri.readFile());
     const result = buildIdPackageLookupTable(vsmanContent);
     strict.deepStrictEqual(result.get('Microsoft.VisualCpp.Tools.HostX86.TargetX86'),
       [

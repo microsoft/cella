@@ -54,7 +54,7 @@ export class ApplyVsManCommand extends Command {
   static async processFile(session: Session, inputUri: Uri, repoRoot: Uri, vsManLookup: Map<string, Array<FlatVsManPayload>>) {
     const inputPath = inputUri.fsPath;
     session.channels.message(i`Processing ${inputPath}...`);
-    const inputContent = (await inputUri.readFile()).toString();
+    const inputContent = session.utf8(await inputUri.readFile());
     const outputContent = templateAmfApplyVsManifestInformation(session, inputPath, inputContent, vsManLookup);
     if (!outputContent) {
       session.channels.warning(i`Skipped processing ${inputPath}`);
@@ -100,10 +100,10 @@ export class ApplyVsManCommand extends Command {
     log(i`Downloading channel manifest from ${channelUriStr}`);
     const channelUriUri = session.fileSystem.parse(channelUriStr);
     const channelFile = await acquireArtifactFile(session, [channelUriUri], 'channel.chman');
-    const vsManPayload = parseVsManFromChannel((await channelFile.readFile()).toString());
+    const vsManPayload = parseVsManFromChannel(session.utf8(await channelFile.readFile()));
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
     const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
-    const vsManLookup = buildIdPackageLookupTable((await vsManUri.readFile()).toString());
+    const vsManLookup = buildIdPackageLookupTable(session.utf8(await vsManUri.readFile()));
     for (const inputPath of this.inputs) {
       const inputUri = session.fileSystem.file(inputPath);
       const inputStat = await inputUri.stat();
