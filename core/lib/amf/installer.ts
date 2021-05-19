@@ -155,6 +155,4 @@ class GitCloneNode extends InstallerNode implements Git {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
-
 }

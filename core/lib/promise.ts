@@ -141,5 +141,6 @@ export class Queue {
     }
     return this;
   }
+
 }
 

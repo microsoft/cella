@@ -142,6 +142,8 @@ export enum ErrorKind {
   IncorrectType = 'IncorrectType',
   ParseError = 'ParseError',
   DuplicateKey = 'DuplicateKey',
+  NoInstallInDemand = 'NoInstallInDemand',
+  HostOnly = 'HostOnly'
 }
 
 export interface Validation {

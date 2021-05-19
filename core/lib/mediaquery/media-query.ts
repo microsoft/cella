@@ -6,7 +6,6 @@
 import { i } from '../i18n';
 import { Kind, MediaQueryError, Scanner, Token } from './scanner';
 
-
 export function parseQuery(text: string) {
   const cursor = new Scanner(text);
 
@@ -69,6 +68,18 @@ class QueryList {
         return;
     }
     throw new MediaQueryError(i`Expected comma, found ${JSON.stringify(cursor.text)}`, cursor.position.line, cursor.position.column);
+  }
+
+  get features() {
+    const result = new Set<string>();
+    for (const query of this.queries) {
+      for (const expression of query.expressions) {
+        if (expression.feature) {
+          result.add(expression.feature);
+        }
+      }
+    }
+    return result;
   }
 
   match(properties: Record<string, unknown>) {

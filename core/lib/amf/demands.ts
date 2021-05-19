@@ -5,13 +5,17 @@
 
 import { fail } from 'assert';
 import { YAMLMap } from 'yaml';
-import { DictionaryOf, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
+import { i } from '../i18n';
+import { parseQuery } from '../mediaquery/media-query';
+import { DictionaryOf, ErrorKind, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 import { proxyDictionary } from './dictionary';
 import { createInstallerNode } from './installer';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
+
+const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
 
 /** @internal */
 export class DemandNode extends NodeBase {
@@ -70,6 +74,13 @@ export class DemandNode extends NodeBase {
       }
 
       if (this.node.has('install') && this.install) {
+        // check to see if this has anything more than host and arch in the demand name
+        for (const feature of parseQuery(this.name).features) {
+          if (!hostFeatures.has(feature)) {
+            yield { message: i`A demand with an 'install' block must only use Host features (ie, host OS, host arch)`, range: this.node.range!, category: ErrorKind.HostOnly };
+          }
+        }
+
         yield* this.install.validate();
       }
 

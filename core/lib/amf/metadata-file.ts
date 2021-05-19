@@ -196,7 +196,6 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
 
     const set = new Set<string>();
     for (const each of this.demands) {
-
       // first, validate that the query is a valid query
       const { key, value } = getPair(this.node, each)!;
       if (set.has(each)) {

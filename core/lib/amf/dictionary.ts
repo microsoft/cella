@@ -71,7 +71,7 @@ export class DictionaryImpl<T> implements DictionaryOf<T> {
   [key: string]: any;
 
   get keys(): Array<string> {
-    const filter = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+    const filter = [...Object.getOwnPropertyNames(Object.getPrototypeOf(this)), 'then'];
 
     return this.node ? this.node.items.map((each: any) => {
 

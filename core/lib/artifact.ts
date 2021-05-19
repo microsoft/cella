@@ -11,6 +11,7 @@ import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
 import { Demands, MetadataFile, VersionReference } from './metadata-format';
 import { Session } from './session';
+import { Uri } from './uri';
 
 export class SetOfDemands {
   #demands = new Map<string, Demands>();
@@ -142,8 +143,11 @@ class ArtifactInfo {
     return `${this.artifact.info.id.replace(/[^\w]+/g, '.')}-${this.artifact.info.version}`;
   }
 
+  #targetLocation: Uri | undefined;
   get targetLocation() {
-    return this.session.installFolder.join(this.name);
+    // tools/contoso/something/x64/1.2.3/
+    // slashes to folders, non-word-chars to dot, append version
+    return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.artifact.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.artifact.info.version));
   }
 
   async writeManifest() {
@@ -170,8 +174,8 @@ class ArtifactInfo {
         // process it's dependencies too.
         await dep.resolveDependencies(artifacts);
       }
-
     }
     return artifacts;
   }
+
 }
