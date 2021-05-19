@@ -9,6 +9,34 @@ import { i } from './i18n';
 import { Session } from './session';
 import { FlatVsManPayload } from './willow';
 
+function lookupVsixVersion(session: Session, vsManLookup: Map<string, Array<FlatVsManPayload>>, id: string) : string | undefined {
+  const adoptedVersionSource = vsManLookup.get(id);
+  if (!adoptedVersionSource) {
+    session.channels.error(i`template required id (${id}) not present in the Visual Studio manifest.`);
+    return undefined;
+  }
+
+  assert(adoptedVersionSource.length >= 1);
+  const adoptedVersion = adoptedVersionSource[0].version;
+  if (adoptedVersionSource.length != 1) {
+    session.channels.warning(i`template required id version (${id}) which names an ID with more than one package in the Visual Studio manifest; choosing first version '${adoptedVersion}'.`);
+  }
+
+  return adoptedVersion;
+}
+
+function getYamlMapEntryKey(target: any) : string | undefined {
+  if (isScalar(target)) {
+    if (typeof target.value === 'string') {
+      return target.value;
+    }
+  } else if (typeof target === 'string') {
+    return target;
+  }
+
+  return undefined;
+}
+
 // Replaces adopt-vsix-version-from-id in in the "info" block of the AMF denoted by inputRootMap,
 // if any, with a real version derived from vsManLookup.
 // Returns whether unrecoverable errors occurred.
@@ -27,7 +55,7 @@ function replaceAdoptVsixVersionFromId(session: Session, inputPath: string,
       continue;
     }
 
-    if (!isScalar(inputInfoEntry.key) || inputInfoEntry.key.value !== 'adopt-vsix-version-from-id') {
+    if (getYamlMapEntryKey(inputInfoEntry.key) !== 'adopt-vsix-version-from-id') {
       continue;
     }
 
@@ -36,17 +64,9 @@ function replaceAdoptVsixVersionFromId(session: Session, inputPath: string,
       return true;
     }
 
-    const inputAdoptVersionId = inputInfoEntry.value.value;
-    const adoptedVersionSource = vsManLookup.get(inputAdoptVersionId);
-    if (!adoptedVersionSource) {
-      session.channels.error(i`${inputPath} use of adopt-vsix-version-from-id (${inputAdoptVersionId}) names an ID not present in the Visual Studio manifest.`);
+    const adoptedVersion = lookupVsixVersion(session, vsManLookup, inputInfoEntry.value.value);
+    if (typeof adoptedVersion !== 'string') {
       return true;
-    }
-
-    assert(adoptedVersionSource.length >= 1);
-    const adoptedVersion = adoptedVersionSource[0].version;
-    if (adoptedVersionSource.length != 1) {
-      session.channels.warning(i`${inputPath} use of adopt-vsix-version-from-id (${inputAdoptVersionId}) names an ID with more than one package in the Visual Studio manifest; choosing first version '${adoptedVersion}'.`);
     }
 
     inputInfoMap.items[idx] = new Pair('version', adoptedVersion);
@@ -161,6 +181,51 @@ function templateAmfProcessInstallCandidate(session : Session, inputPath: string
   return false;
 }
 
+function templateAmfApplyVsixRequireVersion(session : Session, inputPath: string,
+  vsManLookup: Map<string, Array<FlatVsManPayload>>, vsixVersionRequireParent: YAMLMap) : boolean {
+  const parentItems = vsixVersionRequireParent.items;
+  for (let idx = 0; idx < parentItems.length; ++idx) {
+    const thisItem = parentItems[idx];
+    const key = getYamlMapEntryKey(thisItem.key);
+    if (key !== 'vsixVersionRequire') {
+      continue;
+    }
+
+    const vsixVersionRequire = thisItem.value;
+    if (!isMap(vsixVersionRequire)) {
+      session.channels.error(i`vsixVersionRequire must be a map in ${inputPath}.`);
+      return true;
+    }
+
+    const replacements = new YAMLMap<string, string>();
+    for (const vsixVersionRequireEntry of vsixVersionRequire.items) {
+      const key = vsixVersionRequireEntry.key;
+      const value = vsixVersionRequireEntry.value;
+      if (!isScalar(key) || !isScalar(value)
+      || typeof key.value !== 'string' || typeof value.value !== 'string') {
+        session.channels.error(i`vsixVersionRequire entry did not have the expected form in ${inputPath}.`);
+        return true;
+      }
+
+      const targetName = key.value;
+      const adoptedVersion = lookupVsixVersion(session, vsManLookup, value.value);
+      if (typeof adoptedVersion !== 'string') {
+        return true;
+      }
+
+      if (replacements.has(targetName)) {
+        session.channels.warning(i`vsixVersionRequire contained duplicate key ${targetName}; choosing the second.`);
+      }
+
+      replacements.set(targetName, adoptedVersion);
+    }
+
+    parentItems[idx] = new Pair('require', replacements);
+  }
+
+  return false;
+}
+
 export function templateAmfApplyVsManifestInformation(
   session : Session, inputPath: string, inputContent: string,
   vsManLookup: Map<string, Array<FlatVsManPayload>>): string | undefined {
@@ -188,8 +253,13 @@ export function templateAmfApplyVsManifestInformation(
     return undefined;
   }
 
-  // replace any demands with "vsix" sources inside with real https sources
+  // replace any installs with "vsix" sources inside with unzip sources +
+  // replace any vsixVersionRequire s with require s
   if (templateAmfProcessInstallCandidate(session, inputPath, vsManLookup, inputRootMap)) {
+    return undefined;
+  }
+
+  if (templateAmfApplyVsixRequireVersion(session, inputPath, vsManLookup, inputRootMap)) {
     return undefined;
   }
 
@@ -199,24 +269,22 @@ export function templateAmfApplyVsManifestInformation(
       return undefined;
     }
 
-    const demandKey = demand.key;
-    if (!isScalar(demandKey)) {
-      session.channels.error(genericErrorMessage);
-      return undefined;
-    }
-
-    const demandKeyValue = demandKey.value;
-    if (typeof demandKeyValue !== 'string') {
+    const demandKey = getYamlMapEntryKey(demand.key);
+    if (typeof demandKey !== 'string') {
       session.channels.error(genericErrorMessage);
       return undefined;
     }
 
     const demandContents = demand.value;
-    if (demandKeyValue === 'info' || demandKeyValue == 'contacts' || !isMap(demandContents)) {
+    if (demandKey === 'info' || demandKey == 'contacts' || !isMap(demandContents)) {
       continue;
     }
 
     if (templateAmfProcessInstallCandidate(session, inputPath, vsManLookup, demandContents)) {
+      return undefined;
+    }
+
+    if (templateAmfApplyVsixRequireVersion(session, inputPath, vsManLookup, demandContents)) {
       return undefined;
     }
   }
