@@ -8,6 +8,7 @@ import { parse as parseSemver } from 'semver';
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Info, ValidationError } from '../metadata-format';
+import { checkOptionalBool, checkOptionalString } from '../util/checks';
 import { createNode } from '../util/yaml';
 
 /** @internal */
@@ -48,12 +49,27 @@ export class InfoNode implements Info {
     this.node.set('description', value);
   }
 
+  get dependencyOnly(): boolean {
+    const raw = this.node.get('dependencyOnly');
+    if (typeof raw === 'boolean') {
+      return raw;
+    }
+
+    return false;
+  }
+  set dependencyOnly(value: boolean) {
+    if (value) {
+      this.node.set('dependencyOnly', true);
+    } else {
+      this.node.delete('dependencyOnly');
+    }
+  }
+
   protected get range(): [number, number, number] {
     return <any>this.node.range!;
   }
 
   *validate(): Iterable<ValidationError> {
-
     if (!(this.node instanceof YAMLMap)) {
       yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this.range, category: ErrorKind.IncorrectType };
       return; // stop processing in this block
@@ -66,6 +82,9 @@ export class InfoNode implements Info {
     if (!this.node.has('version')) {
       yield { message: i`Missing version '${'info.version'}'`, range: this.range, category: ErrorKind.FieldMissing };
     }
-  }
 
+    yield* checkOptionalString(this.node, this.range, 'summary');
+    yield* checkOptionalString(this.node, this.range, 'description');
+    yield* checkOptionalBool(this.node, this.range, 'dependencyOnly');
+  }
 }

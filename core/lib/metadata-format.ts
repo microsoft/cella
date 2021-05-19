@@ -172,6 +172,9 @@ export interface Info extends Validation {
 
   /** if a longer description is required, the value should go here */
   description?: string;
+
+  /** if true, intended to be used only as a dependency; for example, do not show in search results or lists */
+  dependencyOnly: boolean;
 }
 
 /** A person/organization/etc who either has contributed or is connected to the artifact */
