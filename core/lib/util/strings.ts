@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Scalar, YAMLMap } from 'yaml';
+import { isPair, isScalar, isSeq, Pair, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { isPrimitive } from './checks';
 import { createNode } from './yaml';
 
@@ -168,5 +168,85 @@ export class Strings {
 
   clear(): void {
     this.#parent.delete(this.#property);
+  }
+}
+
+/** Represents a set of options as a YAML sequence of strings. Intended for very small sets, all operations are O(n). */
+export class YamlStringSet {
+  constructor(private readonly parent: YAMLMap, private readonly name: string) {}
+
+  /** Tests whether this string set contains `value`. */
+  has(value: string) : boolean {
+    const rawData = this.parent.get(this.name);
+    if (isSeq(rawData)) {
+      for (const entry of rawData.items) {
+        if (isScalar(entry) && entry.value === value) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /** Sets that the value `value` is in the set. If the string set's element is not a YAML
+    * sequence, it will be overwritten. Returns whether the element was inserted. */
+  set(value: string) : boolean {
+    const items = this.parent.items;
+    for (let idx = 0; idx < items.length; ++idx) {
+      const item = items[idx];
+      // skip items in the map that are not `name`.
+      if (!isPair(item) || !isScalar(item.key) || item.key.value !== this.name) {
+        continue;
+      }
+
+      if (!isSeq(item.value)) {
+        // if `name` isn't already a sequence, overwrite it with one
+        const newSeq = new YAMLSeq();
+        newSeq.add(new Scalar(value));
+        item.value = newSeq;
+        return true;
+      }
+
+      // check if `value` is already in the sequence
+      for (const entry of item.value.items) {
+        if (isScalar(entry) && entry.value === value) {
+          return false;
+        }
+      }
+
+      // add the item to the sequence
+      item.value.add(new Scalar(value));
+      return true;
+    }
+
+    // the set isn't in the document at all
+    const newSeq = new YAMLSeq();
+    newSeq.add(new Scalar(value));
+    this.parent.add(new Pair(new Scalar(this.name), newSeq));
+    return true;
+  }
+
+  /** removes the value `value` from the set. If the string set's element is not a YAML sequence,
+   * has no effects. Returns whether the element existed.
+   */
+  unset(value: string) : boolean {
+    const rawData = this.parent.get(this.name);
+    if (isSeq(rawData)) {
+      const items = rawData.items;
+      for (let idx = 0; idx < items.length; ++idx) {
+        const entry = items[idx];
+        if (isScalar(entry) && entry.value === value) {
+          rawData.delete(idx);
+          if (items.length === 0) {
+            this.parent.delete(this.name);
+          }
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

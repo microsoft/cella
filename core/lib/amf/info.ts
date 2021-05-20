@@ -8,7 +8,8 @@ import { parse as parseSemver } from 'semver';
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Info, ValidationError } from '../metadata-format';
-import { checkOptionalBool, checkOptionalString } from '../util/checks';
+import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
+import { YamlStringSet } from '../util/strings';
 import { createNode } from '../util/yaml';
 
 /** @internal */
@@ -50,18 +51,13 @@ export class InfoNode implements Info {
   }
 
   get dependencyOnly(): boolean {
-    const raw = this.node.get('dependencyOnly');
-    if (typeof raw === 'boolean') {
-      return raw;
-    }
-
-    return false;
+    return (new YamlStringSet(this.node, 'options').has('dependencyOnly'));
   }
   set dependencyOnly(value: boolean) {
     if (value) {
-      this.node.set('dependencyOnly', true);
+      new YamlStringSet(this.node, 'options').set('dependencyOnly');
     } else {
-      this.node.delete('dependencyOnly');
+      new YamlStringSet(this.node, 'options').unset('dependencyOnly');
     }
   }
 
@@ -85,6 +81,6 @@ export class InfoNode implements Info {
 
     yield* checkOptionalString(this.node, this.range, 'summary');
     yield* checkOptionalString(this.node, this.range, 'description');
-    yield* checkOptionalBool(this.node, this.range, 'dependencyOnly');
+    yield* checkOptionalArrayOfStrings(this.node, this.range, 'options');
   }
 }

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { YAMLMap } from 'yaml';
+import { isScalar, isSeq, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, ValidationError } from '../metadata-format';
 
@@ -40,5 +40,26 @@ export function *checkOptionalBool(parent: YAMLMap, range: [number, number, numb
       break;
     default:
       yield { message: i`${name} must be a bool`, range: range, category: ErrorKind.IncorrectType };
+  }
+}
+
+function checkOptionalArrayOfStringsImpl(parent: YAMLMap, range: [number, number, number], name: string): boolean {
+  const val = parent.get(name);
+  if (isSeq(val)) {
+    for (const entry of val.items) {
+      if (!isScalar(entry) || typeof entry.value !== 'string') {
+        return true;
+      }
+    }
+  } else if (typeof val !== 'undefined') {
+    return true;
+  }
+
+  return false;
+}
+
+export function *checkOptionalArrayOfStrings(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
+  if (checkOptionalArrayOfStringsImpl(parent, range, name)) {
+    yield { message: i`${name} must be an array of strings, or unset`, range: range, category: ErrorKind.IncorrectType };
   }
 }
