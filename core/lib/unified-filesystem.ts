@@ -72,8 +72,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).stat(uri);
   }
 
-  async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
-    return this.filesystem(uri).readDirectory(uri);
+  async readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
+    return this.filesystem(uri).readDirectory(uri, options);
   }
 
   createDirectory(uri: Uri): Promise<void> {

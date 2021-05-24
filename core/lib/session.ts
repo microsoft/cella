@@ -213,12 +213,14 @@ export class Session {
     const psf = this.postscriptFile;
     switch (psf?.fsPath.substr(-3)) {
       case 'ps1':
-        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$\{ENV:${k[0]}}="${k[1]}"`; }).join('\n')));
       case 'cmd':
         return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
       case '.sh':
         return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
     }
+
+
   }
 
   setupLogging() {

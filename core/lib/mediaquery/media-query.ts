@@ -90,10 +90,12 @@ class QueryList {
           const p = stringValue(properties[feature]);
           if (p || (not && constant === undefined)) {
             if (constant === undefined) {
+              if (not) {
+                continue queries;
+              }
               // if they didn't give a constant for 'foo' and there is a foo property, we're good.
               continue;
             }
-            // const p = stringValue(properties[feature]);
 
             if (constant == p || (not && constant != p)) {
               continue;

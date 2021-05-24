@@ -57,7 +57,7 @@ export class LocalFileSystem extends FileSystem {
     return new LocalFileStats(s);
   }
 
-  async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
+  async readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
     let retval!: Promise<Array<[Uri, FileType]>>;
     try {
       const folder = uri.fsPath;
@@ -65,7 +65,12 @@ export class LocalFileSystem extends FileSystem {
 
       // use forEachAsync instead so we can throttle this appropriately.
       await (await readdir(folder)).forEachAsync(async each => {
-        retval.push(<[Uri, FileType]>[uri.fileSystem.file(join(folder, each)), getFileType(await stat(uri.join(each).fsPath))]);
+        const path = uri.fileSystem.file(join(folder, each));
+        const type = getFileType(await stat(uri.join(each).fsPath))
+        retval.push(<[Uri, FileType]>[path, type]);
+        if (options?.recursive && type === FileType.Directory) {
+          retval.push(... await this.readDirectory(path, options));
+        }
       }).done;
 
       return retval;

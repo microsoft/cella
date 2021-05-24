@@ -1,18 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
-import { getRepository, installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
+import { delimiter } from 'path';
+import { session } from '../../main';
+import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { error, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 
-export class AcquireCommand extends Command {
-  readonly command = 'acquire';
-  readonly aliases = ['install'];
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+export class UseCommand extends Command {
+  readonly command = 'use';
+  readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
@@ -20,12 +22,12 @@ export class AcquireCommand extends Command {
   version = new Version(this)
 
   get summary() {
-    return i`Acquire artifacts in the repository.`;
+    return i`Instantly activates an artifact outside of the project.`;
   }
 
   get description() {
     return [
-      i`This allows the consumer to acquire (download and unpack) artifacts. Artifacts must be activated to be used.`,
+      i`This will instantly activate an artifact .`,
     ];
   }
 
@@ -63,7 +65,20 @@ export class AcquireCommand extends Command {
     }
 
     if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
-      log(i`Installation completed successfuly`);
+      log(i`Activating Artifacts...`);
+      const a = await getArtifactActivation(artifacts);
+
+      for (const [variable, value] of a.Paths) {
+        session.addPostscript(variable, `${value}${delimiter}${process.env[variable]}`);
+      }
+
+      for (const [variable, value] of a.Variables) {
+        session.addPostscript(variable, value);
+      }
+
+      // for now.
+      session.addPostscript('DEFINES', a.Defines.map(([define, value]) => `${define}=${value}`).join(' '));
+
     } else {
       return false;
     }

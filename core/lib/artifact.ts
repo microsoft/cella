@@ -3,9 +3,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as micromatch from 'micromatch';
 import { AcquireEvents } from './acquire';
+import { Activation } from './activation';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
+import { i } from './i18n';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
@@ -178,4 +181,106 @@ class ArtifactInfo {
     return artifacts;
   }
 
+  async loadActivationSettings(activation: Activation) {
+    // construct paths (bin, lib, include, etc.)
+    // construct tools
+    // compose variables
+    // defines
+
+    const l = this.targetLocation.toString().length + 1;
+    const allPaths = await (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
+
+    for (const s of this.applicableDemands.settings) {
+      for (const key of s.defines.keys) {
+        let value = s.defines[key];
+        if (value === 'true') {
+          value = '1';
+        }
+
+        const v = activation.defines.get(key);
+        if (v && v !== value) {
+          // conflict. todo: what do we want to do?
+          this.session.channels.warning(i`Duplicate define ${key} during activation. New value will replace old `);
+        }
+        activation.defines.set(key, value);
+      }
+
+      for (const key of s.paths.keys) {
+        if (!key) {
+          continue;
+        }
+        let k = key.toUpperCase();
+
+        // transform aliases to actual key
+        switch (k) {
+          case 'BIN':
+          case 'PATH':
+            k = 'PATH';
+            break;
+
+          case 'INCLUDE':
+          case 'INCLUDEPATH':
+            k = 'INCLUDE';
+            break;
+
+          case 'LIB':
+          case 'LIBPATH':
+            k = 'LIB';
+            break;
+
+          case 'LDSCRIPT':
+            k = 'LDSCRIPT';
+            break;
+
+          case 'OBJECT':
+          case 'OBJ':
+            k = 'OBJPATH';
+            break;
+        }
+
+        const p = activation.paths.getOrDefault(k, []);
+        const locations = s.paths[key].selectMany(path => micromatch(allPaths, sanitizePath(path)).map(each => this.targetLocation.join(each)));
+
+        if (locations.length) {
+          p.push(...locations);
+          this.session.channels.debug(`locations: ${locations.map(l => l.toString())}`)
+        }
+      }
+
+      for (const key of s.tools.keys) {
+        const k = key.toUpperCase();
+        if (activation.tools.has(k)) {
+          this.session.channels.error(i`Duplicate tool declared ${key} during activation. Probably not a good thing?`);
+        }
+
+        const location = sanitizePath(s.tools[key]);
+        const uri = this.targetLocation.join(location);
+        if (! await uri.exists()) {
+          this.session.channels.error(i`Tool '${key}' is specified as '${location}' which does not exist in the package`);
+        }
+
+        activation.tools.set(k, uri);
+      }
+
+      for (const key of s.variables.keys) {
+        const value = s.variables[key];
+        const envKey = activation.environment.getOrDefault(key, []);
+        envKey.push(...value);
+      }
+    }
+  }
 }
+
+export function sanitizePath(path: string) {
+  return path.
+    replace(/[\\/]+/g, '/').     // forward slahses please
+    replace(/[?<>:|"]/g, ''). // remove illegal characters.
+    // eslint-disable-next-line no-control-regex
+    replace(/[\x00-\x1f\x80-\x9f]/g, ''). // remove unicode control codes
+    replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i, ''). // no reserved names
+    replace(/^[/.]*\//, ''). // dots and slashes off the front.
+    replace(/[/.]+$/, ''). // dots and slashes off the back.
+    replace(/\/\.+\//g, '/'). // no parts made just of dots.
+    replace(/\/+/g, '/'); // duplicate slashes.
+}
+

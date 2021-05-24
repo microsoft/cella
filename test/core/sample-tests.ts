@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { notStrictEqual } from 'assert';
+import { sanitizePath } from '@microsoft/cella.core';
+import { notStrictEqual, strict } from 'assert';
 import { describe, it } from 'mocha';
 import { pipeline as origPipeline } from 'stream';
 import { promisify } from 'util';
@@ -23,3 +24,22 @@ describe('sample test', () => {
     notStrictEqual('A', 'B', 'letters should not be equal');
   });
 });
+
+
+describe('sanitization of paths', () => {
+  it('makes nice clean paths', () => {
+    strict.equal(sanitizePath(''), '');
+    strict.equal(sanitizePath('.'), '');
+    strict.equal(sanitizePath('..'), '');
+    strict.equal(sanitizePath('..../....'), '');
+    strict.equal(sanitizePath('..../foo/....'), 'foo');
+    strict.equal(sanitizePath('..../..foo/....'), '..foo');
+    strict.equal(sanitizePath('.config'), '.config');
+    strict.equal(sanitizePath('\\.config'), '.config');
+    strict.equal(sanitizePath('..\\.config'), '.config');
+    strict.equal(sanitizePath('/bar'), 'bar');
+    strict.equal(sanitizePath('\\this\\is\\a//test/of//a\\path//..'), 'this/is/a/test/of/a/path');
+
+  });
+});
+

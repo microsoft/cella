@@ -19,6 +19,7 @@ import { HelpCommand } from './lib/commands/help';
 import { ListCommand } from './lib/commands/list';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
 import { UpdateCommand } from './lib/commands/update';
+import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
 import { blank, cli } from './lib/constants';
 import { debug, error, initStyling, log } from './lib/styling';
@@ -65,6 +66,7 @@ async function main() {
   const list = new ListCommand(commandline);
   const cache = new CacheCommand(commandline);
   const clean = new CleanCommand(commandline);
+  const use = new UseCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 
