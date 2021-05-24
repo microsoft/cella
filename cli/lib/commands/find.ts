@@ -55,8 +55,10 @@ export class FindCommand extends Command {
 
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
-      const name = formatName(fullName, latest.shortName);
-      table.push(name, latest.info.version, latest.info.summary || '');
+      if (!latest.info.dependencyOnly) {
+        const name = formatName(fullName, latest.shortName);
+        table.push(name, latest.info.version, latest.info.summary || '');
+      }
     }
     log(table.toString());
     log();

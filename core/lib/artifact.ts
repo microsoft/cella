@@ -65,7 +65,6 @@ export class SetOfDemands {
         result[name] = dict[name];
       }
     }
-    // .toDictionary(([name, ver]) => name, ([name, ver]) => ver);
     return result;
   }
 }
