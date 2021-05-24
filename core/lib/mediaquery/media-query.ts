@@ -93,7 +93,6 @@ class QueryList {
               // if they didn't give a constant for 'foo' and there is a foo property, we're good.
               continue;
             }
-            // const p = stringValue(properties[feature]);
 
             if (constant == p || (not && constant != p)) {
               continue;
