@@ -242,7 +242,7 @@ class ArtifactInfo {
 
         if (locations.length) {
           p.push(...locations);
-          this.session.channels.debug(`locations: ${locations.map(l => l.toString())}`)
+          this.session.channels.debug(`locations: ${locations.map(l => l.toString())}`);
         }
       }
 

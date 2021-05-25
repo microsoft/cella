@@ -66,7 +66,7 @@ export class LocalFileSystem extends FileSystem {
       // use forEachAsync instead so we can throttle this appropriately.
       await (await readdir(folder)).forEachAsync(async each => {
         const path = uri.fileSystem.file(join(folder, each));
-        const type = getFileType(await stat(uri.join(each).fsPath))
+        const type = getFileType(await stat(uri.join(each).fsPath));
         retval.push(<[Uri, FileType]>[path, type]);
         if (options?.recursive && type === FileType.Directory) {
           retval.push(... await this.readDirectory(path, options));
