@@ -173,7 +173,7 @@ describe('ZipUnpacker', () => {
       'This content is only in the directory.\n');
     strict.equal((await targetUri.readFile('a-directory/inner/only-directory-directory.txt')).toString(),
       'This content is only doubly nested.\n');
-    progressChecker.test(9); // just files
+    progressChecker.test(9);
   });
 
   it('UnpacksZipsWithCompression', async () => {
