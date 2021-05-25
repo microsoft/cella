@@ -6,7 +6,6 @@
 import { i } from '../i18n';
 import { Kind, MediaQueryError, Scanner, Token } from './scanner';
 
-
 export function parseQuery(text: string) {
   const cursor = new Scanner(text);
 
@@ -71,18 +70,31 @@ class QueryList {
     throw new MediaQueryError(i`Expected comma, found ${JSON.stringify(cursor.text)}`, cursor.position.line, cursor.position.column);
   }
 
+  get features() {
+    const result = new Set<string>();
+    for (const query of this.queries) {
+      for (const expression of query.expressions) {
+        if (expression.feature) {
+          result.add(expression.feature);
+        }
+      }
+    }
+    return result;
+  }
+
   match(properties: Record<string, unknown>) {
     if (this.isValid) {
       queries: for (const query of this.queries) {
         for (const { feature, constant, not } of query.expressions) {
 
-          if ((feature in properties) || (not && constant === undefined)) {
+          const p = stringValue(properties[feature]);
+          if (p || (not && constant === undefined)) {
             if (constant === undefined) {
               // if they didn't give a constant for 'foo' and there is a foo property, we're good.
               continue;
             }
 
-            if (constant == properties[feature] || not && constant != properties[feature]) {
+            if (constant == p || (not && constant != p)) {
               continue;
             }
 
@@ -100,6 +112,19 @@ class QueryList {
     // no query matched.
     return false;
   }
+}
+
+function stringValue(value: unknown): string | undefined {
+  switch (typeof value) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+      return value.toString();
+
+    case 'object':
+      return value === null ? 'true' : Array.isArray(value) ? stringValue(value[0]) || 'true' : 'true';
+  }
+  return undefined;
 }
 
 class Query {

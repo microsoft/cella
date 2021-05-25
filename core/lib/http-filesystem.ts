@@ -53,8 +53,40 @@ export class HttpFileSystem extends FileSystem {
     throw new Error('Method not implemented.');
   }
 
-  openFile(uri: Uri): Promise<ReadHandle> {
-    throw new Error('Method not implemented.');
+  async openFile(uri: Uri): Promise<ReadHandle> {
+    return new HttpReadHandle(uri);
+  }
+}
+
+
+class HttpReadHandle extends ReadHandle {
+  position = 0;
+  constructor(private target: Uri) {
+    super();
   }
 
+  async read<TBuffer extends Uint8Array>(buffer: TBuffer, offset = 0, length = buffer.byteLength, position: number | null = null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
+    if (position !== null) {
+      this.position = position;
+    }
+
+    const r = getStream(this.target, { start: this.position, end: this.position + length });
+    let bytesRead = 0;
+
+    for await (const chunk of r) {
+      const c = <Buffer>chunk;
+      c.copy(buffer, offset);
+      bytesRead += c.length;
+      offset += c.length;
+    }
+    return { bytesRead, buffer };
+  }
+
+  async size(): Promise<number> {
+    return this.target.size();
+  }
+
+  async close() {
+    //return this.handle.close();
+  }
 }

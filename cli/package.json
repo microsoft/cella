@@ -1,6 +1,6 @@
 {
   "name": "cella",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cella CLI",
   "main": "dist/main.js",
   "directories": {
@@ -44,14 +44,16 @@
     "shx": "0.3.3",
     "translate-strings": "1.0.5",
     "@types/marked-terminal": "3.1.1",
-    "@types/marked": "1.2.2"
+    "@types/marked": "1.2.2",
+    "@types/cli-progress": "3.9.1"
   },
   "dependencies": {
     "yaml": "2.0.0-5",
     "semver": "~7.3.4",
     "chalk": "4.1.0",
-    "@microsoft/cella.core": "~0.1.0",
+    "@microsoft/cella.core": "~0.2.0",
     "marked-terminal": "4.1.0",
-    "marked": "2.0.0"
+    "marked": "2.0.0",
+    "cli-progress": "3.9.0"
   }
 }

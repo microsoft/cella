@@ -5,6 +5,10 @@
 
 import { notStrictEqual } from 'assert';
 import { describe, it } from 'mocha';
+import { pipeline as origPipeline } from 'stream';
+import { promisify } from 'util';
+
+const pipeline = promisify(origPipeline);
 
 // sample test using decorators.
 describe('SomeTests', () => {

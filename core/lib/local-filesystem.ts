@@ -178,7 +178,7 @@ export class LocalFileSystem extends FileSystem {
   async writeStream(uri: Uri, options?: WriteStreamOptions): Promise<Writable> {
     this.write(uri);
     const flags = options?.append ? 'a' : 'w';
-    const createWriteOptions : any = { flags, mode: options?.mode };
+    const createWriteOptions: any = { flags, mode: options?.mode, autoClose: true, emitClose: true };
     if (options?.mtime) {
       const mtime = options.mtime;
       // inject futimes call as part of close
@@ -209,7 +209,7 @@ class LocalReadHandle extends ReadHandle {
     super();
   }
 
-  read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
+  read<TBuffer extends Uint8Array>(buffer: TBuffer, offset = 0, length = buffer.byteLength, position: number | null = null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
     return this.handle.read(buffer, offset, length, position);
   }
 

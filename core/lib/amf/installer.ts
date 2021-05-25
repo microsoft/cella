@@ -6,13 +6,14 @@
 import { isMap, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
-import { getOrCreateMap, getPair } from '../util/yaml';
+import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 
 /** @internal */
-export function createInstallerNode(node: YAMLMap, name: string): Installer {
+export function createInstallerNode(node: YAMLMap, name: string): Installer | undefined {
   const n = getOrCreateMap(node, name);
   if (isMap(n)) {
+
     if (n.has('unzip')) {
       return new UnzipNode(n, name);
     }
@@ -26,7 +27,9 @@ export function createInstallerNode(node: YAMLMap, name: string): Installer {
       return new GitCloneNode(n, name);
     }
   }
-  return new InvalidInstallerNode(<any>getPair(node, name)!.key, name);
+
+  //return new InvalidInstallerNode(<any>getPair(node, name)!.key, name);
+  return undefined;
 }
 
 
@@ -152,6 +155,4 @@ class GitCloneNode extends InstallerNode implements Git {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
-
 }

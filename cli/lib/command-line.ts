@@ -3,23 +3,14 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { intersect } from '@microsoft/cella.core';
+import { Environment, i, intersect } from '@microsoft/cella.core';
+import { strict } from 'assert';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { Command } from './command';
 
 export type switches = {
   [key: string]: Array<string>;
-}
-
-function onlyOne(values: Array<string>, errorMessage: string) {
-  switch (values?.length ?? 0) {
-    case 0:
-      return undefined;
-    case 1:
-      return values[0];
-  }
-  throw new Error(errorMessage);
 }
 
 export interface Help {
@@ -27,14 +18,66 @@ export interface Help {
   readonly title: string;
 }
 
+class Ctx {
+  constructor(cmdline: CommandLine) {
+    this.os =
+      cmdline.switches['windows'] ? 'win32' :
+        cmdline.switches['osx'] ? 'darwin' :
+          cmdline.switches['linux'] ? 'linux' :
+            cmdline.switches['freebsd'] ? 'freebsd' :
+              process.platform;
+    this.arch = cmdline.switches['x64'] ? 'x64' :
+      cmdline.switches['x86'] ? 'x32' :
+        cmdline.switches['arm'] ? 'arm' :
+          cmdline.switches['arm64'] ? 'arm64' :
+            process.arch;
+  }
+
+  readonly os: string;
+  readonly arch: string;
+
+  get windows(): boolean {
+    return this.os === 'win32';
+  }
+
+  get linux(): boolean {
+    return this.os === 'linux';
+  }
+
+  get freebsd(): boolean {
+    return this.os === 'freebsd';
+  }
+
+  get osx(): boolean {
+    return this.os === 'darwin';
+  }
+
+  get x64(): boolean {
+    return this.arch === 'x64';
+  }
+
+  get x86(): boolean {
+    return this.arch === 'x32';
+  }
+
+  get arm(): boolean {
+    return this.arch === 'arm';
+  }
+
+  get arm64(): boolean {
+    return this.arch === 'arm64';
+  }
+}
+
+export function resolvePath(v: string | undefined) {
+  return v?.startsWith('.') ? resolve(v) : v;
+}
+
 export class CommandLine {
   readonly commands = new Array<Command>();
   readonly inputs = new Array<string>();
   readonly switches: switches = {};
-
-  switch(name: string, errorMessage: string) {
-    return onlyOne(this.switches[name], errorMessage);
-  }
+  readonly context = intersect(new Ctx(this), this.switches);
 
   #home?: string;
   get cella_home() {
@@ -46,28 +89,41 @@ export class CommandLine {
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#home || (this.#home = this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella'));
+    return this.#home || (this.#home = resolvePath(this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella')));
   }
 
   get repositoryFolder() {
-    return this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined;
+    return resolvePath(this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined);
   }
 
   get force() {
     return !!this.switches['force'];
   }
 
+  #githubAuthToken?: string;
+  get githubAuthToken() {
+    return this.#githubAuthToken || (this.#githubAuthToken = this.switches['github_auth_token']?.[0] || this.switches['github-auth-token']?.[0] || process.env['github-auth-token'] || process.env['github_auth_token'] || '');
+  }
+
   get debug() {
     return !!this.switches['debug'];
   }
 
-  get lang() {
-    return onlyOne(this.switches['language'], '--language specified multiple times!') || Intl.DateTimeFormat().resolvedOptions().locale;
+  get language() {
+    const l = this.switches['language'] || [];
+    strict.ok(l?.length || 0 < 2, i`Expected a single value for '--${'language'}' -- found multiple.`);
+    return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
-  #environment?: { [key: string]: string | undefined; };
-  get environment(): { [key: string]: string | undefined; } {
+  #environment?: Environment;
+  get environment(): Environment {
     return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
+  }
+
+  claim(sw: string) {
+    const v = this.switches[sw];
+    delete this.switches[sw];
+    return v;
   }
 
   addCommand(command: Command) {
@@ -76,7 +132,7 @@ export class CommandLine {
 
   /** parses the command line and returns the command that has been requested */
   get command() {
-    return this.commands.find(each => each.command === this.inputs[0]);
+    return this.commands.find(cmd => cmd.command === this.inputs[0] || !!cmd.aliases.find(alias => alias === this.inputs[0]));
   }
 }
 

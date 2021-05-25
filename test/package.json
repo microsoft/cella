@@ -1,6 +1,6 @@
 {
   "name": "cella.test",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cella test project",
   "directories": {
     "doc": "docs"
@@ -47,7 +47,7 @@
     "shx": "0.3.3"
   },
   "dependencies": {
-    "@microsoft/cella.core": "~0.1.0",
+    "@microsoft/cella.core": "~0.2.0",
     "yaml": "2.0.0-5",
     "semver": "~7.3.4",
     "txtgen": "2.2.8"

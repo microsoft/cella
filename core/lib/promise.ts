@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ManualPromise } from './manual-promise';
+import { strict } from 'assert';
+import { LazyPromise, ManualPromise } from './manual-promise';
 
 /** a precrafted failed Promise */
 const waiting = Promise.reject(0xDEFACED);
@@ -77,8 +78,9 @@ export async function anyWhere<T>(from: Iterable<Promise<T>>, predicate: (value:
 export class Queue {
   private total = 0;
   private active = 0;
-  private tail: Promise<any> | undefined;
+  private queue = new Array<LazyPromise<any>>();
   private whenZero: ManualPromise<number> | undefined;
+  private rejections = new Array<any>();
 
   constructor(private maxConcurency = 8) {
   }
@@ -97,8 +99,18 @@ export class Queue {
       this.whenZero = this.whenZero || new ManualPromise<number>();
       await this.whenZero;
     }
+    if (this.rejections.length > 0) {
+      throw new AggregateError(this.rejections);
+    }
     this.whenZero = undefined;
     return this.total;
+  }
+
+  private next() {
+    (--this.active) || this.whenZero?.resolve(0);
+    if (this.queue.length) {
+      this.queue.pop()?.execute().catch(async (e) => { this.rejections.push(e); throw e; }).finally(() => this.next());
+    }
   }
 
   /**
@@ -108,45 +120,27 @@ export class Queue {
    * The last item
    * @param action
    */
-  enqueue<T>(action: () => Promise<T>): Promise<T> {
+  async enqueue<T>(action: () => Promise<T>): Promise<T> {
+    strict.ok(!this.whenZero, 'items may not be added to the queue while it is being awaited.');
+
     this.active++;
     this.total++;
 
-    if (this.active < this.maxConcurency) {
-      this.tail = action();
-      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-      return this.tail;
+    if (this.queue.length || this.active >= this.maxConcurency) {
+      const result = new LazyPromise<T>(action);
+      this.queue.push(result);
+      return result;
     }
 
-    const result = new ManualPromise<T>();
-    this.tail!.finally(() => {
-      this.tail = action().then(r => { result.resolve(r); }, e => result.reject(e));
-      this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-    });
-
-    return result;
+    return action().catch(async (e) => { this.rejections.push(e); throw e; }).finally(() => this.next());
   }
 
   enqueueMany<S, T>(array: Array<S>, fn: (v: S) => Promise<T>) {
     for (const each of array) {
-      this.active++;
-      this.total++;
-
-      if (this.active < this.maxConcurency) {
-        this.tail = fn(each);
-        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-        continue;
-      }
-
-      const result = new ManualPromise<T>();
-      this.tail!.finally(() => {
-        this.tail = fn(each).then(r => { result.resolve(r); }, e => result.reject(e));
-        this.tail.finally(() => (--this.active) || this.whenZero?.resolve(0));
-      });
-
-      continue;
+      void this.enqueue(() => fn(each));
     }
     return this;
   }
+
 }
 

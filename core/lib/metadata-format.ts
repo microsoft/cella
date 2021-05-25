@@ -14,12 +14,12 @@ import { getOrCreateMap } from './util/yaml';
 
 export { Range, SemVer };
 
-export type MetadataFile = ProfileBase & DictionaryOf<Demands>;
+export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly content: string };
 
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('nope'), new Amf(doc, filename, lc));
+  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('Fatal Error: this should never get called.'), new Amf(doc, filename, lc));
 }
 
 /**
@@ -140,7 +140,10 @@ export enum ErrorKind {
   SectionNotFound = 'SectionMessing',
   FieldMissing = 'FieldMissing',
   IncorrectType = 'IncorrectType',
-  ParseError = 'ParseError'
+  ParseError = 'ParseError',
+  DuplicateKey = 'DuplicateKey',
+  NoInstallInDemand = 'NoInstallInDemand',
+  HostOnly = 'HostOnly'
 }
 
 export interface Validation {
@@ -214,8 +217,10 @@ export interface GitArtifactSource extends ArtifactSourceBase {
 /** values that can be either a single string, or an array of strings */
 export type StringOrStrings = string | Array<string>;
 
-/** refers to a location of a resource. If an array is specified, they are considered mirrors */
-type ResourceLocation = string | ReadonlyArray<string> | Strings;
+/** refers to a location of a resource. If an array is specified, they are considered mirrors
+ *
+*/
+export type ResourceLocation = string | ReadonlyArray<string> | Strings;
 
 /**
  * a mapped dictionary of string:T

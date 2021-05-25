@@ -103,4 +103,8 @@ export class NodeBase {
   *validate(): Iterable<ValidationError> {
     //
   }
+
+  protected has(element: string) {
+    return this.node?.has(element);
+  }
 }

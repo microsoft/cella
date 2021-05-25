@@ -99,6 +99,15 @@ export abstract class ReadHandle {
    */
   abstract read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number, buffer: TBuffer }>;
 
+  async readComplete<TBuffer extends Uint8Array>(buffr: TBuffer, offset = 0, length = buffr.byteLength, position: number | null = null, totalRead = 0): Promise<{ bytesRead: number, buffer: TBuffer }> {
+    const { bytesRead, buffer } = await this.read(buffr, offset, length, position);
+    if (length) {
+      if (bytesRead && bytesRead < length) {
+        return await this.readComplete(buffr, offset + bytesRead, length - bytesRead, position ? position + bytesRead : null, bytesRead + totalRead);
+      }
+    }
+    return { bytesRead: bytesRead + totalRead, buffer };
+  }
   /**
    * Returns a Readable for consuming an opened ReadHandle
    * @param start the first byte to read of the target
@@ -111,6 +120,46 @@ export abstract class ReadHandle {
   abstract size(): Promise<number>;
 
   abstract close(): Promise<void>;
+
+  range(start: number, length: number) {
+    return new RangeReadHandle(this, start, length);
+  }
+}
+
+class RangeReadHandle extends ReadHandle {
+
+  pos = 0;
+  readHandle?: ReadHandle
+
+  constructor(readHandle: ReadHandle, private start: number, private length: number) {
+    super();
+    this.readHandle = readHandle;
+  }
+
+  async read<TBuffer extends Uint8Array>(buffer: TBuffer, offset?: number | null, length?: number | null, position?: number | null): Promise<{ bytesRead: number; buffer: TBuffer; }> {
+    if (this.readHandle) {
+      position = position !== undefined && position !== null ? (position + this.start) : (this.pos + this.start);
+      length = length === null ? this.length : length;
+
+      const result = await this.readHandle.read(buffer, offset, length, position);
+      this.pos += result.bytesRead;
+      return result;
+    }
+
+    return {
+      bytesRead: 0, buffer
+    };
+
+  }
+
+  async size(): Promise<number> {
+    return this.length;
+  }
+
+  async close(): Promise<void> {
+    this.readHandle = undefined;
+  }
+
 }
 
 /**
@@ -129,9 +178,9 @@ function reasonableBuffer(length: number) {
  * @param handle the ReadHandle
  */
 async function* asyncIterableOverHandle(start: number, end: number, handle: ReadHandle): AsyncIterable<Buffer> {
-  const buffer = reasonableBuffer(1 + end - start);
-
   while (start < end) {
+    // buffer alloc must be inside the loop; zlib will hold the buffers until it can deal with a whole stream.
+    const buffer = reasonableBuffer(1 + end - start);
     const count = Math.min(1 + end - start, buffer.byteLength);
     const b = await handle.read(buffer, 0, count, start);
     if (b.bytesRead === 0) {
@@ -139,7 +188,12 @@ async function* asyncIterableOverHandle(start: number, end: number, handle: Read
     }
     start += b.bytesRead;
     // return only what was actually read. (just a view)
-    yield buffer.slice(0, b.bytesRead);
+    if (b.bytesRead === buffer.byteLength) {
+      yield buffer;
+    }
+    else {
+      yield buffer.slice(0, b.bytesRead);
+    }
   }
 }
 

@@ -5,15 +5,21 @@
 import { fail } from 'assert';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
+import { ProgressTrackingStream } from './streams';
+import { Uri } from './uri';
 
 // md5, sha1, sha256, sha512, sha384
 export type Algorithm = 'sha256' | 'sha384' | 'sha512' | 'md5'
 
-export async function hash(stream: Readable, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256') {
+// export async function hash(stream: Readable, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
+export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
   stream = await stream;
 
   try {
-    for await (const chunk of stream.pipe(createHash(algorithm)).setEncoding('hex')) {
+    const p = new ProgressTrackingStream(0, size);
+    p.on('progress', (filePercentage) => options?.events?.verifying?.(uri.fsPath, filePercentage));
+
+    for await (const chunk of stream.pipe(p).pipe(createHash(algorithm)).setEncoding('hex')) {
       // it should be done reading here
       return chunk;
     }
@@ -23,7 +29,12 @@ export async function hash(stream: Readable, algorithm: 'sha256' | 'sha1' | 'sha
   fail('Should have returned a chunk from the pipe.');
 }
 
+export interface VerifyEvents {
+  verifying(file: string, percent: number): void;
+}
+
 export interface Hash {
   value?: string;
   algorithm?: 'sha256' | 'sha384' | 'sha512' | 'md5'
+  events?: Partial<VerifyEvents>;
 }

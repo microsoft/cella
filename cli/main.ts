@@ -10,8 +10,13 @@ import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
+import { AcquireCommand } from './lib/commands/acquire';
+import { CacheCommand } from './lib/commands/cache';
+import { CleanCommand } from './lib/commands/clean';
+import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
+import { ListCommand } from './lib/commands/list';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
 import { UpdateCommand } from './lib/commands/update';
 import { VersionCommand } from './lib/commands/version';
@@ -22,7 +27,7 @@ import { debug, error, initStyling, log } from './lib/styling';
 const commandline = parseArgs(argv.slice(2));
 
 // try to set the locale based on the users's settings.
-setLocale(commandline.lang, `${__dirname}/i18n/`);
+setLocale(commandline.language, `${__dirname}/i18n/`);
 
 function header() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -55,6 +60,11 @@ async function main() {
   const regenerate = new RegenerateCommand(commandline);
   const update = new UpdateCommand(commandline);
   const find = new FindCommand(commandline);
+  const acquire = new AcquireCommand(commandline);
+  const del = new DeleteCommand(commandline);
+  const list = new ListCommand(commandline);
+  const cache = new CacheCommand(commandline);
+  const clean = new CleanCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 
@@ -95,3 +105,4 @@ async function main() {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 main();
+

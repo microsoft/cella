@@ -34,6 +34,9 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.document.toString();
   }
 
+  get content() {
+    return this.document.toString();
+  }
   /* Profile */
   #info!: Info;
   get info(): Info {
@@ -92,8 +95,8 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#settings || (this.#settings = <Settings>proxyDictionary<any>(getOrCreateMap(<YAMLMap>this.document.contents, 'settings'), getOrCreateMap, () => { fail('no.'); }, new SettingsNode(getOrCreateMap(this.document, 'settings'))));
   }
 
-  #install!: Installer;
-  get install(): Installer {
+  #install?: Installer;
+  get install(): Installer | undefined {
     return this.#install || (this.#install = createInstallerNode(<YAMLMap>this.document.contents, 'install'));
   }
   get use(): DictionaryOf<StringOrStrings> | undefined {
@@ -116,10 +119,9 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   get yamlErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
-
       const line = each.linePos?.[0] || 1;
       const column = each.linePos?.[1] || 1;
-      return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
+      return `\`${this.filename}:${line}:${column}\` ${each.name}, ${message}`;
     }));
   }
 
@@ -137,7 +139,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     for (const { message, range, rangeOffset, category } of this.validate()) {
       const { line, column } = this.positionAt(range, rangeOffset);
       if (line) {
-        this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
+        this.#validationErrors.push(`\`${this.filename}:${line}:${column}\` ${category}, ${message}`);
       } else {
         this.#validationErrors.push(`${this.filename}: ${category}, ${message}`);
       }
@@ -145,7 +147,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     return this.#validationErrors;
   }
 
-  private positionAt(range?: [number, number, number], offset?: { line: number, column: number }) {
+  private positionAt(range?: [number, number, number?], offset?: { line: number, column: number }) {
     const { line, col } = this.lineCounter.linePos(range?.[0] || 0);
     return {
       // adds the offset values (which can come from the mediaquery parser) to the line & column. If MQ doesn't have a position, it's zero.
@@ -162,7 +164,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       yield* this.info.validate();
     }
 
-    if (this.document.has('install')) {
+    if (this.document.has('install') && this.install) {
       yield* this.install.validate();
     }
 
@@ -192,9 +194,14 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       }
     }
 
+    const set = new Set<string>();
     for (const each of this.demands) {
       // first, validate that the query is a valid query
       const { key, value } = getPair(this.node, each)!;
+      if (set.has(each)) {
+        yield { message: i`Duplicate Keys detected in manifest: '${each}'`, range: key.range!, category: ErrorKind.DuplicateKey };
+      }
+      set.add(each);
 
       if (!isMap(value)) {
         yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };

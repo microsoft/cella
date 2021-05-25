@@ -3,15 +3,23 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { strict } from 'assert';
+import { fail, strict } from 'assert';
 import { TextDecoder } from 'util';
+import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
+import { GitInstaller } from './installer/git';
+import { InstallerImpl } from './installer/installer';
+import { NupkgInstaller } from './installer/nupkg';
+import { UntarInstaller } from './installer/untar';
+import { UnzipInstaller } from './installer/unzip';
+import { VsixInstaller } from './installer/vsix';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
-import { MetadataFile, parseConfiguration } from './metadata-format';
+import { Installer, MetadataFile, parseConfiguration } from './metadata-format';
+import { DefaultRepository, Repository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
@@ -23,6 +31,22 @@ global:
 `;
 
 const profileName = ['cella.yaml', 'cella.yml', 'cella.json'];
+export type Context = { [key: string]: Array<string> | undefined; } & {
+  readonly os: string;
+  readonly arch: string;
+  readonly windows: boolean;
+  readonly osx: boolean;
+  readonly linux: boolean;
+  readonly freebsd: boolean;
+  readonly x64: boolean;
+  readonly x86: boolean;
+  readonly arm: boolean;
+  readonly arm64: boolean;
+}
+
+export type Environment = { [key: string]: string | undefined; } & {
+  context: Context;
+};
 
 /**
  * The Session class is used to hold a reference to the
@@ -37,9 +61,9 @@ export class Session {
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
   readonly cellaHome: Uri;
-  readonly repoUri: Uri;
   readonly tmpFolder: Uri;
-  repo: Uri;
+  readonly installFolder: Uri;
+
   readonly globalConfig: Uri;
   readonly cache: Uri;
   currentDirectory: Uri;
@@ -48,7 +72,9 @@ export class Session {
   #decoder = new TextDecoder('utf-8');
   readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
 
-  constructor(currentDirectory: string, protected environment: { [key: string]: string | undefined; }) {
+  private readonly sources: Map<string, Repository>;
+
+  constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
       register('file', new LocalFileSystem(this)).
       register(['http', 'https'], new HttpFileSystem(this)
@@ -57,18 +83,74 @@ export class Session {
     this.channels = new Channels(this);
 
     this.setupLogging();
-    // this.repoUri = this.fileSystem.parse('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    this.repoUri = this.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
 
     this.cellaHome = this.fileSystem.file(environment['cella_home']!);
     this.cache = this.cellaHome.join('cache');
     this.globalConfig = this.cellaHome.join('cella.config.yaml');
-    const repositoryFolder = environment['repositoryFolder'];
-    this.repo = repositoryFolder ? this.fileSystem.file(repositoryFolder) : this.cellaHome.join('repo');
+
     this.tmpFolder = this.cellaHome.join('tmp');
+    this.installFolder = this.cellaHome.join('artifacts');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
+
+    // built in repository
+
+    this.sources = new Map<string, Repository>([
+      ['default', new DefaultRepository(this)]
+    ]);
   }
+
+  get sourceNames() {
+    return this.sources.keys();
+  }
+
+  /** returns a repository given the name */
+  getRepository(source = 'default') {
+    const result = this.sources.get(source);
+
+    if (!result) {
+      throw new Error(i`Unknown repository '${source}'`);
+    }
+    return result;
+  }
+
+  parseName(id: string) {
+    return id.indexOf(':') > -1 ? id.split(':') : ['default', id];
+  }
+
+  /**
+   * returns an artifact for the strongly-named artifact id/version.
+   *
+   * @param idOrShortName the identity of the artifact. If the string has no '<source>:' at the front, default source is assumed.
+   * @param version the version of the artifact
+   */
+  async getArtifact(idOrShortName: string, version: string | undefined) {
+    const [source, name] = this.parseName(idOrShortName);
+    const repository = this.getRepository(source);
+
+    const query = repository.where.id.nameOrShortNameIs(name);
+    if (version) {
+      query.version.rangeMatch(version);
+    }
+    const matches = query.items;
+
+    switch (matches.length) {
+      case 0:
+        // did not match a name or short name.
+        return undefined; // nothing matched.
+
+      case 1: {
+        // found the artifact. awesome.
+        return await repository.openArtifact(matches[0]);
+      }
+
+      default:
+        // multiple matches
+        fail(i`Artifact identity '${idOrShortName}' matched more than one result. This should never happen. or is this multiple version matches?`);
+        break;
+    }
+  }
+
 
   get telemetryEnabled() {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
@@ -147,4 +229,42 @@ export class Session {
     //
     // this.FileSystem.on('deleted', (uri) => { console.log(uri) })
   }
+
+  createInstaller(artifact: Artifact, installer: Installer) {
+    const ctor = Session.Installers.get(installer.kind);
+    if (ctor) {
+      return new ctor(this, artifact, installer);
+    }
+    fail(i`Unknown installer type ${installer.kind}`);
+  }
+
+  async getInstalledArtifacts() {
+    const result = new Array<{ folder: Uri, id: string, artifact: Artifact }>();
+    if (! await this.installFolder.exists()) {
+      return result;
+    }
+    for (const [folder, stat] of await this.installFolder.readDirectory()) {
+      try {
+
+        const content = this.utf8(await folder.readFile('artifact.yaml'));
+        const metadata = parseConfiguration(folder.fsPath, content);
+        result.push({
+          folder,
+          id: metadata.info.id,
+          artifact: createArtifact(this, metadata, '')
+        });
+      } catch {
+        // not a valid install.
+      }
+    }
+    return result;
+  }
+
+  static Installers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
+    ['nupkg', NupkgInstaller],
+    ['unzip', UnzipInstaller],
+    ['untar', UntarInstaller],
+    ['git', GitInstaller],
+    ['vsix', VsixInstaller],
+  ])
 }

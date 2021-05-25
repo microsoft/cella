@@ -23,6 +23,7 @@ class CommandName extends Argument {
 /**@internal */
 export class HelpCommand extends Command {
   readonly command = 'help';
+  readonly aliases = [];
   seeAlso = [];
   commandName: CommandName = new CommandName(this);
   debug = new Debug(this);

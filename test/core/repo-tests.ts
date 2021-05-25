@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Repository, serialize } from '@microsoft/cella.core';
+import { CellaRepository, serialize } from '@microsoft/cella.core';
 import { rejects, strict } from 'assert';
 import { createHash } from 'crypto';
 import { describe, it } from 'mocha';
@@ -78,6 +78,7 @@ describe('Repository Tests', () => {
   after(local.after.bind(local));
 
   before(async () => {
+    const repoFolder = local.session.cellaHome.join('repo', 'default');
     // creates a bunch of artifacts, with multiple versions
     const pkgs = 100;
 
@@ -89,34 +90,34 @@ describe('Repository Tests', () => {
           ...t,
         };
         p.info.version = rndSemver();
-        const target = local.session.repo.join(`${p.info.id}-${p.info.version}.yaml`);
+        const target = repoFolder.join(`${p.info.id}-${p.info.version}.yaml`);
         await target.writeFile(Buffer.from(serialize(p), 'utf8'));
       }
     }
     // now copy the files from the test folder
-    await local.fs.copy(local.rootFolderUri.join('resources', 'repo'), local.session.repo);
+    await local.fs.copy(local.rootFolderUri.join('resources', 'repo'), repoFolder);
   });
 
   it('fails without an index', async () => {
-    const repository = new Repository(local.session);
+    const repository = local.session.getRepository('default');
     await rejects(async () => await repository.load(), 'Should fail when there is not an index ');
   });
 
   it('can save and load the index', async () => {
-    const repository = new Repository(local.session);
+    const repository = local.session.getRepository('default');
     await repository.regenerate();
     await repository.save();
 
-    const anotherRepository = new Repository(local.session);
+    const anotherRepository = new CellaRepository(local.session, local.session.cellaHome.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one.');
   });
 
   it('Loads a bunch items', async () => {
-    const repository = new Repository(local.session);
+    const repository = local.session.getRepository('default');
     await repository.regenerate();
 
-    const all = await repository.open(repository.where.items);
+    const all = await repository.openArtifacts(repository.where.items);
     const items = [...all.values()].flat();
     strict.equal(items.length, repository.count, 'Should have loaded everything.');
 
@@ -125,7 +126,7 @@ describe('Repository Tests', () => {
   it('Create index from some data', async () => {
     const start = process.uptime() * 1000;
 
-    const repository = new Repository(local.session);
+    const repository = local.session.getRepository('default');
     local.session.channels.on('debug', (d, x, m) => console.log(`${m}msec : ${d}`));
     await repository.regenerate();
     await repository.save();
@@ -135,14 +136,14 @@ describe('Repository Tests', () => {
 
     local.session.channels.on('debug', (t) => console.log(t));
 
-    const map = await repository.open(arm);
+    const map = await repository.openArtifacts(arm);
     strict.equal(map.size, 1, 'Should have one pkg id');
 
     const versions = map.get('compilers/gnu/gcc/arm-none-eabi');
     strict.ok(versions, 'should have some versions');
     strict.equal(versions.length, 3, 'should have three versions of the package');
 
-    const anotherRepository = new Repository(local.session);
+    const anotherRepository = new CellaRepository(local.session, local.session.cellaHome.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     const anotherArm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(anotherArm.length, 3, 'should be 3 results');

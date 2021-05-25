@@ -1,3 +1,4 @@
+import { i } from './i18n';
 import { Uri } from './uri';
 
 /*---------------------------------------------------------------------------------------------
@@ -17,6 +18,12 @@ export class RemoteFileUnavailable extends Error {
 export class TargetFileCollision extends Error {
   constructor(public uri: Uri, message: string) {
     super(message);
+  }
+}
+
+export class MultipleInstallsMatched extends Error {
+  constructor(public queries: Array<string>) {
+    super(i`Matched more than one install block [${queries.join(',')}]`);
   }
 }
 

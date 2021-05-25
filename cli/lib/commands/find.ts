@@ -2,13 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { i, Repository } from '@microsoft/cella.core';
-import { yellowBright } from 'chalk';
+import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { parseArgs } from '../command-line';
 import { Table } from '../markdown-table';
-import { error, log, writeException } from '../styling';
+import { formatName, log } from '../styling';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { UpdateCommand } from './update';
@@ -16,6 +14,7 @@ import { UpdateCommand } from './update';
 
 export class FindCommand extends Command {
   readonly command = 'find';
+  readonly aliases = ['search'];
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
@@ -32,31 +31,12 @@ export class FindCommand extends Command {
   }
 
   async run() {
-    const repository = new Repository(session);
+    const repository = session.getRepository('default');
     try {
       await repository.load();
     } catch (e) {
-      log(i`Artifact repository data is not loaded.`);
-      log(i`Attempting to update artifact repository.`);
-      const update = new UpdateCommand(parseArgs([]));
-
-      let success = true;
-      try {
-        success = await update.run();
-      } catch (e) {
-        writeException(e);
-        success = false;
-      }
-      if (!success) {
-        error(i`Unable to load repository index.`);
-        return false;
-      }
-      try {
-        await repository.load();
-      } catch (e) {
-        writeException(e);
-        // it just doesn't want to load.
-        error(i`Unable to load repository index.`);
+      // try to update the repo
+      if (!await UpdateCommand.update(repository)) {
         return false;
       }
     }
@@ -69,14 +49,14 @@ export class FindCommand extends Command {
       selections.version.rangeMatch(each);
     }
 
-    const results = await repository.open(selections.items);
+    const results = await repository.openArtifacts(selections.items);
 
     const table = new Table('Artifact', 'Version', 'Summary');
 
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
-      const name = `${fullName.substr(0, fullName.length - latest.shortName.length)}${yellowBright(latest.shortName)}`;
-      table.push(name, latest.metadata.info.version, latest.metadata.info.summary || '');
+      const name = formatName(fullName, latest.shortName);
+      table.push(name, latest.info.version, latest.info.summary || '');
     }
     log(table.toString());
     log();

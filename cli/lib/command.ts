@@ -19,6 +19,7 @@ export abstract class Command implements Help {
   readonly arguments = new Array<Argument>();
 
   readonly abstract seeAlso: Array<Help>;
+  readonly abstract aliases: Array<string>;
 
   abstract get summary(): string;
   abstract get description(): Array<string>;
