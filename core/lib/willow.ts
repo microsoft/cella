@@ -42,6 +42,40 @@ function isPayload(candidatePayload: any) {
     && typeof candidatePayload.url === 'string';
 }
 
+function isMinimalPackage(candidatePackage: any) {
+  return typeof candidatePackage.id === 'string'
+    && typeof candidatePackage.version === 'string'
+    && candidatePackage.type === 'Vsix'
+    && Array.isArray(candidatePackage.payloads)
+    && candidatePackage.payloads.length === 1
+    && isPayload(candidatePackage.payloads[0]);
+}
+
+function packageHasInstallSize(candidatePackage: any) {
+  return typeof(candidatePackage.installSizes) === 'object'
+    && typeof(candidatePackage.installSizes.targetDrive) === 'number';
+}
+
+function packageGetPointerLikeSingleDependencyId(candidatePackage: any): string | undefined {
+  if (packageHasInstallSize(candidatePackage)
+    || typeof candidatePackage.dependencies !== 'object'){
+    return undefined;
+  }
+
+  let theDependency = undefined;
+  for (const key in candidatePackage.dependencies) {
+    if (theDependency) {
+      return undefined;
+    }
+
+    if (key !== '') {
+      theDependency = key;
+    }
+  }
+
+  return theDependency;
+}
+
 export function parseVsManFromChannel(channelManifestContent: string): FlatChManPayload {
   const chMan = JSON.parse(channelManifestContent);
   const channelItemsRaw = chMan?.channelItems;
@@ -76,14 +110,7 @@ export function parseVsManFromChannel(channelManifestContent: string): FlatChMan
 }
 
 function flattenVsManPackage(rawJson: any): FlatVsManPayload | undefined {
-  if (typeof rawJson.id !== 'string'
-    || typeof rawJson.version !== 'string'
-    || rawJson.type !== 'Vsix'
-    || !Array.isArray(rawJson.payloads)
-    || rawJson.payloads.length !== 1
-    || !isPayload(rawJson.payloads[0])
-    || typeof(rawJson.installSizes) !== 'object'
-    || typeof(rawJson.installSizes.targetDrive) !== 'number') {
+  if (!packageHasInstallSize(rawJson)) {
     return undefined;
   }
 
@@ -124,23 +151,59 @@ function flattenVsManPackage(rawJson: any): FlatVsManPayload | undefined {
   };
 }
 
+function maybeHydratePointerLikePackages(lookup: Map<string, Array<any>>, originalId: string) {
+  const originalArray = lookup.get(originalId);
+  if (!originalArray || originalArray.length === 0) {
+    return;
+  }
+
+  const targetId = packageGetPointerLikeSingleDependencyId(originalArray[0]);
+  if (targetId && targetId !== originalId) {
+    maybeHydratePointerLikePackages(lookup, targetId);
+    const targetArray = lookup.get(targetId);
+    if (targetArray && targetArray.length == originalArray.length) {
+      lookup.set(originalId, targetArray);
+    }
+  }
+}
+
 export function buildIdPackageLookupTable(vsManContent: string): Map<string, Array<FlatVsManPayload>> {
   const vsMan = JSON.parse(vsManContent);
-  const result = new Map<string, Array<FlatVsManPayload>>();
   if (!Array.isArray(vsMan.packages)) {
     throwUnexpectedManifest();
   }
 
+  const lookup = new Map<string, Array<any>>();
   for (const p of vsMan.packages) {
-    const flattened = flattenVsManPackage(p);
-    if (flattened) {
-      const id = flattened.id;
-      const existing = result.get(id);
-      if (existing) {
-        existing.push(flattened);
-      } else {
-        result.set(id, [flattened]);
+    if (!isMinimalPackage(p)) {
+      continue;
+    }
+
+    const id = p.id;
+    const existing = lookup.get(id);
+    if (existing) {
+      existing.push(p);
+    } else {
+      lookup.set(id, [p]);
+    }
+  }
+
+  for (const id of Array.from(lookup.keys())) {
+    maybeHydratePointerLikePackages(lookup, id);
+  }
+
+  const result = new Map<string, Array<FlatVsManPayload>>();
+  for (const entry of lookup.entries()) {
+    const newArr = new Array<FlatVsManPayload>();
+    for (const p of entry[1]) {
+      const flattened = flattenVsManPackage(p);
+      if (flattened){
+        newArr.push(flattened);
       }
+    }
+
+    if (newArr.length != 0) {
+      result.set(entry[0], newArr);
     }
   }
 

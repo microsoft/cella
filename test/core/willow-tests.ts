@@ -436,4 +436,173 @@ describe('Willow', () => {
       'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/good,version=14.28.29914/payload.vsix'
     }]);
   });
+
+  it('Follows Pointer-like Packages', () => {
+    const testInput = {
+      'packages': [
+        {
+          'id': 'Microsoft.VisualCpp.ASAN.X86',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VisualCpp.ASAN.X86.vsix',
+              'sha256': '97c926de9fef5e5c8760638ad05ceaa7793f923ab608ece35c9102c7cc992338',
+              'size': 1071,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/97c926de9fef5e5c8760638ad05ceaa7793f923ab608ece35c9102c7cc992338/Microsoft.VisualCpp.ASAN.X86.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'dependencies': {
+            'Microsoft.VC.14.29.16.10.ASAN.X86.base': '14.29.30037'
+          }
+        },
+        {
+          'id': 'Microsoft.VC.14.29.16.10.ASAN.X86.base',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
+              'sha256': '4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c',
+              'size': 17401493,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c/Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'installSizes': {
+            'targetDrive': 63068674
+          },
+          'dependencies': {
+            'Microsoft.VC.14.29.16.10.ASAN.Headers.base': '14.29.30037',
+            'Microsoft.VC.14.29.16.10.ASAN.X64.base': '14.29.30037',
+            'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetX86.base': '14.29.30037',
+            'Microsoft.VC.14.29.16.10.Tools.HostX64.TargetX86.base': '14.29.30037'
+          }
+        },
+        {
+          'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'language': 'de-DE',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources.deu.vsix',
+              'sha256': 'a4cf6d5ac182a7f386afabdcb27605fca34869bc2b6bd39c4210021f85813599',
+              'size': 1100,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/a4cf6d5ac182a7f386afabdcb27605fca34869bc2b6bd39c4210021f85813599/Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources.deu.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'dependencies': {
+            'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base': '14.29.30037'
+          }
+        },
+        {
+          'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'language': 'en-US',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources.enu.vsix',
+              'sha256': '0b83f64f4a9d9bc5200092d06117a0e7936ca7f1a4e3b596537cdba2893504d5',
+              'size': 1100,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/0b83f64f4a9d9bc5200092d06117a0e7936ca7f1a4e3b596537cdba2893504d5/Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources.enu.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'dependencies': {
+            'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base': '14.29.30037'
+          }
+        },
+        {
+          'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'language': 'de-DE',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.deu.vsix',
+              'sha256': '23612dd70c849c6735b17ce2887edf6d7ca243e9a2f9bd427daace8653b17987',
+              'size': 236777,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/23612dd70c849c6735b17ce2887edf6d7ca243e9a2f9bd427daace8653b17987/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.deu.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'installSizes': {
+            'targetDrive': 1033240
+          }
+        },
+        {
+          'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
+          'version': '14.29.30037',
+          'type': 'Vsix',
+          'language': 'en-US',
+          'payloads': [
+            {
+              'fileName': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.enu.vsix',
+              'sha256': 'b6c39771b8c5564f9998e7b1bd3a89e1d23d287f6625ef65f2cd43c1ccabd306',
+              'size': 205517,
+              'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/b6c39771b8c5564f9998e7b1bd3a89e1d23d287f6625ef65f2cd43c1ccabd306/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.enu.vsix',
+              'signer': {
+                '$ref': '2'
+              }
+            }
+          ],
+          'installSizes': {
+            'targetDrive': 868400
+          }
+        }
+      ]
+    };
+
+    const actual = buildIdPackageLookupTable(JSON.stringify(testInput));
+    strict.equal(actual.size, 4);
+    strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.ASAN.X86'), [{
+      'id': 'Microsoft.VC.14.29.16.10.ASAN.X86.base',
+      'version': '14.29.30037',
+      'language': undefined,
+      'fileName': 'Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
+      'sha256': '4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c',
+      'size': 17401493,
+      'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c/Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
+      'installSize': 63068674,
+      'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.ASAN.X86.base,version=14.29.30037/payload.vsix'
+    }]);
+    strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources'), [
+      {
+        'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
+        'version': '14.29.30037',
+        'language': 'de-DE',
+        'fileName': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.deu.vsix',
+        'sha256': '23612dd70c849c6735b17ce2887edf6d7ca243e9a2f9bd427daace8653b17987',
+        'size': 236777,
+        'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/23612dd70c849c6735b17ce2887edf6d7ca243e9a2f9bd427daace8653b17987/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.deu.vsix',
+        'installSize': 1033240,
+        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=de-DE/payload.vsix'
+      },
+      {
+        'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
+        'version': '14.29.30037',
+        'language': 'en-US',
+        'fileName': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.enu.vsix',
+        'sha256': 'b6c39771b8c5564f9998e7b1bd3a89e1d23d287f6625ef65f2cd43c1ccabd306',
+        'size': 205517,
+        'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/b6c39771b8c5564f9998e7b1bd3a89e1d23d287f6625ef65f2cd43c1ccabd306/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.enu.vsix',
+        'installSize': 868400,
+        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=en-US/payload.vsix'
+      }
+    ]);
+  });
 });
