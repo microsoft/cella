@@ -11,14 +11,20 @@ import { InstallerImpl } from './installer';
 export class UnzipInstaller extends InstallerImpl {
   async acquireFile(locations: Array<string>, options?: AcquireOptions, install?: Verifiable) {
     const targetFile = `${this.artifact.name}.zip`;
-    const file = await acquireArtifactFile(this.session, locations.map(each => this.session.fileSystem.parse(each)), targetFile, { ...options, algorithm: install?.sha256 ? 'sha256' : install?.md5 ? 'md5' : undefined, value: install?.sha256 || install?.md5 || undefined });
+    const file = await acquireArtifactFile(
+      this.session,
+      locations.map(each => this.session.fileSystem.parse(each)),
+      targetFile,
+      InstallerImpl.applyAcquireOptions(options,install));
     return file;
   }
 
   async install(install: UnZip, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
     const locations = this.locations(install.location);
     const file = await this.acquireFile(locations, options, install);
-    await new ZipUnpacker(this.session).unpack(file, this.artifact.targetLocation, { ...options, strip: install.strip, transform: install.transform ? [...install.transform] : undefined });
+    await new ZipUnpacker(this.session).unpack(
+      file,
+      this.artifact.targetLocation,
+      InstallerImpl.applyUnpackOptions(install));
   }
 }
-

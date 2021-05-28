@@ -11,8 +11,15 @@ import { InstallerImpl } from './installer';
 export class NupkgInstaller extends InstallerImpl {
   async install(install: Nupkg, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
     const targetFile = `${this.artifact.name}.zip`;
-    const file = await nuget(this.session, install.location, targetFile, { ...options, algorithm: install?.sha256 ? 'sha256' : install?.md5 ? 'md5' : undefined, value: install?.sha256 || install?.md5 || undefined });
-    await new ZipUnpacker(this.session).unpack(file, this.artifact.targetLocation, { ...options, strip: install.strip, transform: install.transform ? [...install.transform] : undefined });
+    const file = await nuget(
+      this.session,
+      install.location,
+      targetFile,
+      InstallerImpl.applyAcquireOptions(options,install));
+    return new ZipUnpacker(this.session).unpack(
+      file,
+      this.artifact.targetLocation,
+      InstallerImpl.applyUnpackOptions(install));
   }
 
 }
