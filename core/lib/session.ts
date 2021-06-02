@@ -15,7 +15,6 @@ import { InstallerImpl } from './installer/installer';
 import { NupkgInstaller } from './installer/nupkg';
 import { UntarInstaller } from './installer/untar';
 import { UnzipInstaller } from './installer/unzip';
-import { VsixInstaller } from './installer/vsix';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
 import { Installer, MetadataFile, parseConfiguration } from './metadata-format';
@@ -24,7 +23,7 @@ import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
 const defaultConfig =
-  `# Global configuration 
+  `# Global configuration
 
 global:
   send-anonymous-telemetry: true
@@ -76,7 +75,7 @@ export class Session {
 
   constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
-      register('file', new LocalFileSystem(this)).
+      register(['file', 'vsix'], new LocalFileSystem(this)).
       register(['http', 'https'], new HttpFileSystem(this)
       );
 
@@ -265,6 +264,5 @@ export class Session {
     ['unzip', UnzipInstaller],
     ['untar', UntarInstaller],
     ['git', GitInstaller],
-    ['vsix', VsixInstaller],
   ])
 }
