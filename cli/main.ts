@@ -11,13 +11,17 @@ import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { parseArgs } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
+import { ActivateCommand } from './lib/commands/activate';
+import { AddCommand } from './lib/commands/add';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
 import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
 import { ListCommand } from './lib/commands/list';
+import { NewCommand } from './lib/commands/new';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
+import { RemoveCommand } from './lib/commands/remove';
 import { UpdateCommand } from './lib/commands/update';
 import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
@@ -67,6 +71,10 @@ async function main() {
   const cache = new CacheCommand(commandline);
   const clean = new CleanCommand(commandline);
   const use = new UseCommand(commandline);
+  const newcmd = new NewCommand(commandline);
+  const activate = new ActivateCommand(commandline);
+  const remove = new RemoveCommand(commandline);
+  const add = new AddCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 

@@ -8,32 +8,36 @@ import { Command } from '../command';
 import { project } from '../constants';
 import { log } from '../styling';
 
-export class AddCommand extends Command {
-  readonly command = 'add';
+export class NewCommand extends Command {
+  readonly command = 'new';
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
 
   get summary() {
-    return i`Adds an artifact to the project.`;
+    return i`Creates a new project file.`;
   }
 
   get description() {
     return [
-      i`This allows the consumer to add an artifact to the project. This will activate the project as well.`,
+      i`This allows the consumer create a new project file ('${project}').`,
     ];
   }
 
   async run() {
-    if (! await session.currentDirectory.exists(project)) {
-      log(i`The folder at ${session.currentDirectory.fsPath} does not contain a project file '${project}'`);
+    if (await session.currentDirectory.exists(project)) {
+      log(i`The folder at ${session.currentDirectory.fsPath} already contains a project file '${project}'`);
       return false;
     }
 
-    // find the artifacts
-    // add them to the project if they are not there
-    // call project activate
+    await session.currentDirectory.join(project).writeFile(Buffer.from(`# Environment configuration
+info:
+  name: NAME
+  version: 1.0.0
+  summary: My Project
+  
 
+`));
     return true;
   }
 }

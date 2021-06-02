@@ -22,7 +22,14 @@ export class RemoveCommand extends Command {
   }
 
   async run() {
+    // find the project file
+    // load the project
 
+    // identify the artifacts that the user asked to remove
+
+    // remove them from the project
+    // save the project file
+    // re-activate the project
     return true;
   }
 }

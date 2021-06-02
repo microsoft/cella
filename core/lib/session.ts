@@ -262,6 +262,10 @@ export class Session {
     return result;
   }
 
+  async openManifest(manifestFile: Uri) {
+    return parseConfiguration(manifestFile.fsPath, this.utf8(await manifestFile.readFile()));
+  }
+
   static Installers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
     ['nupkg', NupkgInstaller],
     ['unzip', UnzipInstaller],

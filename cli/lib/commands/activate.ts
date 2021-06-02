@@ -3,7 +3,10 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
+import { session } from '../../main';
 import { Command } from '../command';
+import { findProject } from '../project';
+import { error } from '../styling';
 
 export class ActivateCommand extends Command {
   readonly command = 'activate';
@@ -22,7 +25,18 @@ export class ActivateCommand extends Command {
   }
 
   async run() {
+    // find the project file
+    const projectFile = await findProject(session.currentDirectory);
+    if (!projectFile) {
+      error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
+      return false;
+    }
+    // load the project
+    const manifest = await session.openManifest(projectFile);
+    // install the items in the project
 
+
+    // activate all the tools in the project
     return true;
   }
 }
