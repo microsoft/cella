@@ -6,6 +6,7 @@
 import { isMap, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { checkOptionalString } from '../util/checks';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 
@@ -36,6 +37,11 @@ export function createInstallerNode(node: YAMLMap, name: string): Installer | un
 class InstallerNode extends NodeBase {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
+    yield* checkOptionalString(this.node, this.node.range!, 'lang');
+  }
+
+  get lang() {
+    return this.getString('lang');
   }
 }
 

@@ -304,6 +304,7 @@ export interface Verifiable {
    */
 export interface Installer extends Validation {
   readonly kind: string;
+  readonly lang?: string;
 }
 
 export interface UnpackSettings {
