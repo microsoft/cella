@@ -137,13 +137,13 @@ class ArtifactInfo {
     const installInfo = d.installer;
     switch(installInfo?.kind) {
       case 'nupkg':
-        installNuGet(this.session, this.artifact, <Nupkg>installInfo, options);
+        await installNuGet(this.session, this.artifact, <Nupkg>installInfo, options);
         break;
       case 'unzip':
-        installUnZip(this.session, this.artifact, <UnZip>installInfo, options);
+        await installUnZip(this.session, this.artifact, <UnZip>installInfo, options);
         break;
       case 'untar':
-        installUnTar(this.session, this.artifact, <UnTar>installInfo, options);
+        await installUnTar(this.session, this.artifact, <UnTar>installInfo, options);
         break;
       case 'git':
         throw new Error('not implemented');
