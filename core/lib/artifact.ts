@@ -3,13 +3,20 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { fail } from 'assert';
 import { AcquireEvents } from './acquire';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
+import { i } from './i18n';
+import { GitInstaller } from './installer/git';
+import { InstallerImpl } from './installer/installer';
+import { NupkgInstaller } from './installer/nupkg';
+import { UntarInstaller } from './installer/untar';
+import { UnzipInstaller } from './installer/unzip';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, MetadataFile, VersionReference } from './metadata-format';
+import { Demands, Installer, MetadataFile, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
@@ -75,6 +82,21 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
   return artifact;
 }
 
+const SingleInstallers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
+  ['nupkg', NupkgInstaller],
+  ['unzip', UnzipInstaller],
+  ['untar', UntarInstaller],
+  ['git', GitInstaller],
+])
+
+function createInstaller(session: Session, artifact: Artifact, installer: Installer) {
+  const ctor = SingleInstallers.get(installer.kind);
+  if (ctor) {
+    return new ctor(session, artifact, installer);
+  }
+  fail(i`Unknown installer type ${installer.kind}`);
+}
+
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
 
@@ -131,7 +153,7 @@ class ArtifactInfo {
     // ok, let's install this.
     const installInfo = d.installer;
     if (installInfo) {
-      const installer = this.session.createInstaller(this.artifact, installInfo);
+      const installer = createInstaller(this.session, this.artifact, installInfo);
       await installer.install(installInfo, options);
     }
 

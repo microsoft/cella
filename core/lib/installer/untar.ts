@@ -21,7 +21,7 @@ export class UntarInstaller extends InstallerImpl {
   }
 
   async install(install: UnTar, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-    const locations = this.locations(install.location);
+    const locations = InstallerImpl.locations(install.location);
     const file = await this.acquireFile(locations, options, install);
     const x = await file.readBlock(0, 128);
     let unpacker : Unpacker;

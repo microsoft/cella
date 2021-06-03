@@ -20,7 +20,7 @@ export class UnzipInstaller extends InstallerImpl {
   }
 
   async install(install: UnZip, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-    const locations = this.locations(install.location);
+    const locations = InstallerImpl.locations(install.location);
     const file = await this.acquireFile(locations, options, install);
     await new ZipUnpacker(this.session).unpack(
       file,

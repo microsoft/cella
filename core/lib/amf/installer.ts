@@ -3,38 +3,57 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isMap, YAMLMap } from 'yaml';
+import { isMap, isSeq, YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 
-/** @internal */
-export function createInstallerNode(node: YAMLMap, name: string): Installer | undefined {
-  const n = getOrCreateMap(node, name);
-  if (isMap(n)) {
-
-    if (n.has('unzip')) {
-      return new UnzipNode(n, name);
-    }
-    if (n.has('nupkg')) {
-      return new NupkgNode(n, name);
-    }
-    if (n.has('untar')) {
-      return new UnTarNode(n, name);
-    }
-    if (n.has('git')) {
-      return new GitCloneNode(n, name);
-    }
+function createSingleInstallerNode(n: YAMLMap, containingName: string) : InstallerNode | undefined {
+  if (n.has('unzip')) {
+    return new UnzipNode(n, containingName);
+  }
+  if (n.has('nupkg')) {
+    return new NupkgNode(n, containingName);
+  }
+  if (n.has('untar')) {
+    return new UnTarNode(n, containingName);
+  }
+  if (n.has('git')) {
+    return new GitCloneNode(n, containingName);
   }
 
-  //return new InvalidInstallerNode(<any>getPair(node, name)!.key, name);
+  return undefined;
+}
+
+/** @internal */
+export function createInstallerNode(containingNode: YAMLMap, keyName: string): Installer | undefined {
+  const candidate = getOrCreateMap(containingNode, keyName);
+
+  if (isSeq(candidate)) {
+    const items = candidate.items;
+    if (items.all(item => isMap(item))) {
+      const maps = <Array<YAMLMap>><unknown>items;
+      const convertedItems = maps.select((item) => createSingleInstallerNode(<YAMLMap>item, keyName));
+      if (convertedItems.all(item => !!item)) {
+        if (convertedItems.length === 1) {
+          return convertedItems[0];
+        } else if (convertedItems.length > 1) {
+          return new MultiInstallNode(containingNode, keyName, <Array<InstallerNode>>convertedItems);
+        }
+      }
+    }
+  } else if (isMap(candidate)) {
+    return createSingleInstallerNode(candidate, keyName);
+  }
+
   return undefined;
 }
 
 
-class InstallerNode extends NodeBase {
+abstract class InstallerNode extends NodeBase implements Installer {
+  abstract readonly kind : string;
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
     yield* checkOptionalString(this.node, this.node.range!, 'lang');
@@ -45,16 +64,7 @@ class InstallerNode extends NodeBase {
   }
 }
 
-class InvalidInstallerNode extends InstallerNode {
-  readonly kind = 'invalid';
-
-  *validate(): Iterable<ValidationError> {
-    yield { message: i`Install node is not a valid installation declaration`, range: this.node.range!, category: ErrorKind.IncorrectType };
-  }
-}
-
-class FileInstallerNode extends InstallerNode {
-
+abstract class FileInstallerNode extends InstallerNode {
   get sha256() {
     return this.getString('sha256');
   }
@@ -86,7 +96,6 @@ class FileInstallerNode extends InstallerNode {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
 }
 
 class UnzipNode extends FileInstallerNode implements UnZip {
@@ -114,7 +123,6 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
 }
 
 class UnTarNode extends FileInstallerNode implements UnTar {
@@ -151,6 +159,7 @@ class GitCloneNode extends InstallerNode implements Git {
   set full(value: boolean | undefined) {
     this.setBoolean('full', value);
   }
+
   get recurse() {
     return this.getBoolean('recurse');
   }
@@ -158,7 +167,30 @@ class GitCloneNode extends InstallerNode implements Git {
   set recurse(value: boolean | undefined) {
     this.setBoolean('recurse', value);
   }
+
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
+  }
+}
+class MultiInstallNode extends InstallerNode {
+  readonly kind = 'multi';
+  constructor(node: YAMLMap, name: string, public readonly items: Array<InstallerNode>) {
+    super(node, name);
+  }
+
+  *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+    if (this.items.length <= 1) {
+      yield { message: i`Multi install node must have more than one child`, range: this.node.range!, category: ErrorKind.IncorrectType };
+    } else {
+      const firstKind = this.items[0].kind;
+      if (this.items.any(item => item.kind !== firstKind)) {
+        yield { message: i`Multi install node must have children of the same kind`, range: this.node.range!, category: ErrorKind.IncorrectType };
+      }
+    }
+
+    for (const item of this.items) {
+      yield* item.validate();
+    }
   }
 }

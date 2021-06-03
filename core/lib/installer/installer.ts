@@ -13,7 +13,7 @@ export abstract class InstallerImpl {
   constructor(protected session: Session, protected artifact: Artifact, protected installInfo: Installer) {
   }
 
-  locations(from: ResourceLocation) {
+  protected static locations(from: ResourceLocation) {
     const result = from ? (typeof from === 'string' ? [from] : [...from]) : [];
     strict.ok(result, 'Installer - missing locations');
     return result;
