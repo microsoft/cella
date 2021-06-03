@@ -132,14 +132,6 @@ export abstract class Unpacker extends ExtendedEmitter<UnpackEvents> {
   }
 }
 
-interface UnpackEntryCommon {
-  filePercentageScaler: PercentageScaler;
-  zipFile: ZipFile;
-  archiveUri: Uri;
-  outputUri: Uri;
-  options: OutputOptions;
-}
-
 export class ZipUnpacker extends Unpacker {
   constructor(private readonly session: Session) {
     super();
