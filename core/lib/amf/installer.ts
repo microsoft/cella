@@ -5,7 +5,7 @@
 
 import { isMap, isSeq, YAMLMap } from 'yaml';
 import { i } from '../i18n';
-import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { ErrorKind, Git, Installer, MultiInstaller, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
@@ -172,7 +172,7 @@ class GitCloneNode extends InstallerNode implements Git {
     yield* super.validate();
   }
 }
-class MultiInstallNode extends InstallerNode {
+class MultiInstallNode extends InstallerNode implements MultiInstaller {
   readonly kind = 'multi';
   constructor(node: YAMLMap, name: string, public readonly items: Array<InstallerNode>) {
     super(node, name);
