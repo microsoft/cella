@@ -8,15 +8,11 @@ import { AcquireEvents } from './acquire';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { i } from './i18n';
-import { GitInstaller } from './installer/git';
-import { InstallerImpl } from './installer/installer';
-import { NupkgInstaller } from './installer/nupkg';
-import { UntarInstaller } from './installer/untar';
-import { UnzipInstaller } from './installer/unzip';
+import { installNuGet, installUnTar, installUnZip } from './installer/installer';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, Installer, MetadataFile, VersionReference } from './metadata-format';
+import { Demands, MetadataFile, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
@@ -82,21 +78,6 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
   return artifact;
 }
 
-const SingleInstallers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
-  ['nupkg', NupkgInstaller],
-  ['unzip', UnzipInstaller],
-  ['untar', UntarInstaller],
-  ['git', GitInstaller],
-])
-
-function createInstaller(session: Session, artifact: Artifact, installer: Installer) {
-  const ctor = SingleInstallers.get(installer.kind);
-  if (ctor) {
-    return new ctor(session, artifact, installer);
-  }
-  fail(i`Unknown installer type ${installer.kind}`);
-}
-
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
 
@@ -128,16 +109,18 @@ class ArtifactInfo {
     }
 
     const d = this.applicableDemands;
-    let fail = false;
-    for (const each of d.errors) {
-      this.session.channels.error(each);
-      fail = true;
-    }
+    {
+      let fail = false;
+      for (const each of d.errors) {
+        this.session.channels.error(each);
+        fail = true;
+      }
 
-    // check to see that we only have one install block
+      // check to see that we only have one install block
 
-    if (fail) {
-      throw Error('errors present');
+      if (fail) {
+        throw Error('errors present');
+      }
     }
 
     // warnings
@@ -152,9 +135,23 @@ class ArtifactInfo {
 
     // ok, let's install this.
     const installInfo = d.installer;
-    if (installInfo) {
-      const installer = createInstaller(this.session, this.artifact, installInfo);
-      await installer.install(installInfo, options);
+    switch(installInfo?.kind) {
+      case 'nupkg':
+        installNuGet(this.session, this.artifact, <Nupkg>installInfo, options);
+        break;
+      case 'unzip':
+        installUnZip(this.session, this.artifact, <UnZip>installInfo, options);
+        break;
+      case 'untar':
+        installUnTar(this.session, this.artifact, <UnTar>installInfo, options);
+        break;
+      case 'git':
+        throw new Error('not implemented');
+      case undefined:
+          // nothing to do
+          break;
+      default:
+        fail(i`Unknown installer type ${installInfo!.kind}`);
     }
 
     // after we unpack it, write out the installed manifest
@@ -199,5 +196,4 @@ class ArtifactInfo {
     }
     return artifacts;
   }
-
 }
