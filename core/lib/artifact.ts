@@ -8,7 +8,7 @@ import { AcquireEvents } from './acquire';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { i } from './i18n';
-import { installNuGet, installUnTar, installUnZip } from './installer/installer';
+import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';

@@ -1,9 +1,9 @@
 import { strict } from 'assert';
-import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from '../acquire';
-import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from '../archive';
-import { Artifact } from '../artifact';
-import { Nupkg, ResourceLocation, UnpackSettings, UnTar, UnZip, Verifiable } from '../metadata-format';
-import { Session } from '../session';
+import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './acquire';
+import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from './archive';
+import { Artifact } from './artifact';
+import { Nupkg, ResourceLocation, UnpackSettings, UnTar, UnZip, Verifiable } from './metadata-format';
+import { Session } from './session';
 
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
