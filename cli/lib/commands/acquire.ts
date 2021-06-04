@@ -45,7 +45,7 @@ export class AcquireCommand extends Command {
 
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
-      error(i`Multiple packages specified, but not an equal number of '--verison=' switches. `);
+      error(i`Multiple packages specified, but not an equal number of '--version=' switches. `);
       return false;
     }
 
@@ -91,11 +91,11 @@ export class AcquireCommand extends Command {
     }
 
     if (await this.install(artifacts)) {
-      log(i`Installation completed successfuly`);
-    } else {
-      return false;
+      log(i`Installation completed successfully`);
+      return true;
     }
-    return true;
+
+    return false;
   }
 
   async install(artifacts: Iterable<Artifact>) {
@@ -116,6 +116,8 @@ export class AcquireCommand extends Command {
       try {
         await artifact.install({
           force: this.commandLine.force,
+          allLanguages: this.commandLine.allLanguages,
+          language: this.commandLine.language,
           events: {
             verifying: (name, percent) => {
               if (percent >= 100) {
