@@ -106,7 +106,7 @@ describe('Willow', () => {
           'size': 16126219,
           'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/5b9e9d7f332e79bcc2342c49e7f99ddf43ecf6d130e5e6c6908dc2c7a39b15c6/Microsoft.VisualCpp.Tools.HostX86.TargetX86.vsix',
           'installSize': 35276532,
-          'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86,version=14.28.29914/payload.vsix'
+          'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86,version=14.28.29914/payload.vsix'
         }
       ]);
 
@@ -120,7 +120,7 @@ describe('Willow', () => {
         'size': 229756,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/47db023518b45bab6e7b9bba9aa2b0254895f3eb21221a70bdeb453e2747bafd/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.csy.vsix',
         'installSize': 906288,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=cs-CZ/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=cs-CZ/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -131,7 +131,7 @@ describe('Willow', () => {
         'size': 234819,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/5e128ff82600b53cebd63afaa40d3714d52c539104bf8ad4b44d61f261e933a1/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.deu.vsix',
         'installSize': 1026640,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=de-DE/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=de-DE/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -142,7 +142,7 @@ describe('Willow', () => {
         'size': 204190,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/4752b7e2053d1db888b43309d604ae7ed807d363ecbb39a89937ca051a10bdc8/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.enu.vsix',
         'installSize': 862328,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=en-US/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=en-US/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -153,7 +153,7 @@ describe('Willow', () => {
         'size': 224027,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/b9c8500e4f49df54292c7aab3bae930a940cd264877b4feee7cc26618f99edf4/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.esn.vsix',
         'installSize': 1001560,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=es-ES/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=es-ES/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -164,7 +164,7 @@ describe('Willow', () => {
         'size': 225466,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/fe41ec5957aaa14e5a613cd2352bc1171b1e4b550e980bf4dcd0b11fce1d7192/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.fra.vsix',
         'installSize': 1012800,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=fr-FR/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=fr-FR/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -175,7 +175,7 @@ describe('Willow', () => {
         'size': 222846,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/8c540bc9953a7f1c26072e16748926a73818ae5fb5b8288bedbc0841e789bfac/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.ita.vsix',
         'installSize': 1012272,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=it-IT/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=it-IT/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -186,7 +186,7 @@ describe('Willow', () => {
         'size': 200323,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/91e4c239726a104a38c7ae69d1590abc20249354c0fd5a5ae580ceef8e5149eb/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.jpn.vsix',
         'installSize': 636488,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ja-JP/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ja-JP/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -197,7 +197,7 @@ describe('Willow', () => {
         'size': 195053,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/3b1fa4d736a7d82bef9054fbe5f52919d34a8c5ec614e3d957e7665b94ae9ece/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.kor.vsix',
         'installSize': 640568,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ko-KR/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ko-KR/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -208,7 +208,7 @@ describe('Willow', () => {
         'size': 233518,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/13b2331b7157e21006b79c873d532e5e256ae049f41b11be972e316eae6a8a1b/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.plk.vsix',
         'installSize': 982080,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=pl-PL/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=pl-PL/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -219,7 +219,7 @@ describe('Willow', () => {
         'size': 219322,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/2d4133d05cf9adec2bdbc73cbdb266c359d7bb1fe6e012cc346b1dff334df860/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.ptb.vsix',
         'installSize': 947784,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=pt-BR/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=pt-BR/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -230,7 +230,7 @@ describe('Willow', () => {
         'size': 233022,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/54d321dc5471c42d655aa5b613b55dab3f1129df179bef8597e470d46f464445/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.rus.vsix',
         'installSize': 968256,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ru-RU/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=ru-RU/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -241,7 +241,7 @@ describe('Willow', () => {
         'size': 216776,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/7b1cbe7df387e5132d8e639e407afe8c83b45f624cde06fc9aa6af0bf896f32d/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.trk.vsix',
         'installSize': 911416,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=tr-TR/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=tr-TR/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -252,7 +252,7 @@ describe('Willow', () => {
         'size': 183804,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/7538c083be1f37b91217b8690a72746fc57bcd4c0e8c21f553ac4f88f8c60c98/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.chs.vsix',
         'installSize': 478256,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=zh-CN/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=zh-CN/payload.vsix'
       },
       {
         'id': 'Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources',
@@ -263,7 +263,7 @@ describe('Willow', () => {
         'size': 187675,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/f0c019c004dcca5f7f5ce3a9b97730967cfff6f960113a55f7f317a41ade3df7/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources.cht.vsix',
         'installSize': 503864,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=zh-TW/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VisualCpp.Tools.HostX86.TargetX86.Resources,version=14.28.29914,language=zh-TW/payload.vsix'
       }
     ]);
 
@@ -433,7 +433,7 @@ describe('Willow', () => {
       'size': 15447514,
       'url': 'https://download.visualstudio.microsoft.com/download/pr/3c309edd-88c5-4207-ab8d-fc1fda49d203/7c3a3eaab5d6000185cf8c44e3eeb8229cd1afa3dd72cf1d9c579f9125561a42/Microsoft.VisualCpp.Tools.HostX86.TargetX64.vsix',
       'installSize': 33650830,
-      'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/good,version=14.28.29914/payload.vsix'
+      'localPath': 'vsix:///good,version=14.28.29914/payload.vsix'
     }]);
   });
 
@@ -578,7 +578,7 @@ describe('Willow', () => {
       'size': 17401493,
       'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c/Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
       'installSize': 63068674,
-      'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.ASAN.X86.base,version=14.29.30037/payload.vsix'
+      'localPath': 'vsix:///Microsoft.VC.14.29.16.10.ASAN.X86.base,version=14.29.30037/payload.vsix'
     }]);
     strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources'), [
       {
@@ -590,7 +590,7 @@ describe('Willow', () => {
         'size': 236777,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/23612dd70c849c6735b17ce2887edf6d7ca243e9a2f9bd427daace8653b17987/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.deu.vsix',
         'installSize': 1033240,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=de-DE/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=de-DE/payload.vsix'
       },
       {
         'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
@@ -601,7 +601,7 @@ describe('Willow', () => {
         'size': 205517,
         'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/b6c39771b8c5564f9998e7b1bd3a89e1d23d287f6625ef65f2cd43c1ccabd306/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base.enu.vsix',
         'installSize': 868400,
-        'localPath': '$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=en-US/payload.vsix'
+        'localPath': 'vsix:///Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=en-US/payload.vsix'
       }
     ]);
   });

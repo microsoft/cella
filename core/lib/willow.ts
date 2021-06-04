@@ -127,7 +127,7 @@ function flattenVsManPackage(rawJson: any): FlatVsManPayload | undefined {
     chip = rawJson.chip;
   }
 
-  let localPath = `$ENV{PROGRAMDATA}/Microsoft/VisualStudio/Packages/${theId},version=${theVersion}`;
+  let localPath = `vsix:///${theId},version=${theVersion}`;
   if (chip) {
     localPath += `,chip=${chip}`;
   }

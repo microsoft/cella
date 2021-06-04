@@ -92,9 +92,8 @@ function transformVsixMapToUnzipMaps(session: Session, inputPath: string,
   if (vsixSource.length === 1) {
     const asUnzip = new YAMLMap();
     const soleSource = vsixSource[0];
-    asUnzip.add(new Pair('unzip', soleSource.url));
+    asUnzip.add(new Pair('unzip', [soleSource.localPath, soleSource.url]));
     asUnzip.add(new Pair('sha256', soleSource.sha256));
-    asUnzip.add(new Pair('local-alternate', soleSource.localPath));
     if (strip) {
       asUnzip.add(new Pair('strip', strip));
     }
@@ -121,10 +120,9 @@ function transformVsixMapToUnzipMaps(session: Session, inputPath: string,
   const result = new Array<YAMLMap>();
   for (const entry of langMap) {
     const asUnzip = new YAMLMap();
-    asUnzip.add(new Pair('unzip', entry[1].url));
+    asUnzip.add(new Pair('unzip', [entry[1].localPath, entry[1].url]));
     asUnzip.add(new Pair('sha256', entry[1].sha256));
     asUnzip.add(new Pair('lang', entry[0]));
-    asUnzip.add(new Pair('local-alternate', entry[1].localPath));
     if (strip) {
       asUnzip.add(new Pair('strip', strip));
     }
