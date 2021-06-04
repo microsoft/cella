@@ -120,6 +120,7 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
   set location(value: string) {
     this.setString('nupkg', value);
   }
+
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
@@ -131,10 +132,10 @@ class UnTarNode extends FileInstallerNode implements UnTar {
   get location() {
     return this.getStrings('untar');
   }
+
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
 }
 
 class GitCloneNode extends InstallerNode implements Git {
