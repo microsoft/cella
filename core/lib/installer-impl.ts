@@ -16,6 +16,11 @@ export interface InstallArtifactInfo {
 
 function artifactFileName(artifact: InstallArtifactInfo, install: Installer, extension: string) : string {
   let result = artifact.name;
+  if (install.nametag) {
+    result += '-';
+    result += install.nametag;
+  }
+
   if (install.lang) {
     result += '-';
     result += install.lang;

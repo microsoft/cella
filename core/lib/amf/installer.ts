@@ -62,6 +62,10 @@ abstract class InstallerNode extends NodeBase implements Installer {
   get lang() {
     return this.getString('lang');
   }
+
+  get nametag() {
+    return this.getString('nametag');
+  }
 }
 
 abstract class FileInstallerNode extends InstallerNode {
