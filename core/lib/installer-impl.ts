@@ -32,39 +32,37 @@ function artifactFileName(artifact: InstallArtifactInfo, install: Installer, ext
   return result;
 }
 
-function applyAcquireOptions(options?: AcquireOptions, install?: Verifiable): AcquireOptions | undefined {
-  if (install) {
-    if (install.sha256) {
-      return {...options, algorithm: 'sha256', value: install.sha256};
-    }
+function applyAcquireOptions(options: AcquireOptions, install: Verifiable) : AcquireOptions {
+  if (install.sha256) {
+    return {...options, algorithm: 'sha256', value: install.sha256};
+  }
 
-    if (install.md5) {
-      return {...options, algorithm: 'md5', value: install.md5};
-    }
+  if (install.md5) {
+    return {...options, algorithm: 'md5', value: install.md5};
   }
 
   return options;
 }
 
-function applyUnpackOptions(install: UnpackSettings) : OutputOptions {
-  return {strip: install.strip, transform: install.transform ? [...install.transform] : undefined };
+function applyUnpackOptions(options: OutputOptions, install: UnpackSettings) : OutputOptions {
+  return {...options, strip: install.strip, transform: install.transform ? [...install.transform] : undefined };
 }
 
-export async function installNuGet(session: Session, artifact: InstallArtifactInfo, install: Nupkg, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-    const targetFile = `${artifact.name}.zip`;
-    const file = await nuget(
-      session,
-      install.location,
-      targetFile,
-      applyAcquireOptions(options,install));
-    return new ZipUnpacker(session).unpack(
-      file,
-      artifact.targetLocation,
-      applyUnpackOptions(install));
-  }
+export async function installNuGet(session: Session, artifact: InstallArtifactInfo, install: Nupkg, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
+  const targetFile = `${artifact.name}.zip`;
+  const file = await nuget(
+    session,
+    install.location,
+    targetFile,
+    applyAcquireOptions(options,install));
+  return new ZipUnpacker(session).unpack(
+    file,
+    artifact.targetLocation,
+    applyUnpackOptions(options,install));
+}
 
 
-async function acquireInstallArtifactFile(session: Session, targetFile: string, locations: Array<string>, options?: AcquireOptions, install?: Verifiable) {
+async function acquireInstallArtifactFile(session: Session, targetFile: string, locations: Array<string>, options: AcquireOptions, install: Verifiable) {
   const file = await acquireArtifactFile(
     session,
     locations.map(each => session.fileSystem.parse(each)),
@@ -73,7 +71,7 @@ async function acquireInstallArtifactFile(session: Session, targetFile: string, 
   return file;
 }
 
-export async function installUnTar(session: Session, artifact: InstallArtifactInfo, install: UnTar, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
+export async function installUnTar(session: Session, artifact: InstallArtifactInfo, install: UnTar, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
   const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.tar'), locations(install.location), options, install);
   const x = await file.readBlock(0, 128);
   let unpacker : Unpacker;
@@ -85,13 +83,13 @@ export async function installUnTar(session: Session, artifact: InstallArtifactIn
     unpacker = new TarUnpacker(session);
   }
 
-  return unpacker.unpack(file,artifact.targetLocation, applyUnpackOptions(install));
+  return unpacker.unpack(file,artifact.targetLocation, applyUnpackOptions(options,install));
 }
 
-export async function installUnZip(session: Session, artifact: InstallArtifactInfo, install: UnZip, options?: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
+export async function installUnZip(session: Session, artifact: InstallArtifactInfo, install: UnZip, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
   const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.zip'), locations(install.location), options, install);
   await new ZipUnpacker(session).unpack(
     file,
     artifact.targetLocation,
-    applyUnpackOptions(install));
+    applyUnpackOptions(options,install));
 }

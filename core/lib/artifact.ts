@@ -94,8 +94,8 @@ class ArtifactInfo {
     return this.targetLocation.exists('artifact.yaml');
   }
 
-  private async installSingle(installInfo: Installer, options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }): Promise<void> {
-    switch(installInfo.kind) {
+  private async installSingle(installInfo: Installer, options: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }): Promise<void> {
+    switch (installInfo.kind) {
       case 'nupkg':
         await installNuGet(this.session, this, <Nupkg>installInfo, options);
         break;
@@ -113,12 +113,16 @@ class ArtifactInfo {
   }
 
   async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }) {
+    if (!options) {
+      options = {};
+    }
+
     // is it installed?
-    if (await this.isInstalled && !(options?.force)) {
+    if (await this.isInstalled && !options.force) {
       return;
     }
 
-    if (options?.force) {
+    if (options.force) {
       try {
         await this.uninstall();
       } catch {
