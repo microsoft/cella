@@ -14,17 +14,27 @@ type PrimitiveValue = string | number | boolean | undefined | Date;
 
 let translatorModule: language | undefined = undefined;
 
+function loadTranslatorModule(newLocale: string, basePath?: string) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return <language>(require(join(basePath || `${__dirname}/../i18n`, newLocale.toLowerCase())).map);
+}
+
 export function setLocale(newLocale: string, basePath?: string) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    translatorModule = <language>(require(join(basePath || `${__dirname}/../i18n`, newLocale.toLowerCase())).map);
+    translatorModule = loadTranslatorModule(newLocale, basePath);
   } catch {
     // translation did not load.
     // let's try to trim the locale and see if it fits
     const l = newLocale.lastIndexOf('-');
     if (l > -1) {
-      setLocale(newLocale.substr(0, l), basePath);
+      try {
+        const localeFiltered = newLocale.substr(0, l);
+        translatorModule = loadTranslatorModule(localeFiltered, basePath);
+      } catch {
+        // intentionally fall down to undefined setting below
+      }
     }
+
     // fallback to no translation
     translatorModule = undefined;
   }
