@@ -1,7 +1,6 @@
-import { strict } from 'assert';
 import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './acquire';
 import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from './archive';
-import { Installer, Nupkg, ResourceLocation, UnpackSettings, UnTar, UnZip, Verifiable } from './metadata-format';
+import { Installer, Nupkg, UnpackSettings, UnTar, UnZip, Verifiable } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
@@ -13,12 +12,6 @@ import { Uri } from './uri';
 export interface InstallArtifactInfo {
   readonly name: string;
   readonly targetLocation: Uri;
-}
-
-function locations(from: ResourceLocation) {
-  const result = from ? (typeof from === 'string' ? [from] : [...from]) : [];
-  strict.ok(result, 'Installer - missing locations');
-  return result;
 }
 
 function artifactFileName(artifact: InstallArtifactInfo, install: Installer, extension: string) : string {
@@ -72,7 +65,7 @@ async function acquireInstallArtifactFile(session: Session, targetFile: string, 
 }
 
 export async function installUnTar(session: Session, artifact: InstallArtifactInfo, install: UnTar, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-  const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.tar'), locations(install.location), options, install);
+  const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.tar'), install.location, options, install);
   const x = await file.readBlock(0, 128);
   let unpacker : Unpacker;
   if (x[0] === 0x1f && x[1] === 0x8b) {
@@ -87,7 +80,7 @@ export async function installUnTar(session: Session, artifact: InstallArtifactIn
 }
 
 export async function installUnZip(session: Session, artifact: InstallArtifactInfo, install: UnZip, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
-  const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.zip'), locations(install.location), options, install);
+  const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.zip'), install.location, options, install);
   await new ZipUnpacker(session).unpack(
     file,
     artifact.targetLocation,

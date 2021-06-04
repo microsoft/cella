@@ -217,11 +217,6 @@ export interface GitArtifactSource extends ArtifactSourceBase {
 /** values that can be either a single string, or an array of strings */
 export type StringOrStrings = string | Array<string>;
 
-/** refers to a location of a resource. If an array is specified, they are considered mirrors
- *
-*/
-export type ResourceLocation = string | ReadonlyArray<string> | Strings;
-
 /**
  * a mapped dictionary of string:T
  *
@@ -312,7 +307,7 @@ export interface UnpackSettings {
   strip?: number;
 
   /** one or more transform strings to apply to the filenames as they are restored (think tar --xform ... ) */
-  transform?: Strings;
+  transform?: Array<string>;
 }
 
 /**
@@ -322,7 +317,7 @@ export interface UnpackSettings {
  */
 export interface UnZip extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip */
-  location: ResourceLocation;
+  location: Array<string>;
 }
 
 
@@ -333,7 +328,7 @@ export interface UnZip extends Verifiable, UnpackSettings, Installer {
  */
 export interface UnTar extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to untar */
-  location: ResourceLocation;
+  location: Array<string>;
 }
 
 
@@ -360,7 +355,7 @@ export interface Nupkg extends Verifiable, UnpackSettings, Installer {
  */
 export interface Git extends Installer {
   /** the git repository location to be cloned */
-  location: ResourceLocation;
+  location: Array<string>;
 
   /** optionally, a tag/branch to be checked out */
   tag?: string;

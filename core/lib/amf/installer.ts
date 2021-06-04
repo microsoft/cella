@@ -90,7 +90,7 @@ abstract class FileInstallerNode extends InstallerNode {
   }
 
   get transform() {
-    return this.strings('transform');
+    return this.getStrings('transform');
   }
 
   *validate(): Iterable<ValidationError> {
@@ -106,7 +106,7 @@ class UnzipNode extends FileInstallerNode implements UnZip {
   }
 
   get location() {
-    return this.strings('unzip');
+    return this.getStrings('unzip');
   }
 }
 
@@ -129,7 +129,7 @@ class UnTarNode extends FileInstallerNode implements UnTar {
   readonly kind = 'untar';
 
   get location() {
-    return this.strings('untar');
+    return this.getStrings('untar');
   }
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
@@ -141,7 +141,7 @@ class GitCloneNode extends InstallerNode implements Git {
   readonly kind = 'git';
 
   get location() {
-    return this.strings('git');
+    return this.getStrings('git');
   }
 
   get tag() {
