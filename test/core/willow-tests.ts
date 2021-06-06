@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { buildIdPackageLookupTable, parseVsManFromChannel } from '@microsoft/cella.core';
+import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/cella.core';
 import { strict, throws } from 'assert';
 import { describe, it } from 'mocha';
 import { SuiteLocal } from './SuiteLocal';
@@ -94,7 +94,7 @@ describe('Willow', () => {
     const local = new SuiteLocal();
     const vsmanUri = local.resourcesFolderUri.join('2021-05-06-VisualStudio.vsman');
     const vsmanContent = local.session.utf8(await vsmanUri.readFile());
-    const result = buildIdPackageLookupTable(vsmanContent);
+    const result = new VsManDatabase(vsmanContent);
     strict.deepStrictEqual(result.get('Microsoft.VisualCpp.Tools.HostX86.TargetX86'),
       [
         {
@@ -271,9 +271,9 @@ describe('Willow', () => {
   });
 
   it('Hard Rejects Completely Broken VS Manifests', () => {
-    throws(() => { buildIdPackageLookupTable('{'); });
-    throws(() => { buildIdPackageLookupTable('{}'); });
-    throws(() => { buildIdPackageLookupTable('{\'packages\': 42}'); });
+    throws(() => { new VsManDatabase('{'); });
+    throws(() => { new VsManDatabase('{}'); });
+    throws(() => { new VsManDatabase('{\'packages\': 42}'); });
   });
 
   it('Ignores Unusuable Packages', () => {
@@ -422,7 +422,7 @@ describe('Willow', () => {
       ]
     };
 
-    const actual = buildIdPackageLookupTable(JSON.stringify(testInput));
+    const actual = new VsManDatabase(JSON.stringify(testInput));
     strict.equal(actual.size, 1);
     strict.deepStrictEqual(actual.get('good'), [{
       'id': 'good',
@@ -567,9 +567,9 @@ describe('Willow', () => {
       ]
     };
 
-    const actual = buildIdPackageLookupTable(JSON.stringify(testInput));
+    const actual = new VsManDatabase(JSON.stringify(testInput));
     strict.equal(actual.size, 4);
-    strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.ASAN.X86'), [{
+    const asanExpected = [{
       'id': 'Microsoft.VC.14.29.16.10.ASAN.X86.base',
       'version': '14.29.30037',
       'language': undefined,
@@ -579,7 +579,9 @@ describe('Willow', () => {
       'url': 'https://download.visualstudio.microsoft.com/download/pr/c0ac19c1-e1d7-47e2-bde8-fd11c4410cca/4a39aa98ee4540b8cd9a55ad6f1717602ee45ffd2db3a70894b9a3b41dfdac1c/Microsoft.VC.14.29.16.10.ASAN.X86.base.vsix',
       'installSize': 63068674,
       'localPath': 'vsix:///Microsoft.VC.14.29.16.10.ASAN.X86.base,version=14.29.30037/payload.vsix'
-    }]);
+    }];
+    strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.ASAN.X86'), asanExpected);
+    strict.deepStrictEqual(actual.get('Microsoft.VC.$(SxSVersion).ASAN.X86.base'), asanExpected);
     strict.deepStrictEqual(actual.get('Microsoft.VisualCpp.Tools.HostX86.TargetARM.Resources'), [
       {
         'id': 'Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base',
@@ -604,5 +606,37 @@ describe('Willow', () => {
         'localPath': 'vsix:///Microsoft.VC.14.29.16.10.Tools.HostX86.TargetARM.Resources.base,version=14.29.30037,language=en-US/payload.vsix'
       }
     ]);
+  });
+
+  it('Finds Latest Numbers', () => {
+    strict.equal(resolveVsManId(
+      ['hello.100.world', 'hello.9.world', 'hello.10.world', 'unrelated'],
+      'hello.$(SxSVersion).world'),
+    'hello.100.world');
+
+    strict.equal(resolveVsManId(
+      ['hello.9.world', 'hello.10.world', 'unrelated', 'hello.100.world'],
+      'hello.$(SxSVersion).world'),
+    'hello.100.world');
+
+    strict.equal(resolveVsManId(
+      ['hello.9.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
+      'hello.$(SxSVersion).world'),
+    'hello.100.world');
+
+    strict.equal(resolveVsManId(
+      ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
+      'hello.$(SxSVersion).world'),
+    'hello.100.10.world');
+
+    strict.equal(resolveVsManId(
+      ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
+      '$(SxSVersion)'),
+    '$(SxSVersion)');
+
+    strict.equal(resolveVsManId(
+      ['100.10', '100', '10', 'unrelated'],
+      '$(SxSVersion)'),
+    '100.10');
   });
 });

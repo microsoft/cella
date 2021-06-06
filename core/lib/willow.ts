@@ -167,45 +167,135 @@ function maybeHydratePointerLikePackages(lookup: Map<string, Array<any>>, origin
   }
 }
 
-export function buildIdPackageLookupTable(vsManContent: string): Map<string, Array<FlatVsManPayload>> {
-  const vsMan = JSON.parse(vsManContent);
-  if (!Array.isArray(vsMan.packages)) {
-    throwUnexpectedManifest();
-  }
+function escapeRegex(str: string) {
+  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
 
-  const lookup = new Map<string, Array<any>>();
-  for (const p of vsMan.packages) {
-    if (!isMinimalPackage(p)) {
-      continue;
+class NumbersEntry {
+  public readonly numbers : Array<number>; // for example, [10, 29]
+  constructor(public readonly rawStr : string) // for example, 10.0029
+  {
+    this.numbers = Array.from(rawStr.split('.').select(Number.parseInt));
+  }
+}
+
+function cmpNumbersEntry(a: NumbersEntry, b: NumbersEntry) {
+  for (let idx = 0;; ++idx) {
+    if (a.numbers.length <= idx) {
+      if (b.numbers.length <= idx) {
+        return 0;
+      }
+
+      return -1;
+    } else if (b.numbers.length <= idx) {
+      return 1;
     }
 
-    const id = p.id;
-    const existing = lookup.get(id);
-    if (existing) {
-      existing.push(p);
-    } else {
-      lookup.set(id, [p]);
+    const l = a.numbers[idx];
+    const r = b.numbers[idx];
+    if (l < r) {
+      return -1;
+    }
+
+    if (r < l) {
+      return 1;
+    }
+  }
+}
+
+function maxElement<T>(subject: Array<T>, cmp: (arg0: T, arg1: T) => number) : T | undefined {
+  if (subject.length === 0) {
+     return undefined;
+  }
+
+  let highest = subject[0];
+  for (let idx = 1; idx < subject.length; ++idx) {
+    if (cmp(subject[idx], highest) > 0) {
+      highest = subject[idx];
     }
   }
 
-  for (const id of Array.from(lookup.keys())) {
-    maybeHydratePointerLikePackages(lookup, id);
+  return highest;
+}
+
+export function resolveVsManId(ids: Iterable<string>, candidateId: string) : string {
+  const needle = '$(SxSVersion)';
+  const loc = candidateId.indexOf(needle);
+  if (loc >= 0) {
+    if (candidateId.indexOf(needle, loc + 1) >= 0) {
+      throw new Error(i`${candidateId} can only contain ${needle} once`);
+    }
+
+    // find all the ids which match the expected form
+    const matchingIds = new Array<NumbersEntry>();
+    const prefix = candidateId.slice(0, loc);
+    const suffix = candidateId.slice(loc + needle.length);
+    const regStr = '^' + escapeRegex(prefix) + '((?:\\d+\\.)*\\d+)' + escapeRegex(suffix) + '$';
+    const reg = new RegExp(regStr);
+    for (const id of ids) {
+       const match = reg.exec(id);
+       if (match) {
+         matchingIds.push(new NumbersEntry(match[1]));
+       }
+    }
+
+    const highest = maxElement(matchingIds, cmpNumbersEntry);
+    if (highest) {
+      return prefix + highest.rawStr + suffix;
+    }
   }
 
-  const result = new Map<string, Array<FlatVsManPayload>>();
-  for (const entry of lookup.entries()) {
-    const newArr = new Array<FlatVsManPayload>();
-    for (const p of entry[1]) {
-      const flattened = flattenVsManPackage(p);
-      if (flattened){
-        newArr.push(flattened);
+  return candidateId;
+}
+
+export class VsManDatabase {
+  private readonly idLookup = new Map<string, Array<FlatVsManPayload>>();
+
+  constructor(vsManContent: string) {
+    const vsMan = JSON.parse(vsManContent);
+    if (!Array.isArray(vsMan.packages)) {
+      throwUnexpectedManifest();
+    }
+
+    const lookup = new Map<string, Array<any>>();
+    for (const p of vsMan.packages) {
+      if (!isMinimalPackage(p)) {
+        continue;
+      }
+
+      const id = p.id;
+      const existing = lookup.get(id);
+      if (existing) {
+        existing.push(p);
+      } else {
+        lookup.set(id, [p]);
       }
     }
 
-    if (newArr.length != 0) {
-      result.set(entry[0], newArr);
+    for (const id of Array.from(lookup.keys())) {
+      maybeHydratePointerLikePackages(lookup, id);
+    }
+
+    for (const entry of lookup.entries()) {
+      const newArr = new Array<FlatVsManPayload>();
+      for (const p of entry[1]) {
+        const flattened = flattenVsManPackage(p);
+        if (flattened){
+          newArr.push(flattened);
+        }
+      }
+
+      if (newArr.length != 0) {
+        this.idLookup.set(entry[0], newArr);
+      }
     }
   }
 
-  return result;
+  get(id: string): Array<FlatVsManPayload> | undefined {
+    return this.idLookup.get(resolveVsManId(this.idLookup.keys(), id));
+  }
+
+  get size() {
+    return this.idLookup.size;
+  }
 }

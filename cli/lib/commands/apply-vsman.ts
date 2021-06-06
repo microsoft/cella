@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { acquireArtifactFile, buildIdPackageLookupTable, FileType, FlatVsManPayload, i, parseConfiguration, parseVsManFromChannel, Session, templateAmfApplyVsManifestInformation, Uri } from '@microsoft/cella.core';
+import { acquireArtifactFile, FileType, i, parseConfiguration, parseVsManFromChannel, Session, templateAmfApplyVsManifestInformation, Uri, VsManDatabase } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { log } from '../styling';
@@ -51,7 +51,7 @@ export class ApplyVsManCommand extends Command {
   /**
    * Process an input file.
    */
-  static async processFile(session: Session, inputUri: Uri, repoRoot: Uri, vsManLookup: Map<string, Array<FlatVsManPayload>>) {
+  static async processFile(session: Session, inputUri: Uri, repoRoot: Uri, vsManLookup: VsManDatabase) {
     const inputPath = inputUri.fsPath;
     session.channels.message(i`Processing ${inputPath}...`);
     const inputContent = session.utf8(await inputUri.readFile());
@@ -84,7 +84,7 @@ export class ApplyVsManCommand extends Command {
   /**
    * Process an input file or directory, recursively.
    */
-  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: Map<string, Array<FlatVsManPayload>>) {
+  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: VsManDatabase) {
     if ((inputDirectoryEntry[1] & FileType.Directory) !== 0) {
       for (const child of await inputDirectoryEntry[0].readDirectory()) {
         await ApplyVsManCommand.processInput(session, child, repoRoot, vsManLookup);
@@ -103,7 +103,7 @@ export class ApplyVsManCommand extends Command {
     const vsManPayload = parseVsManFromChannel(session.utf8(await channelFile.readFile()));
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
     const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
-    const vsManLookup = buildIdPackageLookupTable(session.utf8(await vsManUri.readFile()));
+    const vsManLookup = new VsManDatabase(session.utf8(await vsManUri.readFile()));
     for (const inputPath of this.inputs) {
       const inputUri = session.fileSystem.file(inputPath);
       const inputStat = await inputUri.stat();
