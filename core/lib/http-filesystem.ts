@@ -46,6 +46,9 @@ export class HttpFileSystem extends FileSystem {
   copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<number> {
     throw new Error('Method not implemented.');
   }
+  async createSymlink(original: Uri, symlink: Uri): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
   async readStream(uri: Uri, options?: { start?: number, end?: number }): Promise<Readable> {
     return getStream(uri, options);
   }

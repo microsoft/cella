@@ -1,5 +1,4 @@
 import { i } from '@microsoft/cella.core';
-import { delimiter } from 'path';
 import { session } from '../../main';
 import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
 import { Command } from '../command';
@@ -66,19 +65,7 @@ export class UseCommand extends Command {
 
     if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
       log(i`Activating Artifacts...`);
-      const a = await getArtifactActivation(artifacts);
-
-      for (const [variable, value] of a.Paths) {
-        session.addPostscript(variable, `${value}${delimiter}${process.env[variable]}`);
-      }
-
-      for (const [variable, value] of a.Variables) {
-        session.addPostscript(variable, value);
-      }
-
-      // for now.
-      session.addPostscript('DEFINES', a.Defines.map(([define, value]) => `${define}=${value}`).join(' '));
-
+      session.setActivationInPostscript(await getArtifactActivation(artifacts));
     } else {
       return false;
     }

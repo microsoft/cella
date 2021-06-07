@@ -91,12 +91,12 @@ class QueryList {
 
           if (not) {
             // negative/not present query
-            if (!contextValue && (constant === undefined || constant != contextValue)) {
+            if (!contextValue || constant === undefined || constant != contextValue) {
               continue; // good match
             }
           } else {
             // positive/present query
-            if (contextValue && (constant === undefined || constant == contextValue)) {
+            if (contextValue === constant || (constant === undefined && contextValue && contextValue !== 'false')) {
               continue; // good match
             }
           }

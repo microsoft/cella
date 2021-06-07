@@ -4,7 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
+import { delimiter } from 'path';
 import { TextDecoder } from 'util';
+import { Activation } from './activation';
 import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
@@ -209,6 +211,21 @@ export class Session {
     this.#postscript[variableName] = value;
   }
 
+  setActivationInPostscript(a: Activation) {
+    for (const [variable, value] of a.Paths) {
+      this.addPostscript(variable, `${value}${delimiter}${process.env[variable]}`);
+    }
+
+    for (const [variable, value] of a.Variables) {
+      this.addPostscript(variable, value);
+    }
+
+    // for now.
+    if (a.defines.size > 0) {
+      this.addPostscript('DEFINES', a.Defines.map(([define, value]) => `${define}=${value}`).join(' '));
+    }
+  }
+
   async writePostscript() {
     const psf = this.postscriptFile;
     switch (psf?.fsPath.substr(-3)) {
@@ -245,7 +262,7 @@ export class Session {
     if (! await this.installFolder.exists()) {
       return result;
     }
-    for (const [folder, stat] of await this.installFolder.readDirectory()) {
+    for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
 
         const content = this.utf8(await folder.readFile('artifact.yaml'));
