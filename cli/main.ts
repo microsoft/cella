@@ -9,7 +9,7 @@ import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
-import { parseArgs } from './lib/command-line';
+import { CommandLine } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
@@ -25,7 +25,7 @@ import { blank, cli } from './lib/constants';
 import { debug, error, initStyling, log } from './lib/styling';
 
 // parse the command line
-const commandline = parseArgs(argv.slice(2));
+const commandline = new CommandLine(argv.slice(2));
 
 // try to set the locale based on the users's settings.
 setLocale(commandline.language, `${__dirname}/i18n/`);

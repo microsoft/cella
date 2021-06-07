@@ -54,7 +54,26 @@ export function intersect<T extends object, T2 extends object>(primary: T, secon
         };
       }
 
+      const pv = (<any>target.primary)[property];
+      const sv = (<any>target.secondary)[property];
 
+      if (pv !== undefined) {
+        if (typeof pv === 'function') {
+          return pv.bind(primary);
+        }
+        return pv;
+      }
+
+      if (sv !== undefined) {
+        if (typeof sv === 'function') {
+          return sv.bind(secondary);
+        }
+        return sv;
+      }
+
+      return undefined;
+
+      /*
       if (Object.getOwnPropertyNames(target.primary).indexOf(propertyName) > -1) {
         return (<any>target.primary)[property];
       }
@@ -70,7 +89,9 @@ export function intersect<T extends object, T2 extends object>(primary: T, secon
       if (typeof ((<any>target.secondary)[property]) === 'function') {
         return (<any>target.secondary)[property].bind(secondary);
       }
-      return (<any>target.primary)[property] || (<any>target.secondary)[property];
+
+      return (<any>target.primary)[property] !== undefined ? (<any>target.primary)[property] : (<any>target.secondary)[property];
+      */
     },
 
     // member set proxy handler

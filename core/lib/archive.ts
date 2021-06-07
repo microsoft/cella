@@ -177,7 +177,8 @@ export class ZipUnpacker extends Unpacker {
       this.session.channels.debug(`unpacking ZIP file ${archiveUri}/${file.name} => ${destination}`);
       await destination.parent().createDirectory();
       const readStream = await file.read();
-      const writeStream = await destination.writeStream({ mtime: file.time });
+
+      const writeStream = await destination.writeStream({ mtime: file.time, mode: ((file.attr >> 16) & 0xfff) });
       const progressStream = new ProgressTrackingStream(0, file.size);
       progressStream.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
       await pipeline(readStream, progressStream, writeStream);

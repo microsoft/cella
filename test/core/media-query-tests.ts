@@ -55,20 +55,32 @@ describe('MediaQuery', () => {
     strict.equal(parseQuery('foo:?100').error?.message, 'Expected one of {Number, Boolean, Identifier, String}, found token "?"');
   });
 
-  it('test for matches', async () => {
+  it('positive matches', async () => {
     strict.ok(parseQuery('foo').match({ foo: true }), 'foo was present, it should match!');
     strict.ok(parseQuery('foo').match({ foo: null }), 'foo was present, it should match!');
 
-    strict.ok(!parseQuery('foo').match({}), 'foo was not present, it should not match!');
-
+    strict.ok(parseQuery('foo:false').match({}), 'foo was not present, it should match!');
+    strict.ok(parseQuery('foo:true').match({ foo: true }), 'foo was true, it should  match!');
+    strict.ok(parseQuery('foo:true').match({ foo: null }), 'foo was true, it should  match!');
     strict.ok(parseQuery('foo and windows').match({ foo: true, windows: true, books: true }), 'foo,windows was present, it should match!');
-    strict.ok(!parseQuery('bar and windows').match({ foo: true, windows: true, books: true }), 'bar was not , it should not match!');
-
     strict.ok(parseQuery('windows and x64 and target:amd64, osx').match({ windows: true, x64: true, target: 'amd64' }), 'should match');
     strict.ok(parseQuery('windows and (x64) and (target:amd64), osx').match({ windows: true, x64: true, target: 'amd64' }), 'should match');
-
     strict.ok(parseQuery('windows and x64 and target:amd64, osx').match({ osx: true }), 'should match');
-    strict.ok(!parseQuery('windows and x64 and target:amd64, osx').match({ linux: true }), 'should not match');
+    strict.ok(parseQuery('not windows').match({ windows: false, linux: true }), 'it should match!');
+  });
 
+  it('negative matches', async () => {
+    strict.ok(!parseQuery('not foo').match({ foo: true }), 'foo was present, it should not match!');
+    strict.ok(!parseQuery('not foo').match({ foo: null }), 'foo was present, it should not match!');
+    strict.ok(!parseQuery('foo').match({ foo: false }), 'foo was false, it should not match!');
+    strict.ok(!parseQuery('not foo:true').match({ foo: true }), 'foo was true, it should not match!');
+    strict.ok(!parseQuery('not foo:true').match({ foo: null }), 'foo was true, it should not match!');
+
+
+    strict.ok(!parseQuery('foo').match({}), 'foo was not present, it should not match!');
+    strict.ok(!parseQuery('not foo:false').match({}), 'foo was not present, it should match false!');
+    strict.ok(!parseQuery('bar and windows').match({ foo: true, windows: true, books: true }), 'bar was not , it should not match!');
+    strict.ok(!parseQuery('windows and x64 and target:amd64, osx').match({ linux: true }), 'should not match');
+    strict.ok(!parseQuery('not windows and not linux').match({ windows: false, linux: true }), 'it should not match!');
   });
 });
