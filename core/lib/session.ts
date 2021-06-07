@@ -236,8 +236,6 @@ export class Session {
       case '.sh':
         return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `export ${k[0]}="${k[1]}"`; }).join('\n')));
     }
-
-
   }
 
   setupLogging() {

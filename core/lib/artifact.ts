@@ -24,6 +24,7 @@ export class SetOfDemands {
 
     for (const query of metadata.demands) {
       if (parseQuery(query).match(session.environment.context)) {
+        session.channels.debug(`Matching demand query: '${query}'`);
         this.#demands.set(query, metadata[query]);
       }
     }
@@ -257,6 +258,7 @@ class ArtifactInfo {
 
         const location = sanitizePath(s.tools[key]);
         const uri = this.targetLocation.join(location);
+
         if (! await uri.exists()) {
           this.session.channels.error(i`Tool '${key}' is specified as '${location}' which does not exist in the package`);
         }

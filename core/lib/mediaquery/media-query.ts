@@ -88,16 +88,33 @@ class QueryList {
         for (const { feature, constant, not } of query.expressions) {
           // get the value from the context
           const contextValue = stringValue(properties[feature]);
-
           if (not) {
             // negative/not present query
-            if (!contextValue || constant === undefined || constant != contextValue) {
-              continue; // good match
+
+            if (contextValue) {
+              // we have a value
+              if (constant && contextValue !== constant) {
+                continue; // the values are NOT a match.
+              }
+              if (!constant && contextValue === 'false') {
+                continue;
+              }
+            } else {
+              // no value
+              if (!constant || contextValue === 'false') {
+                continue;
+              }
             }
           } else {
             // positive/present query
-            if (contextValue === constant || (constant === undefined && contextValue && contextValue !== 'false')) {
-              continue; // good match
+            if (contextValue) {
+              if (contextValue === constant || contextValue !== 'false' && !constant) {
+                continue;
+              }
+            } else {
+              if (constant === 'false') {
+                continue;
+              }
             }
           }
           continue queries; // no match
