@@ -72,26 +72,6 @@ export function intersect<T extends object, T2 extends object>(primary: T, secon
       }
 
       return undefined;
-
-      /*
-      if (Object.getOwnPropertyNames(target.primary).indexOf(propertyName) > -1) {
-        return (<any>target.primary)[property];
-      }
-      // try binding member function
-      if (typeof ((<any>target.primary)[property]) === 'function') {
-        return (<any>target.primary)[property].bind(primary);
-      }
-
-      if (Object.getOwnPropertyNames(target.secondary).indexOf(propertyName) > -1) {
-        return (<any>target.secondary)[property];
-      }
-
-      if (typeof ((<any>target.secondary)[property]) === 'function') {
-        return (<any>target.secondary)[property].bind(secondary);
-      }
-
-      return (<any>target.primary)[property] !== undefined ? (<any>target.primary)[property] : (<any>target.secondary)[property];
-      */
     },
 
     // member set proxy handler
