@@ -320,6 +320,8 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    */
   abstract copy(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<number>;
 
+  abstract createSymlink(symlink: Uri, target: Uri): Promise<void>;
+
   /** checks to see if the target exists */
   async exists(uri: Uri) {
     try {

@@ -238,7 +238,10 @@ class ArtifactInfo {
         }
 
         const p = activation.paths.getOrDefault(k, []);
-        const locations = s.paths[key].selectMany(path => micromatch(allPaths, sanitizePath(path)).map(each => this.targetLocation.join(each)));
+        const locations = s.paths[key].selectMany(path => {
+          const p = sanitizePath(path);
+          return p ? micromatch(allPaths, p) : [''];
+        }).map(each => this.targetLocation.join(each));
 
         if (locations.length) {
           p.push(...locations);

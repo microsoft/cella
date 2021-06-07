@@ -6,7 +6,7 @@
 import { strict } from 'assert';
 import { COPYFILE_EXCL } from 'constants';
 import { close, createReadStream, createWriteStream, futimes, NoParamCallback, open as openFd, Stats, write as writeFd, writev as writevFd } from 'fs';
-import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises';
+import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, symlink, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import { Readable, Writable } from 'stream';
 import { delay } from './events';
@@ -83,6 +83,10 @@ export class LocalFileSystem extends FileSystem {
   async createDirectory(uri: Uri): Promise<void> {
     await mkdir(uri.fsPath, { recursive: true });
     this.directoryCreated(uri);
+  }
+
+  createSymlink(original: Uri, slink: Uri): Promise<void> {
+    return symlink(original.fsPath, slink.fsPath, 'file');
   }
 
   readFile(uri: Uri): Promise<Uint8Array> {

@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { fail } from 'assert';
 import { sed } from 'sed-lite';
 import { pipeline as origPipeline, Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
@@ -12,6 +13,7 @@ import { ExtendedEmitter } from './events';
 import { Queue } from './promise';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
+import { UnifiedFileSystem } from './unified-filesystem';
 import { ZipEntry, ZipFile } from './unzip';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
@@ -224,16 +226,43 @@ abstract class BasicTarUnpacker extends Unpacker {
     });
 
     try {
-      if (header?.type !== 'file') {
-        this.session.channels.debug(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
-        return;
-      }
 
       const extractPath = Unpacker.implementOutputOptions(header.name, options);
       let destination: Uri | undefined = undefined;
       if (extractPath) {
         destination = outputUri.join(extractPath);
       }
+
+      switch (header?.type) {
+        case 'symlink': {
+          const linkTargetUri = destination?.parent().join(header.linkname!) || fail('');
+          await destination!.parent().createDirectory();
+          await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+        }
+          return;
+
+        case 'link': {
+          // this should be a 'hard-link' -- but I'm not sure if we can make hardlinks on windows. todo: find out
+          const linkTargetUri = outputUri.join(Unpacker.implementOutputOptions(header.linkname!, options)!);
+          // quick hack
+          await destination!.parent().createDirectory();
+          await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+        }
+          return;
+
+        case 'directory':
+          this.session.channels.debug(`in ${archiveUri} skipping directory ${header.name}`);
+          return;
+
+        case 'file':
+          // files handle below
+          break;
+
+        default:
+          console.log(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
+          return;
+      }
+
 
       const fileEntry = {
         archiveUri: archiveUri,
