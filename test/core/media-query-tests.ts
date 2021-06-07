@@ -58,7 +58,7 @@ describe('MediaQuery', () => {
   it('test for matches', async () => {
     strict.ok(parseQuery('foo').match({ foo: true }), 'foo was present, it should match!');
     strict.ok(parseQuery('foo').match({ foo: null }), 'foo was present, it should match!');
-    strict.ok(parseQuery('foo').match({ foo: false }), 'foo was present, it should match!');
+
     strict.ok(!parseQuery('foo').match({}), 'foo was not present, it should not match!');
 
     strict.ok(parseQuery('foo and windows').match({ foo: true, windows: true, books: true }), 'foo,windows was present, it should match!');
