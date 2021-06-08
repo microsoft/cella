@@ -84,6 +84,7 @@ export class CellaRepository implements Repository {
         repo.catalog.insert(amf, repo.baseFolder.relative(uri));
 
       } catch (e) {
+        repo.session.channels.debug(e.toString());
         repo.session.channels.warning(`skipping invalid metadata file ${uri.fsPath}`);
       }
     }

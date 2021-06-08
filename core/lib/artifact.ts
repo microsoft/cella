@@ -3,16 +3,18 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { fail } from 'assert';
 import * as micromatch from 'micromatch';
 import { AcquireEvents } from './acquire';
 import { Activation } from './activation';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { i } from './i18n';
+import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, MetadataFile, VersionReference } from './metadata-format';
+import { Demands, Installer, isMultiInstaller, MetadataFile, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
@@ -94,13 +96,39 @@ class ArtifactInfo {
     return this.targetLocation.exists('artifact.yaml');
   }
 
-  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean }) {
-    // is it installed?
-    if (await this.isInstalled && !(options?.force)) {
+  private async installSingle(installInfo: Installer, options: { events?: Partial<UnpackEvents & AcquireEvents>, allLanguages?: boolean, language?: string }): Promise<void> {
+    if (installInfo.lang && !options.allLanguages && options.language && options.language.toLowerCase() !== installInfo.lang.toLowerCase()) {
       return;
     }
 
-    if (options?.force) {
+    switch (installInfo.kind) {
+      case 'nupkg':
+        await installNuGet(this.session, this, <Nupkg>installInfo, options);
+        break;
+      case 'unzip':
+        await installUnZip(this.session, this, <UnZip>installInfo, options);
+        break;
+      case 'untar':
+        await installUnTar(this.session, this, <UnTar>installInfo, options);
+        break;
+      case 'git':
+        throw new Error('not implemented');
+      default:
+        fail(i`Unknown installer type ${installInfo!.kind}`);
+    }
+  }
+
+  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }) {
+    if (!options) {
+      options = {};
+    }
+
+    // is it installed?
+    if (await this.isInstalled && !options.force) {
+      return;
+    }
+
+    if (options.force) {
       try {
         await this.uninstall();
       } catch {
@@ -109,16 +137,18 @@ class ArtifactInfo {
     }
 
     const d = this.applicableDemands;
-    let fail = false;
-    for (const each of d.errors) {
-      this.session.channels.error(each);
-      fail = true;
-    }
+    {
+      let fail = false;
+      for (const each of d.errors) {
+        this.session.channels.error(each);
+        fail = true;
+      }
 
-    // check to see that we only have one install block
+      // check to see that we only have one install block
 
-    if (fail) {
-      throw Error('errors present');
+      if (fail) {
+        throw Error('errors present');
+      }
     }
 
     // warnings
@@ -134,8 +164,13 @@ class ArtifactInfo {
     // ok, let's install this.
     const installInfo = d.installer;
     if (installInfo) {
-      const installer = this.session.createInstaller(this.artifact, installInfo);
-      await installer.install(installInfo, options);
+      if (isMultiInstaller(installInfo)) {
+        for (const singleInstallInfo of installInfo.items) {
+          await this.installSingle(singleInstallInfo, options);
+        }
+      } else {
+        await this.installSingle(installInfo, options);
+      }
     }
 
     // after we unpack it, write out the installed manifest
@@ -147,7 +182,7 @@ class ArtifactInfo {
   }
 
   #targetLocation: Uri | undefined;
-  get targetLocation() {
+  get targetLocation(): Uri {
     // tools/contoso/something/x64/1.2.3/
     // slashes to folders, non-word-chars to dot, append version
     return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.artifact.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.artifact.info.version));
@@ -164,7 +199,6 @@ class ArtifactInfo {
   }
 
   async resolveDependencies(artifacts = new Set<Artifact>()) {
-
     // find the dependencies and add them to the set
     for (const [id, version] of linq.items(this.applicableDemands.requires)) {
       const dep = await this.session.getArtifact(id, version.raw);

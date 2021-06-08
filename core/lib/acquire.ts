@@ -62,11 +62,11 @@ export async function acquireArtifactFile(session: Session, uris: Array<Uri>, ou
       if (options?.algorithm && options?.value) {
         // we have a hash.
         // is it valid?
-        if (uri.hashValid(options)) {
+        if (await uri.hashValid(options)) {
           session.channels.debug(`Local file matched hash: ${uri.fsPath}`);
           return uri;
         }
-      } else {
+      } else if (await uri.exists()) {
         // we don't have a hash, but the file is local, and it exists.
         // we have to return it
         session.channels.debug(`Using local file (no hash, unable to verify): ${uri.fsPath}`);

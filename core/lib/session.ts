@@ -12,21 +12,15 @@ import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
 import { HttpFileSystem } from './http-filesystem';
 import { i } from './i18n';
-import { GitInstaller } from './installer/git';
-import { InstallerImpl } from './installer/installer';
-import { NupkgInstaller } from './installer/nupkg';
-import { UntarInstaller } from './installer/untar';
-import { UnzipInstaller } from './installer/unzip';
-import { VsixInstaller } from './installer/vsix';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
-import { Installer, MetadataFile, parseConfiguration } from './metadata-format';
+import { MetadataFile, parseConfiguration } from './metadata-format';
 import { DefaultRepository, Repository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 
 const defaultConfig =
-  `# Global configuration 
+  `# Global configuration
 
 global:
   send-anonymous-telemetry: true
@@ -78,7 +72,7 @@ export class Session {
 
   constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
-      register('file', new LocalFileSystem(this)).
+      register(['file', 'vsix'], new LocalFileSystem(this)).
       register(['http', 'https'], new HttpFileSystem(this)
       );
 
@@ -247,14 +241,6 @@ export class Session {
     // this.FileSystem.on('deleted', (uri) => { console.log(uri) })
   }
 
-  createInstaller(artifact: Artifact, installer: Installer) {
-    const ctor = Session.Installers.get(installer.kind);
-    if (ctor) {
-      return new ctor(this, artifact, installer);
-    }
-    fail(i`Unknown installer type ${installer.kind}`);
-  }
-
   async getInstalledArtifacts() {
     const result = new Array<{ folder: Uri, id: string, artifact: Artifact }>();
     if (! await this.installFolder.exists()) {
@@ -280,12 +266,4 @@ export class Session {
   async openManifest(manifestFile: Uri) {
     return parseConfiguration(manifestFile.fsPath, this.utf8(await manifestFile.readFile()));
   }
-
-  static Installers = new Map<string, new (session: Session, artifact: Artifact, install: Installer) => InstallerImpl>([
-    ['nupkg', NupkgInstaller],
-    ['unzip', UnzipInstaller],
-    ['untar', UntarInstaller],
-    ['git', GitInstaller],
-    ['vsix', VsixInstaller],
-  ])
 }

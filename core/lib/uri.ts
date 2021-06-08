@@ -69,13 +69,27 @@ export class Uri implements URI {
   get fragment() { return this.uri.fragment; }
 
   /**
-  * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+  * Creates a new Uri from a string, e.g. `http://www.msft.com/some/path`,
   * `file:///usr/home`, or `scheme:with/path`.
   *
   * @param value A string which represents an URI (see `URI#toString`).
   */
   static parse(fileSystem: FileSystem, value: string, _strict?: boolean): Uri {
     return new Uri(fileSystem, URI.parse(value, _strict));
+  }
+
+  /**
+   * Creates a new Uri from a string, and replaces 'vsix' schemes with file:// instead.
+   *
+   * @param value A string which represents a URI which may be a VSIX uri.
+   */
+  static parseFilterVsix(fileSystem: FileSystem, value: string, _strict?: boolean, vsixBaseUri?: Uri): Uri {
+    const parsed = URI.parse(value, _strict);
+    if (vsixBaseUri && parsed.scheme === 'vsix') {
+      return vsixBaseUri.join(parsed.path);
+    }
+
+    return new Uri(fileSystem, parsed);
   }
 
   /**

@@ -217,11 +217,6 @@ export interface GitArtifactSource extends ArtifactSourceBase {
 /** values that can be either a single string, or an array of strings */
 export type StringOrStrings = string | Array<string>;
 
-/** refers to a location of a resource. If an array is specified, they are considered mirrors
- *
-*/
-export type ResourceLocation = string | ReadonlyArray<string> | Strings;
-
 /**
  * a mapped dictionary of string:T
  *
@@ -304,6 +299,8 @@ export interface Verifiable {
    */
 export interface Installer extends Validation {
   readonly kind: string;
+  readonly lang?: string; // note to only install this entry when the current locale is this language
+  readonly nametag?: string; // note to include this tag in the file name of the cached artifact
 }
 
 export interface UnpackSettings {
@@ -311,28 +308,28 @@ export interface UnpackSettings {
   strip?: number;
 
   /** one or more transform strings to apply to the filenames as they are restored (think tar --xform ... ) */
-  transform?: Strings;
+  transform?: Array<string>;
 }
 
 /**
  * a file that can be unzipp'd
  *
- * combined with Verifyable, the hash should be matched before proceeding
+ * combined with Verifiable, the hash should be matched before proceeding
  */
 export interface UnZip extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip */
-  location: ResourceLocation;
+  location: Array<string>;
 }
 
 
 /**
  * a file that can be untar'd
  *
- * combined with Verifyable, the hash should be matched before proceeding
+ * combined with Verifiable, the hash should be matched before proceeding
  */
 export interface UnTar extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to untar */
-  location: ResourceLocation;
+  location: Array<string>;
 }
 
 
@@ -345,7 +342,7 @@ export interface UnTar extends Verifiable, UnpackSettings, Installer {
  *
  * post MVP we could add the ability to use artifact sources and grab the package that way.
  *
- * combined with Verifyable, the hash should be matched before proceeding
+ * combined with Verifiable, the hash should be matched before proceeding
  */
 export interface Nupkg extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip/untar/unrar/etc */
@@ -355,11 +352,11 @@ export interface Nupkg extends Verifiable, UnpackSettings, Installer {
 /**
  * a file that can be untar/unzip/unrar/etc
  *
- * combined with Verifyable, the hash should be matched before proceeding
+ * combined with Verifiable, the hash should be matched before proceeding
  */
 export interface Git extends Installer {
   /** the git repository location to be cloned */
-  location: ResourceLocation;
+  location: Array<string>;
 
   /** optionally, a tag/branch to be checked out */
   tag?: string;
@@ -383,6 +380,10 @@ export interface Git extends Installer {
   recurse?: boolean;
 }
 
+export interface MultiInstaller extends Verifiable, UnpackSettings, Installer {
+  readonly items: Array<Installer>;
+}
+
 export function isNupkg(installer: Installer): installer is Nupkg {
   return installer.kind === 'nupkg';
 }
@@ -394,4 +395,7 @@ export function isUnTar(installer: Installer): installer is UnTar {
 }
 export function isGit(installer: Installer): installer is Git {
   return installer.kind === 'git';
+}
+export function isMultiInstaller(installer: Installer): installer is MultiInstaller {
+  return installer.kind === 'multi';
 }
