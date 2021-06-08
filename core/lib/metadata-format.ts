@@ -116,7 +116,7 @@ export interface Demands extends Validation {
    *       then there would need to be a 'requires' that refers to the additional
    *       package.
    */
-  install?: Installer;
+  install: Array<Installer>;
 
   /**
    * manually specified settings to use when activating the context
@@ -380,10 +380,6 @@ export interface Git extends Installer {
   recurse?: boolean;
 }
 
-export interface MultiInstaller extends Verifiable, UnpackSettings, Installer {
-  readonly items: Array<Installer>;
-}
-
 export function isNupkg(installer: Installer): installer is Nupkg {
   return installer.kind === 'nupkg';
 }
@@ -395,7 +391,4 @@ export function isUnTar(installer: Installer): installer is UnTar {
 }
 export function isGit(installer: Installer): installer is Git {
   return installer.kind === 'git';
-}
-export function isMultiInstaller(installer: Installer): installer is MultiInstaller {
-  return installer.kind === 'multi';
 }
