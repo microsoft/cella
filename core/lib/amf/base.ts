@@ -72,7 +72,7 @@ export class NodeBase {
     this.node.set(property, value);
   }
 
-  protected getStrings(property: string): StringOrStrings | undefined {
+  protected getStrings(property: string): Array<string> {
     return getStrings(this.node, property);
   }
   protected setStrings(property: string, value: StringOrStrings | undefined) {
