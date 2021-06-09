@@ -15,6 +15,7 @@ import { ActivateCommand } from './lib/commands/activate';
 import { AddCommand } from './lib/commands/add';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
+import { DeactivateCommand } from './lib/commands/deactivate';
 import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
@@ -46,7 +47,7 @@ export let session: Session;
 
 async function main() {
   // create our session for this process.
-  session = new Session(process.cwd(), commandline.environment);
+  session = new Session(process.cwd(), commandline.context, <any>commandline, process.env);
 
   initStyling(commandline, session);
 
@@ -75,6 +76,7 @@ async function main() {
   const activate = new ActivateCommand(commandline);
   const remove = new RemoveCommand(commandline);
   const add = new AddCommand(commandline);
+  const deactivate = new DeactivateCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 

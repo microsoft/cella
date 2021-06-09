@@ -32,10 +32,13 @@ export class ActivateCommand extends Command {
       error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
       return false;
     }
+    await session.deactivate();
 
-    const result = await activateProject(projectFile);
+    // track what got installed
+    const [success, artifactStatus] = await activateProject(projectFile);
 
+    // print the status of the activation
 
-    return result;
+    return success;
   }
 }

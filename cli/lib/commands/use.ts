@@ -63,9 +63,10 @@ export class UseCommand extends Command {
       return false;
     }
 
-    if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
+    const [success, artifactStatus] = await installArtifacts(artifacts, { force: this.commandLine.force });
+    if (success) {
       log(i`Activating Artifacts...`);
-      session.setActivationInPostscript(await getArtifactActivation(artifacts));
+      await session.setActivationInPostscript(await getArtifactActivation(artifacts), false);
     } else {
       return false;
     }

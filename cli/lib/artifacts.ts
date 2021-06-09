@@ -9,7 +9,7 @@ import { MultiBar, SingleBar } from 'cli-progress';
 import { session } from '../main';
 import { UpdateCommand } from './commands/update';
 import { Table } from './markdown-table';
-import { error, formatName, log } from './styling';
+import { debug, error, formatName, log } from './styling';
 
 export async function showArtifacts(artifacts: Set<Artifact>) {
   let failing = false;
@@ -54,8 +54,9 @@ export async function selectArtifacts(inputs: Array<string>, versions: Array<str
   return artifacts;
 }
 
-export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }) {
+export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }): Promise<[boolean, Map<Artifact, boolean>]> {
   // resolve the full set of artifacts to install.
+  const installed = new Map<Artifact, boolean>();
 
   const bar = new MultiBar({
     clearOnComplete: true, hideCursor: true, format: '{name} {bar}\u25A0 {percentage}% {action} {current}',
@@ -70,7 +71,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
     const id = artifact.id;
 
     try {
-      await artifact.install({
+      const actuallyInstalled = await artifact.install({
         force: options?.force,
         events: {
           verifying: (name, percent) => {
@@ -121,15 +122,18 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
           }
         }
       });
+      // remember what was actually installed
+      installed.set(artifact, actuallyInstalled);
     } catch (e) {
       bar.stop();
+      debug(e);
       error(i`Error installing ${formatName(id)} - ${e} `);
-      return false;
+      return [false, installed];
     }
 
     bar.stop();
   }
-  return true;
+  return [true, installed];
 }
 
 // more options in the future...

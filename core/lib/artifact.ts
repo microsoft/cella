@@ -25,7 +25,7 @@ export class SetOfDemands {
     this.#demands.set('', metadata);
 
     for (const query of metadata.demands) {
-      if (parseQuery(query).match(session.environment.context)) {
+      if (parseQuery(query).match(session.context)) {
         session.channels.debug(`Matching demand query: '${query}'`);
         this.#demands.set(query, metadata[query]);
       }
@@ -33,7 +33,7 @@ export class SetOfDemands {
   }
 
   get installer() {
-    const install = linq.items(this.#demands).where(([query, demand]) => !!demand.install).toArray();
+    const install = linq.items(this.#demands).where(([query, demand]) => demand.install.length > 0).toArray();
 
     if (install.length > 1) {
       // bad. There should only ever be one install block.
@@ -118,14 +118,14 @@ class ArtifactInfo {
     }
   }
 
-  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }) {
+  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }): Promise<boolean> {
     if (!options) {
       options = {};
     }
 
     // is it installed?
     if (await this.isInstalled && !options.force) {
-      return;
+      return false;
     }
 
     if (options.force) {
@@ -168,6 +168,8 @@ class ArtifactInfo {
 
     // after we unpack it, write out the installed manifest
     await this.writeManifest();
+
+    return true;
   }
 
   get name() {

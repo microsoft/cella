@@ -144,7 +144,7 @@ bad.fragment === '/project1';
 
   /** returns true if the uri represents a file:// resource. */
   get isLocal(): boolean {
-    return this.scheme === 'file';
+    return this.scheme === 'file' || this.scheme === 'vsix';
   }
 
   get isHttp(): boolean {

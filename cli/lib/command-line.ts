@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Environment, i, intersect } from '@microsoft/cella.core';
+import { i, intersect } from '@microsoft/cella.core';
 import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
@@ -117,15 +117,10 @@ export class CommandLine {
     return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
-  get allLanguages() : boolean {
+  get allLanguages(): boolean {
     const l = this.switches['all-languages'] || [];
     strict.ok((l?.length || 0) < 2, i`Expected a single value for '--${'all-languages'}' -- found multiple.`);
     return !!l[0];
-  }
-
-  #environment?: Environment;
-  get environment(): Environment {
-    return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
   }
 
   isSet(sw: string) {

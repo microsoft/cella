@@ -62,8 +62,9 @@ export class AcquireCommand extends Command {
       warning(i`No artifacts are being acquired.`);
       return false;
     }
+    const [success, artifactStatus] = await installArtifacts(artifacts, { force: this.commandLine.force });
 
-    if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
+    if (success) {
       log(i`Installation completed successfuly`);
       return true;
     }

@@ -23,23 +23,25 @@ export async function findProject(location: Uri): Promise<undefined | Uri> {
   return undefined;
 }
 
-export async function activateProject(location: Uri): Promise<boolean> {
+export async function activateProject(location: Uri): Promise<[boolean, Map<Artifact, boolean>]> {
   // load the project
   const manifest = await session.openManifest(location);
 
   const artifact = createArtifact(session, manifest, '');
 
-  const artifacts = new Set<Artifact>();
-  await artifact.resolveDependencies(artifacts);
+  const artifacts = await artifact.resolveDependencies();
 
   // install the items in the project
-  await installArtifacts(artifacts);
+  const [success, artifactStatus] = await installArtifacts(artifacts);
 
-  // activate all the tools in the project
-  const activation = await activateArtifacts(artifacts);
+  if (success) {
+    // activate all the tools in the project
+    const activation = await activateArtifacts(artifacts);
+    await session.setActivationInPostscript(activation);
 
-  session.setActivationInPostscript(activation);
-  return true;
+  }
+
+  return [success, artifactStatus];
 }
 
 // activation
