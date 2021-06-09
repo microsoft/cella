@@ -123,6 +123,9 @@ export class Session {
   async getArtifact(idOrShortName: string, version: string | undefined) {
     const [source, name] = this.parseName(idOrShortName);
     const repository = this.getRepository(source);
+    if (!repository.loaded) {
+      await repository.load();
+    }
 
     const query = repository.where.id.nameOrShortNameIs(name);
     if (version) {

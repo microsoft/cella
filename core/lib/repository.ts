@@ -28,11 +28,13 @@ const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 export interface Repository {
   readonly count: number;
   readonly where: RepoIndex;
+  readonly loaded: boolean;
 
   load(): Promise<void>;
   save(): Promise<void>;
   update(): Promise<void>;
   regenerate(): Promise<void>;
+
   openArtifact(manifestPath: string): Promise<Artifact>;
   openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
   readonly baseFolder: Uri;
@@ -109,9 +111,16 @@ export class CellaRepository implements Repository {
     this.catalog.doneInsertion();
   }
 
+  #loaded = false;
+
+  get loaded() {
+    return this.#loaded;
+  }
+
   async load(): Promise<void> {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
+    this.#loaded = true;
   }
 
   async save(): Promise<void> {
