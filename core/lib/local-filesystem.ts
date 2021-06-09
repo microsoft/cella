@@ -14,7 +14,6 @@ import { TargetFileCollision } from './exceptions';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 import { i } from './i18n';
 import { Queue } from './promise';
-import { Session } from './session';
 import { Uri } from './uri';
 
 function getFileType(stats: Stats) {
@@ -52,26 +51,6 @@ class LocalFileStats implements FileStat {
  * This is used to handle the access to the local disks.
  */
 export class LocalFileSystem extends FileSystem {
-  private readonly vsixBaseUri : Uri | undefined;
-
-  constructor(session: Session) {
-    super(session);
-    const programData = session.environment['ProgramData'];
-    if (programData) {
-      this.vsixBaseUri = this.file(programData).join('Microsoft/VisualStudio/Packages');
-    }
-  }
-
-  /**
-   * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
-   * `file:///usr/home`, or `scheme:with/path`.
-   *
-   * @param value A string which represents an URI (see `URI#toString`).
-   */
-  parse(value: string, _strict?: boolean): Uri {
-    return Uri.parseFilterVsix(this, value, _strict, this.vsixBaseUri);
-  }
-
   async stat(uri: Uri): Promise<FileStat> {
     const path = uri.fsPath;
     const s = await stat(path);

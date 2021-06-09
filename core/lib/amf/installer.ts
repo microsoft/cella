@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { isMap, isSeq, YAMLMap } from 'yaml';
-import { i } from '../i18n';
-import { ErrorKind, Git, Installer, MultiInstaller, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
@@ -28,7 +27,7 @@ function createSingleInstallerNode(n: YAMLMap, containingName: string) : Install
 }
 
 /** @internal */
-export function createInstallerNode(containingNode: YAMLMap, keyName: string): Installer | undefined {
+export function createInstallerNode(containingNode: YAMLMap, keyName: string): Array<Installer> {
   const candidate = getOrCreateMap(containingNode, keyName);
 
   if (isSeq(candidate)) {
@@ -37,18 +36,17 @@ export function createInstallerNode(containingNode: YAMLMap, keyName: string): I
       const maps = <Array<YAMLMap>><unknown>items;
       const convertedItems = maps.select((item) => createSingleInstallerNode(<YAMLMap>item, keyName));
       if (convertedItems.all(item => !!item)) {
-        if (convertedItems.length === 1) {
-          return convertedItems[0];
-        } else if (convertedItems.length > 1) {
-          return new MultiInstallNode(containingNode, keyName, <Array<InstallerNode>>convertedItems);
-        }
+        return <Array<Installer>>convertedItems;
       }
     }
   } else if (isMap(candidate)) {
-    return createSingleInstallerNode(candidate, keyName);
+    const single = createSingleInstallerNode(candidate, keyName);
+    if (single) {
+      return [single];
+    }
   }
 
-  return undefined;
+  return [];
 }
 
 
@@ -175,27 +173,5 @@ class GitCloneNode extends InstallerNode implements Git {
 
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
-  }
-}
-class MultiInstallNode extends InstallerNode implements MultiInstaller {
-  readonly kind = 'multi';
-  constructor(node: YAMLMap, name: string, public readonly items: Array<InstallerNode>) {
-    super(node, name);
-  }
-
-  *validate(): Iterable<ValidationError> {
-    yield* super.validate();
-    if (this.items.length <= 1) {
-      yield { message: i`Multi install node must have more than one child`, range: this.node.range!, category: ErrorKind.IncorrectType };
-    } else {
-      const firstKind = this.items[0].kind;
-      if (this.items.any(item => item.kind !== firstKind)) {
-        yield { message: i`Multi install node must have children of the same kind`, range: this.node.range!, category: ErrorKind.IncorrectType };
-      }
-    }
-
-    for (const item of this.items) {
-      yield* item.validate();
-    }
   }
 }
