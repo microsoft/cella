@@ -14,7 +14,7 @@ import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, Installer, isMultiInstaller, MetadataFile, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
+import { Demands, Installer, MetadataFile, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
@@ -162,15 +162,8 @@ class ArtifactInfo {
     }
 
     // ok, let's install this.
-    const installInfo = d.installer;
-    if (installInfo) {
-      if (isMultiInstaller(installInfo)) {
-        for (const singleInstallInfo of installInfo.items) {
-          await this.installSingle(singleInstallInfo, options);
-        }
-      } else {
-        await this.installSingle(installInfo, options);
-      }
+    for (const singleInstallInfo of d.installer) {
+      await this.installSingle(singleInstallInfo, options);
     }
 
     // after we unpack it, write out the installed manifest

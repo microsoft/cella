@@ -18,6 +18,7 @@ import { MetadataFile, parseConfiguration } from './metadata-format';
 import { DefaultRepository, Repository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
+import { VsixLocalFilesystem } from './vsix-local-filesystem';
 
 const defaultConfig =
   `# Global configuration
@@ -72,7 +73,8 @@ export class Session {
 
   constructor(currentDirectory: string, public readonly environment: Environment) {
     this.fileSystem = new UnifiedFileSystem(this).
-      register(['file', 'vsix'], new LocalFileSystem(this)).
+      register('file', new LocalFileSystem(this)).
+      register('vsix', new VsixLocalFilesystem(this)).
       register(['http', 'https'], new HttpFileSystem(this)
       );
 
