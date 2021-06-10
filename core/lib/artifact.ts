@@ -217,7 +217,7 @@ class ArtifactInfo {
     // defines
 
     const l = this.targetLocation.toString().length + 1;
-    const allPaths = await (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
+    const allPaths = (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
 
     for (const s of this.applicableDemands.settings) {
       for (const key of s.defines.keys) {
@@ -238,36 +238,8 @@ class ArtifactInfo {
         if (!key) {
           continue;
         }
-        let k = key.toUpperCase();
-
-        // transform aliases to actual key
-        switch (k) {
-          case 'BIN':
-          case 'PATH':
-            k = 'PATH';
-            break;
-
-          case 'INCLUDE':
-          case 'INCLUDEPATH':
-            k = 'INCLUDE';
-            break;
-
-          case 'LIB':
-          case 'LIBPATH':
-            k = 'LIB';
-            break;
-
-          case 'LDSCRIPT':
-            k = 'LDSCRIPT';
-            break;
-
-          case 'OBJECT':
-          case 'OBJ':
-            k = 'OBJPATH';
-            break;
-        }
-
-        const p = activation.paths.getOrDefault(k, []);
+        const pathEnvVariable = key.toUpperCase();
+        const p = activation.paths.getOrDefault(pathEnvVariable, []);
         const locations = s.paths[key].selectMany(path => {
           const p = sanitizePath(path);
           return p ? micromatch(allPaths, p) : [''];
@@ -280,8 +252,8 @@ class ArtifactInfo {
       }
 
       for (const key of s.tools.keys) {
-        const k = key.toUpperCase();
-        if (activation.tools.has(k)) {
+        const envVariable = key.toUpperCase();
+        if (activation.tools.has(envVariable)) {
           this.session.channels.error(i`Duplicate tool declared ${key} during activation. Probably not a good thing?`);
         }
 
@@ -292,7 +264,7 @@ class ArtifactInfo {
           this.session.channels.error(i`Tool '${key}' is specified as '${location}' which does not exist in the package`);
         }
 
-        activation.tools.set(k, uri);
+        activation.tools.set(envVariable, uri);
       }
 
       for (const key of s.variables.keys) {

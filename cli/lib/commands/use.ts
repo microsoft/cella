@@ -1,6 +1,6 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
-import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
+import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { error, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
@@ -48,17 +48,14 @@ export class UseCommand extends Command {
       return false;
     }
 
-    let failing = false;
-
-    const artifacts = await selectArtifacts(this.inputs, this.version.values);
+    const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
+    const artifacts = await selectArtifacts(selections);
 
     if (!artifacts) {
       return false;
     }
 
-    failing = await showArtifacts(artifacts);
-
-    if (failing) {
+    if (await showArtifacts(artifacts)) {
       warning(i`No artifacts are being acquired.`);
       return false;
     }

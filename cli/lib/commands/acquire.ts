@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { Artifact, i } from '@microsoft/cella.core';
 import { MultiBar, SingleBar } from 'cli-progress';
-import { getRepository, installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
+import { getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { error, formatName, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
@@ -48,17 +48,14 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    let failing = false;
-
-    const artifacts = await selectArtifacts(this.inputs, this.version.values);
+    const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
+    const artifacts = await selectArtifacts(selections);
 
     if (!artifacts) {
       return false;
     }
 
-    failing = await showArtifacts(artifacts);
-
-    if (failing) {
+    if (await showArtifacts(artifacts)) {
       warning(i`No artifacts are being acquired.`);
       return false;
     }

@@ -19,8 +19,6 @@ export interface Help {
 }
 
 class Ctx {
-
-
   constructor(cmdline: CommandLine) {
     this.os =
       cmdline.isSet('windows') ? 'win32' :
