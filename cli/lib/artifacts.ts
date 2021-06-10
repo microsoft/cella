@@ -30,18 +30,12 @@ export async function showArtifacts(artifacts: Set<Artifact>) {
   return failing;
 }
 
-export async function selectArtifacts(inputs: Array<string>, versions: Array<string>) {
-  if (versions.length && inputs.length !== versions.length) {
-    error(i`Multiple packages specified, but not an equal number of '--verison=' switches. `);
-    return false;
-  }
+export type Selections = Array<[string, string | undefined]>;
 
+export async function selectArtifacts(selections: Selections) {
   const artifacts = new Set<Artifact>();
 
-  let n = 0;
-  for (const identity of inputs) {
-    const version = versions[n++];
-
+  for (const [identity, version] of selections) {
     const artifact = await session.getArtifact(identity, version);
     if (!artifact) {
       error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);

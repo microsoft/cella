@@ -19,8 +19,6 @@ export interface Help {
 }
 
 class Ctx {
-
-
   constructor(cmdline: CommandLine) {
     this.os =
       cmdline.isSet('windows') ? 'win32' :
@@ -117,7 +115,7 @@ export class CommandLine {
     return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
-  get allLanguages() : boolean {
+  get allLanguages(): boolean {
     const l = this.switches['all-languages'] || [];
     strict.ok((l?.length || 0) < 2, i`Expected a single value for '--${'all-languages'}' -- found multiple.`);
     return !!l[0];

@@ -212,58 +212,61 @@ abstract class BasicTarUnpacker extends Unpacker {
         destination = outputUri.join(extractPath);
       }
 
-      switch (header?.type) {
-        case 'symlink': {
-          const linkTargetUri = destination?.parent().join(header.linkname!) || fail('');
-          await destination!.parent().createDirectory();
-          await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+      if (destination) {
+        switch (header?.type) {
+          case 'symlink': {
+            const linkTargetUri = destination?.parent().join(header.linkname!) || fail('');
+            await destination.parent().createDirectory();
+            await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+          }
+            return;
+
+          case 'link': {
+            // this should be a 'hard-link' -- but I'm not sure if we can make hardlinks on windows. todo: find out
+            const linkTargetUri = outputUri.join(Unpacker.implementOutputOptions(header.linkname!, options)!);
+            // quick hack
+            await destination.parent().createDirectory();
+            await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+          }
+            return;
+
+          case 'directory':
+            this.session.channels.debug(`in ${archiveUri} skipping directory ${header.name}`);
+            return;
+
+          case 'file':
+            // files handle below
+            break;
+
+          default:
+            console.log(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
+            return;
         }
-          return;
 
-        case 'link': {
-          // this should be a 'hard-link' -- but I'm not sure if we can make hardlinks on windows. todo: find out
-          const linkTargetUri = outputUri.join(Unpacker.implementOutputOptions(header.linkname!, options)!);
-          // quick hack
-          await destination!.parent().createDirectory();
-          await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+        const fileEntry = {
+          archiveUri: archiveUri,
+          destination: destination,
+          path: header.name,
+          extractPath: extractPath
+        };
+
+        this.session.channels.debug(`unpacking TAR ${archiveUri}/${header.name} => ${destination}`);
+        this.fileProgress(fileEntry, 0);
+
+        if (header.size) {
+          const parentDirectory = destination.parent();
+          await parentDirectory.createDirectory();
+          const fileProgress = new ProgressTrackingStream(0, header.size);
+          fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
+          fileProgress.on('progress', (filePercentage) => options.events?.fileProgress?.(fileEntry, filePercentage));
+          const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
+          await pipeline(stream, fileProgress, writeStream);
         }
-          return;
 
-        case 'directory':
-          this.session.channels.debug(`in ${archiveUri} skipping directory ${header.name}`);
-          return;
-
-        case 'file':
-          // files handle below
-          break;
-
-        default:
-          console.log(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
-          return;
+        this.fileProgress(fileEntry, 100);
+        this.unpacked(fileEntry);
       }
 
-
-      const fileEntry = {
-        archiveUri: archiveUri,
-        destination: destination,
-        path: header.name,
-        extractPath: extractPath
-      };
-
-      this.session.channels.debug(`unpacking TAR ${archiveUri}/${header.name} => ${destination}`);
-      this.fileProgress(fileEntry, 0);
-
-      if (destination && header.size) {
-        const parentDirectory = destination.parent();
-        await parentDirectory.createDirectory();
-        const fileProgress = new ProgressTrackingStream(0, header.size);
-        fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
-        fileProgress.on('progress', (filePercentage) => options.events?.fileProgress?.(fileEntry, filePercentage));
-        const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
-        await pipeline(stream, fileProgress, writeStream);
-      }
-      this.fileProgress(fileEntry, 100);
-      this.unpacked(fileEntry);
     } finally {
       stream.resume();
       await streamPromise;

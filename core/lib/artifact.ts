@@ -236,36 +236,9 @@ class ArtifactInfo {
         if (!key) {
           continue;
         }
-        let k = key.toUpperCase();
+        const environmentVariableName = key.toUpperCase();
 
-        // transform aliases to actual key
-        switch (k) {
-          case 'BIN':
-          case 'PATH':
-            k = 'PATH';
-            break;
-
-          case 'INCLUDE':
-          case 'INCLUDEPATH':
-            k = 'INCLUDE';
-            break;
-
-          case 'LIB':
-          case 'LIBPATH':
-            k = 'LIB';
-            break;
-
-          case 'LDSCRIPT':
-            k = 'LDSCRIPT';
-            break;
-
-          case 'OBJECT':
-          case 'OBJ':
-            k = 'OBJPATH';
-            break;
-        }
-
-        const p = activation.paths.getOrDefault(k, []);
+        const p = activation.paths.getOrDefault(environmentVariableName, []);
         const locations = s.paths[key].selectMany(path => {
           const p = sanitizePath(path);
           return p ? micromatch(allPaths, p) : [''];
