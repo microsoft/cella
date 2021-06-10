@@ -41,6 +41,7 @@ export async function activateProject(location: Uri): Promise<[boolean, Map<Arti
 
   }
 
+
   return [success, artifactStatus];
 }
 
