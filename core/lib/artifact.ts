@@ -215,7 +215,7 @@ class ArtifactInfo {
     // defines
 
     const l = this.targetLocation.toString().length + 1;
-    const allPaths = await (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
+    const allPaths = (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
 
     for (const s of this.applicableDemands.settings) {
       for (const key of s.defines.keys) {
