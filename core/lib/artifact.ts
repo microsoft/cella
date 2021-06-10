@@ -236,9 +236,8 @@ class ArtifactInfo {
         if (!key) {
           continue;
         }
-        const environmentVariableName = key.toUpperCase();
-
-        const p = activation.paths.getOrDefault(environmentVariableName, []);
+        const pathEnvVariable = key.toUpperCase();
+        const p = activation.paths.getOrDefault(pathEnvVariable, []);
         const locations = s.paths[key].selectMany(path => {
           const p = sanitizePath(path);
           return p ? micromatch(allPaths, p) : [''];
@@ -251,8 +250,8 @@ class ArtifactInfo {
       }
 
       for (const key of s.tools.keys) {
-        const k = key.toUpperCase();
-        if (activation.tools.has(k)) {
+        const envVariable = key.toUpperCase();
+        if (activation.tools.has(envVariable)) {
           this.session.channels.error(i`Duplicate tool declared ${key} during activation. Probably not a good thing?`);
         }
 
@@ -263,7 +262,7 @@ class ArtifactInfo {
           this.session.channels.error(i`Tool '${key}' is specified as '${location}' which does not exist in the package`);
         }
 
-        activation.tools.set(k, uri);
+        activation.tools.set(envVariable, uri);
       }
 
       for (const key of s.variables.keys) {
