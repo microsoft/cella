@@ -53,19 +53,19 @@ export class ApplyVsManCommand extends Command {
    */
   static async processFile(session: Session, inputUri: Uri, repoRoot: Uri, vsManLookup: VsManDatabase) {
     const inputPath = inputUri.fsPath;
-    session.channels.message(i`Processing ${inputPath}...`);
+    session.channels.debug(i`Processing ${inputPath}...`);
     const inputContent = session.utf8(await inputUri.readFile());
     const outputContent = templateAmfApplyVsManifestInformation(session, inputPath, inputContent, vsManLookup);
     if (!outputContent) {
       session.channels.warning(i`Skipped processing ${inputPath}`);
-      return;
+      return 0;
     }
 
     const outputAmf = parseConfiguration(inputPath, outputContent);
     if (!outputAmf.isValid) {
       const errors = outputAmf.validationErrors.join('\n');
       session.channels.warning(i`After transformation, ${inputPath} did not result in a valid AMF; skipping:\n${outputContent}\n${errors}`);
-      return;
+      return 0;
     }
 
     const outputId = outputAmf.info.id;
@@ -73,25 +73,42 @@ export class ApplyVsManCommand extends Command {
     const outputVersion = outputAmf.info.version;
     const outputRelativePath = `${outputId}/${outputIdLast}-${outputVersion}.yaml`;
     const outputFullPath = repoRoot.join(outputRelativePath);
-    if (await outputFullPath.exists()) {
-      session.channels.warning(i`After transformation, ${inputPath} results in ${outputFullPath.toString()} which already exists; overwriting.`);
+    let doWrite = true;
+    try {
+      const outputExistingContent = session.utf8(await outputFullPath.readFile());
+      if (outputExistingContent === outputContent) {
+        doWrite = false;
+      } else {
+        session.channels.warning(i`After transformation, ${inputPath} results in ${outputFullPath.toString()} which already exists; overwriting.`);
+      }
+    } catch {
+      // nothing to do
     }
 
-    await outputFullPath.writeFile(Buffer.from(outputContent, 'utf-8'));
-    session.channels.message(i`-> ${outputFullPath.toString()}`);
+    if (doWrite) {
+      await outputFullPath.writeFile(Buffer.from(outputContent, 'utf-8'));
+    }
+
+    session.channels.debug(i`-> ${outputFullPath.toString()}`);
+    return 1;
   }
 
   /**
    * Process an input file or directory, recursively.
    */
-  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: VsManDatabase) {
+  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: VsManDatabase) : Promise<number> {
     if ((inputDirectoryEntry[1] & FileType.Directory) !== 0) {
+      let total = 0;
       for (const child of await inputDirectoryEntry[0].readDirectory()) {
-        await ApplyVsManCommand.processInput(session, child, repoRoot, vsManLookup);
+        total += await ApplyVsManCommand.processInput(session, child, repoRoot, vsManLookup);
       }
+
+      return total;
     } else if ((inputDirectoryEntry[1] & FileType.File) !== 0) {
-      await ApplyVsManCommand.processFile(session, inputDirectoryEntry[0], repoRoot, vsManLookup);
+      return await ApplyVsManCommand.processFile(session, inputDirectoryEntry[0], repoRoot, vsManLookup);
     }
+
+    return 0;
   }
 
   async run() {
@@ -104,12 +121,14 @@ export class ApplyVsManCommand extends Command {
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
     const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
     const vsManLookup = new VsManDatabase(session.utf8(await vsManUri.readFile()));
+    let totalProcessed = 0;
     for (const inputPath of this.inputs) {
       const inputUri = session.fileSystem.file(inputPath);
       const inputStat = await inputUri.stat();
-      await ApplyVsManCommand.processInput(session, [inputUri, inputStat.type], repoRoot, vsManLookup);
+      totalProcessed += await ApplyVsManCommand.processInput(session, [inputUri, inputStat.type], repoRoot, vsManLookup);
     }
 
+    session.channels.message(i`Processed ${totalProcessed} templates.`);
     return true;
   }
 }
