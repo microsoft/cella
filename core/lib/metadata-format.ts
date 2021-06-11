@@ -282,8 +282,6 @@ export interface Settings extends DictionaryOf<any>, Validation {
 export interface Verifiable {
   /** SHA-256 hash */
   sha256?: string;
-  /** MD5 hash */
-  md5?: string; // example, MD5 might not be a good idea
 }
 
 /**
