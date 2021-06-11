@@ -119,6 +119,7 @@ export class CellaRepository implements Repository {
 
   async load(): Promise<void> {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
+    this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
     this.#loaded = true;
   }
@@ -178,7 +179,7 @@ export class DefaultRepository extends CellaRepository {
   constructor(session: Session) {
     const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
     //('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    const repositoryFolder = session.environment['repositoryFolder'];
+    const repositoryFolder = session.settings['repositoryFolder'];
     const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.cellaHome.join('repo', 'default');
     super(session, localUri, remoteUri);
   }

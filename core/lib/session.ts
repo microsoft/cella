@@ -28,7 +28,7 @@ global:
   send-anonymous-telemetry: true
 `;
 
-const profileName = ['cella.yaml', 'cella.yml', 'cella.json'];
+const profileName = ['environment.yaml', 'environment.yml', 'environment.json'];
 export type Context = { [key: string]: Array<string> | undefined; } & {
   readonly os: string;
   readonly arch: string;

@@ -5,7 +5,7 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { activateProject, findProject } from '../project';
+import { activateProject } from '../project';
 import { error } from '../styling';
 
 export class ActivateCommand extends Command {
@@ -27,7 +27,7 @@ export class ActivateCommand extends Command {
   async run() {
 
     // find the project file
-    const projectFile = await findProject(session.currentDirectory);
+    const projectFile = await session.findProjectProfile(session.currentDirectory);
     if (!projectFile) {
       error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
       return false;
