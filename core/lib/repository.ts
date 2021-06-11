@@ -166,8 +166,8 @@ export class CellaRepository implements Repository {
     // load them up async, but throttled via a queue
     await manifestPaths.forEachAsync(async (manifest) => metadataFiles.push(await this.openArtifact(manifest))).done;
 
-    // sort the contents by version before grouping.
-    metadataFiles = metadataFiles.sort((a, b) => compare(a.info.version, b.info.version));
+    // sort the contents by version before grouping. (descending version)
+    metadataFiles = metadataFiles.sort((a, b) => compare(b.info.version, a.info.version));
 
     // return a map.
     return metadataFiles.groupByMap(m => m.info.id, artifact => artifact);

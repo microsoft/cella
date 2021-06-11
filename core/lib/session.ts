@@ -123,7 +123,7 @@ export class Session {
    * @param idOrShortName the identity of the artifact. If the string has no '<source>:' at the front, default source is assumed.
    * @param version the version of the artifact
    */
-  async getArtifact(idOrShortName: string, version: string | undefined) {
+  async getArtifact(idOrShortName: string, version: string | undefined): Promise<Artifact | undefined> {
     const [source, name] = this.parseName(idOrShortName);
     const repository = this.getRepository(source);
     if (!repository.loaded) {
@@ -146,9 +146,20 @@ export class Session {
         return await repository.openArtifact(matches[0]);
       }
 
-      default:
-        // multiple matches
-        fail(i`Artifact identity '${idOrShortName}' matched more than one result. This should never happen. or is this multiple version matches?`);
+      default: {
+        // multiple matches.
+        const artifacts = await repository.openArtifacts(matches);
+        // there should be a single id matched.
+        switch (artifacts.size) {
+          case 0:
+            return undefined;
+          case 1:
+            // we want the first item, because it's the highest version that matches in what we were asked for
+            return artifacts.entries().next().value[1];
+        }
+        // this should not be happening.
+        fail(i`Artifact identity '${idOrShortName}' matched more than one result (${[...artifacts.keys()].join(',')}). This should never happen. or is this multiple version matches?`);
+      }
         break;
     }
   }

@@ -10,6 +10,7 @@ import { extract as tarExtract, Headers } from 'tar-stream';
 import { promisify } from 'util';
 import { createGunzip } from 'zlib';
 import { ExtendedEmitter } from './events';
+import { i } from './i18n';
 import { Queue } from './promise';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
@@ -231,7 +232,7 @@ abstract class BasicTarUnpacker extends Unpacker {
             return;
 
           case 'directory':
-            this.session.channels.debug(`in ${archiveUri} skipping directory ${header.name}`);
+            this.session.channels.debug(`in ${archiveUri.fsPath} skipping directory ${header.name}`);
             return;
 
           case 'file':
@@ -239,7 +240,7 @@ abstract class BasicTarUnpacker extends Unpacker {
             break;
 
           default:
-            console.log(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
+            this.session.channels.warning(i`in ${archiveUri.fsPath} skipping ${header.name} because it is a ${header?.type || ''}`);
             return;
         }
 
