@@ -23,11 +23,7 @@ export class DeactivateCommand extends Command {
   }
 
   async run() {
-
-
     await session.deactivate();
-
-
     return true;
   }
 }

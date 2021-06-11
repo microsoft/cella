@@ -9,8 +9,6 @@ import { Uri } from './uri';
 
 
 export class Activation {
-
-
   defines = new Map<string, string>();
   tools = new Map<string, Uri>();
   paths = new Map<string, Array<Uri>>();

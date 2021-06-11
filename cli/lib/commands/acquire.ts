@@ -142,8 +142,6 @@ export class AcquireCommand extends Command {
         error(i`Error installing ${formatName(id)} - ${e} `);
         return false;
       }
-
-
       bar.stop();
     }
     return true;
