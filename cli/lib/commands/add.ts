@@ -30,7 +30,7 @@ export class AddCommand extends Command {
       return false;
     }
 
-    // find the artifacts
+    // select the artifacts
     // add them to the project if they are not there
     // call project activate
 
