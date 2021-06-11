@@ -33,7 +33,7 @@ export class SetOfDemands {
   }
 
   get installer() {
-    const install = linq.items(this.#demands).where(([query, demand]) => !!demand.install).toArray();
+    const install = linq.items(this.#demands).where(([query, demand]) => demand.install.length > 0).toArray();
 
     if (install.length > 1) {
       // bad. There should only ever be one install block.
