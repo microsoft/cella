@@ -1,0 +1,179 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)-$(SourceBranchName)
+
+parameters:
+- name: SignTypeOverride
+  displayName: Signing Type Override
+  type: string
+  default: default
+  values:
+  - default
+  - test
+  - real
+
+trigger:
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - '*'
+
+pr:
+- main
+
+# This pool is marked as deprecated, but MicroBuild signing plugins fail to install in other pools.
+# https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_wiki/wikis/DevDiv.wiki/724/Software-Inventory
+pool:
+  name: VSEng-MicroBuildVS2019
+
+variables:
+  # MicroBuild requires TeamName to be set.
+  TeamName: C++ Cross Platform and Cloud
+  # MicroBuild pollutes the staging directory, so we use our own subdirectory.
+  OutputDirectory: $(Build.StagingDirectory)/out
+  # If the user didn't override the signing type, then only real-sign on main.
+  ${{ if ne(parameters.SignTypeOverride, 'default') }}:
+    SignType: ${{ parameters.SignTypeOverride }}
+  ${{ if and(eq(parameters.SignTypeOverride, 'default'), eq(variables['Build.SourceBranchName'], 'main')) }}:
+    SignType: real
+  ${{ if and(eq(parameters.SignTypeOverride, 'default'), ne(variables['Build.SourceBranchName'], 'main')) }}:
+    SignType: test
+
+steps:
+  - task: MicroBuildSigningPlugin@2
+    displayName: Install MicroBuild Signing
+    inputs:
+      signType: $(SignType)
+      zipSources: false
+
+  # Run these scanners first so that they don't detect issues in dependencies.
+  # Failures won't break the build until "Check for compliance errors" step.
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+    displayName: Run CredScan
+    inputs:
+      toolMajorVersion: V2
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
+    displayName: Run PoliCheck
+    inputs:
+      targetType: F
+      targetArgument: $(Build.SourcesDirectory)
+
+  # Build and test the project.
+  - task: UseNode@1
+    displayName: Use Node 14
+    inputs:
+      version: "14.x"
+  - script: npm install -g @microsoft/rush
+    displayName: Install Rush
+  - script: rush update
+    displayName: Install dependencies
+  - script: rush lint
+    displayName: Check for linting errors
+  - script: rush rebuild
+    displayName: Build all packages
+  - script: rush test
+    displayName: Run tests
+
+  # Collect all dependencies. Output will be placed in the ./common/deploy directory.
+  - script: |
+      rush set-versions
+      node -e "const c = require('./cli/package.json'); p = require('./assets/package.json') ; p.version = c.version; require('fs').writeFileSync('./assets/package.json', JSON.stringify(p,undefined,2)); console.log(``set asset version to `${p.version}``);"
+    displayName: Set package versions
+  - script: rush deploy
+    displayName: Collect dependencies
+
+  # Sign JavaScript and PowerShell files.
+  - task: NuGetCommand@2
+    displayName: Restore MicroBuild Core
+    inputs:
+      command: custom
+      arguments: restore .scripts/signing/SignFiles.proj -PackagesDirectory .scripts/signing/packages
+  - task: MSBuild@1
+    displayName: Sign individual files
+    inputs:
+      solution: .scripts/signing/SignFiles.proj
+      msbuildArguments: /p:SignType=$(SignType)
+
+  # Create pack and extract files to staging directory.
+  - script: npm pack $(Build.SourcesDirectory)/common/deploy
+    displayName: Create pack
+  - powershell: mkdir $(OutputDirectory); copy cella-*.tgz $(OutputDirectory)/cella.tgz
+    displayName: Copy pack
+  - task: CopyFiles@2
+    displayName: Copy bootstrapping scripts
+    inputs:
+      sourceFolder: $(Build.SourcesDirectory)/common/deploy/scripts
+      contents: |
+        cella
+        cella.ps1
+      targetFolder: $(OutputDirectory)
+  - powershell: copy $(OutputDirectory)/cella.ps1 $(OutputDirectory)/cella.cmd
+    displayName: Duplicate PowerShell bootstrapper for CMD
+
+  # Add detached signatures for the pack and bootstrapping scripts.
+  - powershell: New-FileCatalog -Path .\cella,.\cella.ps1,.\cella.cmd,.\cella.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
+    displayName: Create catalog for detached signatures
+    workingDirectory: $(OutputDirectory)
+  - task: MSBuild@1
+    displayName: Sign catalog
+    inputs:
+      solution: .scripts/signing/SignDetached.proj
+      msbuildArguments: /p:SignType=$(SignType) /p:BaseOutputDirectory=$(OutputDirectory)
+
+  - publish: $(OutputDirectory)
+    artifact: vcpkg-ce
+    displayName: Publish artifacts
+
+  # Do final compliance checks.
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    displayName: Detect components
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@1
+    displayName: Check for compliance errors
+    # To avoid spirious warnings about missing logs, explicitly declare what we scanned.
+    inputs:
+      CredScan: true
+      PoliCheck: true
+  # Trust Services Automation (TSA) can automatically open bugs for compliance issues.
+  # https://www.1eswiki.com/wiki/Trust_Services_Automation_(TSA)
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-uploadtotsa.TSAUpload@1
+    displayName: Upload logs to TSA
+    inputs:
+      tsaVersion: TsaV2
+      codebase: NewOrUpdate
+      codeBaseName: vcpkg-ce
+      notificationAlias: embeddeddev@microsoft.com
+      instanceUrlForTsaV2: DEVDIV
+      projectNameDEVDIV: DevDiv
+      areaPath: DevDiv\Cpp Developer Experience\Cross Platform\IoT Tools
+      iterationPath: DevDiv
+      # To avoid spurious warnings about missing logs, explicitly declare what we don't upload.
+      uploadAPIScan: false
+      uploadBinSkim: false
+      uploadFortifySCA: false
+      uploadFxCop: false
+      uploadModernCop: false
+      uploadPREfast: false
+      uploadRoslyn: false
+      uploadTSLint: false
+    condition: eq(variables['Build.SourceBranchName'], 'main')
+
+  # This task won't actually publish if the release isn't tagged.
+  - task: GitHubRelease@0
+    displayName: Publish to GitHub
+    inputs:
+      gitHubConnection: embeddedbot
+      repositoryName: microsoft/cella
+      action: create
+      target: $(Build.SourceVersion)
+      tagSource: auto
+      assets: |
+        $(OutputDirectory)\cella
+        $(OutputDirectory)\cella.ps1
+        $(OutputDirectory)\cella.cmd
+        $(OutputDirectory)\cella.tgz
+        $(OutputDirectory)\signature.cat
+      isPreRelease: true
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+
+  - task: MicroBuildCleanup@1
+    displayName: Clean up MicroBuild

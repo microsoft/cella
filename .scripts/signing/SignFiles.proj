@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="SignFiles" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\Microsoft.VisualStudioEng.MicroBuild.Core.0.4.1\build\Microsoft.VisualStudioEng.MicroBuild.Core.props" />
+
+  <PropertyGroup>
+    <BaseOutputDirectory>$(MSBuildThisFileDirectory)../../common/deploy/</BaseOutputDirectory>
+    <!-- These properties are required by MicroBuild, which only signs files that are under these paths -->
+    <IntermediateOutputPath>$(BaseOutputDirectory)</IntermediateOutputPath>
+    <OutDir>$(BaseOutputDirectory)</OutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FilesToSign Include="$(OutDir)\**\*.js" Exclude="$(OutDir)\**\node_modules\**\*.js">
+      <Authenticode>Microsoft400</Authenticode>
+    </FilesToSign>
+    <FilesToSign Include="$(OutDir)\**\cella.ps1">
+      <Authenticode>Microsoft400</Authenticode>
+    </FilesToSign>
+    <!--
+      Unfortunately, there's a problem using the real-signed third-party certificate for Javascript.
+      SignTool Error: Multiple signature support is not implemented for this filetype.
+      While not ideal, it's still okay because later we add a detached signature for the
+      entire tgz, which includes the third-party sources.
+    -->
+    <!-- <FilesToSign Include="$(OutDir)\**\node_modules\**\*.js">
+      <Authenticode>3PartySHA2</Authenticode>
+    </FilesToSign> -->
+  </ItemGroup>
+
+  <Import Project="packages\Microsoft.VisualStudioEng.MicroBuild.Core.0.4.1\build\Microsoft.VisualStudioEng.MicroBuild.Core.targets" />
+</Project>
