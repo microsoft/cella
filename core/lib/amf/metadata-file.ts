@@ -199,24 +199,27 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     const set = new Set<string>();
     for (const each of this.demands) {
       // first, validate that the query is a valid query
-      const { key, value } = getPair(this.node, each)!;
-      if (set.has(each)) {
-        yield { message: i`Duplicate Keys detected in manifest: '${each}'`, range: key.range!, category: ErrorKind.DuplicateKey };
-      }
-      set.add(each);
+      const pair = getPair(this.node, each);
+      if (pair) {
+        const { key, value } = pair;
+        if (set.has(each)) {
+          yield { message: i`Duplicate Keys detected in manifest: '${each}'`, range: key.range!, category: ErrorKind.DuplicateKey };
+        }
+        set.add(each);
 
-      if (!isMap(value)) {
-        yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };
-        continue;
-      }
+        if (!isMap(value)) {
+          yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };
+          continue;
+        }
 
-      const query = parseQuery(each);
-      if (!query.isValid) {
-        yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
-        continue;
-      }
+        const query = parseQuery(each);
+        if (!query.isValid) {
+          yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
+          continue;
+        }
 
-      yield* this.#proxy[each].validate();
+        yield* this.#proxy[each].validate();
+      }
     }
   }
 }

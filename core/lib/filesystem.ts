@@ -248,7 +248,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the folder.
    * @return An array of name/type-tuples or a Promise that resolves to such.
    */
-  abstract readDirectory(uri: Uri, options?: {}): Promise<Array<[Uri, FileType]>>;
+  abstract readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>>;
 
   /**
    * Create a new directory (Note, that new files are created via `write`-calls).
@@ -319,6 +319,8 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param options Defines if existing files should be overwritten.
    */
   abstract copy(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<number>;
+
+  abstract createSymlink(symlink: Uri, target: Uri): Promise<void>;
 
   /** checks to see if the target exists */
   async exists(uri: Uri) {

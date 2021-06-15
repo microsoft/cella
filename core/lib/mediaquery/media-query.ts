@@ -86,24 +86,38 @@ class QueryList {
     if (this.isValid) {
       queries: for (const query of this.queries) {
         for (const { feature, constant, not } of query.expressions) {
+          // get the value from the context
+          const contextValue = stringValue(properties[feature]);
+          if (not) {
+            // negative/not present query
 
-          const p = stringValue(properties[feature]);
-          if (p || (not && constant === undefined)) {
-            if (constant === undefined) {
-              // if they didn't give a constant for 'foo' and there is a foo property, we're good.
-              continue;
+            if (contextValue) {
+              // we have a value
+              if (constant && contextValue !== constant) {
+                continue; // the values are NOT a match.
+              }
+              if (!constant && contextValue === 'false') {
+                continue;
+              }
+            } else {
+              // no value
+              if (!constant || contextValue === 'false') {
+                continue;
+              }
             }
-
-            if (constant == p || (not && constant != p)) {
-              continue;
-            }
-
-            // value didn't match. this whole query is a bust.
-            continue queries;
           } else {
-            // the feature ain't here, and it's not negated
-            continue queries;
+            // positive/present query
+            if (contextValue) {
+              if (contextValue === constant || contextValue !== 'false' && !constant) {
+                continue;
+              }
+            } else {
+              if (constant === 'false') {
+                continue;
+              }
+            }
           }
+          continue queries; // no match
         }
         // we matched a whole query, we're good
         return true;

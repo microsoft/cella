@@ -217,9 +217,9 @@ bad.fragment === '/project1';
     return uri.fileSystem.stat(uri);
   }
 
-  readDirectory(uri?: Uri | string): Promise<Array<[Uri, FileType]>> {
+  readDirectory(uri?: Uri | string, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
     uri = this.resolve(uri);
-    return uri.fileSystem.readDirectory(uri);
+    return uri.fileSystem.readDirectory(uri, options);
   }
 
   async createDirectory(uri?: Uri | string): Promise<Uri> {

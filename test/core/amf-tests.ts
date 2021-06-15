@@ -100,8 +100,8 @@ describe('Amf', () => {
     doc.settings.variables['test'] = [...doc.settings.variables['test'], 'another value'];
     strict.deepEqual(doc.settings.variables['test'], ['abc', 'another value'], 'variables should be an array of two items now');
 
-    doc.settings.paths.bin = [...doc.settings.paths.bin, 'hello/there'];
-    strict.deepEqual(doc.settings.paths.bin.length, 3, 'there should be three paths in bin now.');
+    doc.settings.paths['bin'] = [...doc.settings.paths['bin'], 'hello/there'];
+    strict.deepEqual(doc.settings.paths['bin'].length, 3, 'there should be three paths in bin now.');
 
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 

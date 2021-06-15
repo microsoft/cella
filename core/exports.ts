@@ -6,6 +6,7 @@ import { Queue } from './lib/promise';
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 export * from './lib/acquire';
+export * from './lib/activation';
 export * from './lib/archive';
 export * from './lib/artifact';
 export * from './lib/catalog';

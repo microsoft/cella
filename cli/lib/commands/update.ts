@@ -5,7 +5,7 @@
 import { i, RemoteFileUnavailable, Repository } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { parseArgs } from '../command-line';
+import { CommandLine } from '../command-line';
 import { error, log, writeException } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
@@ -52,7 +52,7 @@ export class UpdateCommand extends Command {
   static async update(repository: Repository) {
     log(i`Artifact repository data is not loaded.`);
     log(i`Attempting to update artifact repository.`);
-    const update = new UpdateCommand(parseArgs([]));
+    const update = new UpdateCommand(new CommandLine([]));
 
     let success = true;
     try {

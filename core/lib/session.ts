@@ -4,7 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { fail, strict } from 'assert';
+import { delimiter } from 'path';
 import { TextDecoder } from 'util';
+import { Activation } from './activation';
 import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { FileSystem } from './filesystem';
@@ -120,7 +122,7 @@ export class Session {
    * @param idOrShortName the identity of the artifact. If the string has no '<source>:' at the front, default source is assumed.
    * @param version the version of the artifact
    */
-  async getArtifact(idOrShortName: string, version: string | undefined) {
+  async getArtifact(idOrShortName: string, version: string | undefined): Promise<Artifact | undefined> {
     const [source, name] = this.parseName(idOrShortName);
     const repository = this.getRepository(source);
 
@@ -140,9 +142,20 @@ export class Session {
         return await repository.openArtifact(matches[0]);
       }
 
-      default:
-        // multiple matches
-        fail(i`Artifact identity '${idOrShortName}' matched more than one result. This should never happen. or is this multiple version matches?`);
+      default: {
+        // multiple matches.
+        const artifacts = await repository.openArtifacts(matches);
+        // there should be a single id matched.
+        switch (artifacts.size) {
+          case 0:
+            return undefined;
+          case 1:
+            // we want the first item, because it's the highest version that matches in what we were asked for
+            return artifacts.entries().next().value[1];
+        }
+        // this should not be happening.
+        fail(i`Artifact identity '${idOrShortName}' matched more than one result (${[...artifacts.keys()].join(',')}). This should never happen. or is this multiple version matches?`);
+      }
         break;
     }
   }
@@ -205,11 +218,26 @@ export class Session {
     this.#postscript[variableName] = value;
   }
 
+  setActivationInPostscript(a: Activation) {
+    for (const [variable, value] of a.Paths) {
+      this.addPostscript(variable, `${value}${delimiter}${process.env[variable]}`);
+    }
+
+    for (const [variable, value] of a.Variables) {
+      this.addPostscript(variable, value);
+    }
+
+    // for now.
+    if (a.defines.size > 0) {
+      this.addPostscript('DEFINES', a.Defines.map(([define, value]) => `${define}=${value}`).join(' '));
+    }
+  }
+
   async writePostscript() {
     const psf = this.postscriptFile;
     switch (psf?.fsPath.substr(-3)) {
       case 'ps1':
-        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$ENV:${k[0]}="${k[1]}"`; }).join('\n')));
+        return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k, v) => { return `$\{ENV:${k[0]}}="${k[1]}"`; }).join('\n')));
       case 'cmd':
         return await this.fileSystem.writeFile(psf, Buffer.from([...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n')));
       case '.sh':
@@ -231,7 +259,7 @@ export class Session {
     if (! await this.installFolder.exists()) {
       return result;
     }
-    for (const [folder, stat] of await this.installFolder.readDirectory()) {
+    for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
 
         const content = this.utf8(await folder.readFile('artifact.yaml'));
@@ -248,4 +276,7 @@ export class Session {
     return result;
   }
 
+  async openManifest(manifestFile: Uri) {
+    return parseConfiguration(manifestFile.fsPath, this.utf8(await manifestFile.readFile()));
+  }
 }
