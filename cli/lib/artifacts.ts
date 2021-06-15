@@ -32,7 +32,7 @@ export async function showArtifacts(artifacts: Set<Artifact>) {
 
 export type Selections = Array<[string, string | undefined]>;
 
-export async function selectArtifacts(selections: Selections) {
+export async function selectArtifacts(selections: Selections): Promise<false | Set<Artifact>> {
   const artifacts = new Set<Artifact>();
 
   for (const [identity, version] of selections) {
@@ -41,8 +41,8 @@ export async function selectArtifacts(selections: Selections) {
       error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);
       return false;
     }
-
     artifacts.add(artifact);
+    artifact.isPrimary = true;
     await artifact.resolveDependencies(artifacts);
   }
   return artifacts;

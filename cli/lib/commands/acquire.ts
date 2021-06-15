@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { Artifact, i } from '@microsoft/cella.core';
 import { MultiBar, SingleBar } from 'cli-progress';
-import { getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
+import { installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { error, formatName, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
@@ -39,12 +39,6 @@ export class AcquireCommand extends Command {
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
       error(i`Multiple packages specified, but not an equal number of '--version=' switches. `);
-      return false;
-    }
-
-    const repository = await getRepository();
-    if (!repository) {
-      // the repository isn't functional
       return false;
     }
 

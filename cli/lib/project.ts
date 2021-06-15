@@ -6,22 +6,6 @@
 import { Artifact, createArtifact, Uri } from '@microsoft/cella.core';
 import { session } from '../main';
 import { activateArtifacts, installArtifacts } from './artifacts';
-import { project } from './constants';
-
-export async function findProject(location: Uri): Promise<undefined | Uri> {
-  const p = location.join(project);
-
-  if (await location.exists()) {
-    return p;
-  }
-
-  const parent = location.parent();
-  if (parent.fsPath !== '.' && parent.fsPath != '/') {
-    return findProject(parent);
-  }
-
-  return undefined;
-}
 
 export async function activateProject(location: Uri): Promise<[boolean, Map<Artifact, boolean>]> {
   // load the project
@@ -34,16 +18,26 @@ export async function activateProject(location: Uri): Promise<[boolean, Map<Arti
   // install the items in the project
   const [success, artifactStatus] = await installArtifacts(artifacts);
 
+  /*
+  // which artifacts have been installed
+  for (const [dep, installed] of artifactStatus) {
+    if (installed) {
+      const id = dep.id;
+      const ver = dep.info.version;
+      console.log(`${id}, ${ver}`);
+    }
+  }
+*/
+
   if (success) {
     // activate all the tools in the project
     const activation = await activateArtifacts(artifacts);
     await session.setActivationInPostscript(activation);
-
   }
-
 
   return [success, artifactStatus];
 }
+
 
 // activation
 //  -- store the 'reverse-activation' info in a file somewhere.

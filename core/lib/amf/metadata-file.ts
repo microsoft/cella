@@ -31,11 +31,11 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   #proxy!: MetadataFile;
 
   toString(): string {
-    return this.document.toString();
+    return this.content;
   }
 
   get content() {
-    return this.document.toString();
+    return this.document.toString({});
   }
   /* Profile */
   #info!: Info;

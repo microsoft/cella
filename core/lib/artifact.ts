@@ -40,7 +40,8 @@ export class SetOfDemands {
       throw new MultipleInstallsMatched(install.map(each => each[0]));
     }
 
-    return install[0]?.[1].install;
+
+    return install[0]?.[1].install || [];
   }
 
   get errors() {
@@ -82,6 +83,8 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
 
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
+
+  isPrimary = false;
 
   readonly applicableDemands: SetOfDemands;
   constructor(protected session: Session, protected metadata: MetadataFile, public shortName: string) {

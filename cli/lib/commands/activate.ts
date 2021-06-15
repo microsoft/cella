@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
+import { showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { activateProject } from '../project';
 import { error } from '../styling';
@@ -38,6 +39,7 @@ export class ActivateCommand extends Command {
     const [success, artifactStatus] = await activateProject(projectFile);
 
     // print the status of the activation
+    await showArtifacts(new Set(artifactStatus.keys()));
 
     return success;
   }

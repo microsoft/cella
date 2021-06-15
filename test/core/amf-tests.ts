@@ -33,6 +33,23 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
+    console.log(doc.content);
+  });
+
+  it('load/persist environment.yaml', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'environment.yaml'))).toString('utf-8');
+    const doc = parse('cenvironment.yaml', content);
+
+    console.log(doc.content);
+    for (const each of doc.validationErrors) {
+      console.log(each);
+    }
+
+
+    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isValid, 'better be valid!');
+
+    console.log(doc.content);
 
   });
 
@@ -105,11 +122,12 @@ describe('Amf', () => {
 
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
-    const install = doc['windows and arm'].install;
-    strict.ok(isNupkg(install[0]), 'the install type should be nupkg');
-    strict.equal(install[0].location, 'floobaloo/1.2.3', 'should have correct location');
+    const install = doc['windows and arm'].install[0];
 
-    // console.log(doc.toString());
+    strict.ok(isNupkg(install), 'the install type should be nupkg');
+    strict.equal((install).location, 'floobaloo/1.2.3', 'should have correct location');
+
+    console.log(doc.toString());
   });
 
   it('read invalid yaml file', async () => {
