@@ -11,6 +11,7 @@ import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
+import { i } from './i18n';
 import { MetadataFile, parseConfiguration } from './metadata-format';
 import { Queue } from './promise';
 import { Session } from './session';
@@ -66,7 +67,6 @@ export class CellaRepository implements Repository {
       try {
         const amf = parseConfiguration(uri.fsPath, content);
 
-
         if (!amf.isValidYaml) {
           for (const err of amf.yamlErrors) {
             repo.session.channels.warning(`Parse errors in metadata file ${err}}`);
@@ -118,7 +118,12 @@ export class CellaRepository implements Repository {
   }
 
   async load(): Promise<void> {
+    if (! await this.indexYaml.exists()) {
+      await this.update();
+    }
+
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
+
     this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
     this.#loaded = true;
@@ -133,6 +138,8 @@ export class CellaRepository implements Repository {
   }
 
   async update() {
+    this.session.channels.message(i`Updating repository data from ${this.remoteLocation.toString()}`);
+
     const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {
       credentials: {
         githubToken: this.session.environment['githubAuthToken']
@@ -142,12 +149,6 @@ export class CellaRepository implements Repository {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.baseFolder, { strip: 1 });
     }
-  }
-
-  async resolveDependencies(manifests: Array<string>) {
-    // open all the ones that are listed
-    // go thru each one, and add in the dependencies
-    //
   }
 
   private async openManifest(manifestPath: string) {

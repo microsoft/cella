@@ -141,7 +141,7 @@ export class LocalFileSystem extends FileSystem {
       return 1;
     }
 
-    strict.ok(type & FileType.Directory, 'Unknown file type should never happen during copy.');
+    strict.ok(type & FileType.Directory, 'Unknown file type should never happen during copy');
 
     let targetIsFile = false;
     try {
@@ -152,7 +152,7 @@ export class LocalFileSystem extends FileSystem {
 
     // if it's a folder, then the target has to be a folder, or not exist
     if (targetIsFile) {
-      throw new TargetFileCollision(target, i`Copy failed: source (${source.fsPath}) is a folder, target (${target.fsPath}) is a file.`);
+      throw new TargetFileCollision(target, i`Copy failed: source (${source.fsPath}) is a folder, target (${target.fsPath}) is a file`);
     }
 
     // make sure the target folder exists

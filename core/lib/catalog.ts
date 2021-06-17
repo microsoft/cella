@@ -448,7 +448,6 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
     return this.index;
   }
 
-
   /** deserializes an object graph back into this key */
   deserialize(content: any) {
     super.deserialize(content);

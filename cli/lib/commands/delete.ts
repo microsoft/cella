@@ -6,6 +6,7 @@ import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { Version } from '../switches/version';
+import { WhatIf } from '../switches/whatIf';
 
 export class DeleteCommand extends Command {
   readonly command = 'delete';
@@ -13,9 +14,10 @@ export class DeleteCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   version = new Version(this)
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Deletes an artifact from the artifact folder.`;
+    return i`Deletes an artifact from the artifact folder`;
   }
 
   get description() {
@@ -36,8 +38,6 @@ export class DeleteCommand extends Command {
         }
       }
     }
-
-
     return true;
   }
 }

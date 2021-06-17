@@ -26,7 +26,7 @@ export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 
   } finally {
     stream.destroy();
   }
-  fail('Should have returned a chunk from the pipe.');
+  fail('Should have returned a chunk from the pipe');
 }
 
 export interface VerifyEvents {

@@ -53,7 +53,6 @@ export async function acquireArtifactFile(session: Session, uris: Array<Uri>, ou
     }
   }
 
-
   // is the file present on a local filesystem?
   for (const uri of uris) {
     if (uri.isLocal) {
@@ -98,23 +97,23 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
   const outputFile = session.cache.join(outputFilename);
 
   if (options?.force) {
-    session.channels.debug(`Acquire '${outputFilename}': force specified, forcing download.`);
+    session.channels.debug(`Acquire '${outputFilename}': force specified, forcing download`);
     // is force specified; delete the current file
     await outputFile.delete();
   }
 
   // start this peeking at the target uris.
-  session.channels.debug(`Acquire '${outputFilename}': checking remote connections.`);
+  session.channels.debug(`Acquire '${outputFilename}': checking remote connections`);
   const locations = new RemoteFile(uris, { credentials: options?.credentials });
   let url: Uri | undefined;
 
   // is there a file in the cache
   if (await outputFile.exists()) {
-    session.channels.debug(`Acquire '${outputFilename}': local file exists.`);
+    session.channels.debug(`Acquire '${outputFilename}': local file exists`);
     if (options?.algorithm) {
       // does it match a hash that we have?
       if (await outputFile.hashValid(options)) {
-        session.channels.debug(`Acquire '${outputFilename}': local file hash matches metdata.`);
+        session.channels.debug(`Acquire '${outputFilename}': local file hash matches metdata`);
         // yes it does. let's just return done.
         return outputFile;
       }
@@ -122,13 +121,13 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
 
     // it doesn't match a known hash.
     const contentLength = await locations.contentLength;
-    session.channels.debug(`Acquire '${outputFilename}': remote connection info is back.`);
+    session.channels.debug(`Acquire '${outputFilename}': remote connection info is back`);
     const onDiskSize = await outputFile.size();
     if (!await locations.availableLocation) {
       if (locations.failures.all(each => each.code === 404)) {
         let msg = i`Unable to download file`;
         if (options?.credentials) {
-          msg += (i` - It could be that your authentication credentials are not correct.`);
+          msg += (i` - It could be that your authentication credentials are not correct`);
         }
 
         session.channels.error(msg);
@@ -136,7 +135,7 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
       }
     }
     // first, make sure that there is a remote that is accessible.
-    strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
+    strict.ok(!!await locations.availableLocation, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}`);
 
     url = await locations.resumableLocation;
     // ok, does it support resume?
@@ -149,9 +148,9 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
           session.channels.debug(`Acquire '${outputFilename}': on disk file matches length of remote file`);
           const algorithm = <Algorithm>(await locations.algorithm);
           const value = await locations.hash;
-          session.channels.debug(`Acquire '${outputFilename}': remote alg/hash: '${algorithm}'/'${value}.`);
+          session.channels.debug(`Acquire '${outputFilename}': remote alg/hash: '${algorithm}'/'${value}`);
           if (algorithm && value && outputFile.hashValid({ algorithm, value, ...options })) {
-            session.channels.debug(`Acquire '${outputFilename}': on disk file hash matches the server hash.`);
+            session.channels.debug(`Acquire '${outputFilename}': on disk file hash matches the server hash`);
             // so *we* don't have the hash, but ... if the server has a hash, we could see if what we have is what they have?
             // it does match what the server has.
             // I call this an win.
@@ -168,7 +167,7 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
 
         // so, how big is the remote
         if (contentLength >= onDiskSize) {
-          session.channels.debug(`Acquire '${outputFilename}': local file length is less than or equal to remote file length.`);
+          session.channels.debug(`Acquire '${outputFilename}': local file length is less than or equal to remote file length`);
           // looks like there could be more remotely than we have.
           // lets compare the first 32k and the last 32k of what we have
           // against what they have and see if they match.
@@ -179,16 +178,16 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
           const onDiskBottom = await outputFile.readBlock(onDiskSize - size32K, onDiskSize - 1);
 
           if (top.compare(onDiskTop) === 0 && bottom.compare(onDiskBottom) === 0) {
-            session.channels.debug(`Acquire '${outputFilename}': first/last blocks are equal.`);
+            session.channels.debug(`Acquire '${outputFilename}': first/last blocks are equal`);
             // the start and end of what we have does match what they have.
             // is this file the same size?
             if (contentLength === onDiskSize) {
               // same file size, front and back match, let's accept this. begrudgingly
-              session.channels.debug(`Acquire '${outputFilename}': file size is identical. keeping this one.`);
+              session.channels.debug(`Acquire '${outputFilename}': file size is identical. keeping this one`);
               return outputFile;
             }
             // looks like we can continue from here.
-            session.channels.debug(`Acquire '${outputFilename}': ok to resume.`);
+            session.channels.debug(`Acquire '${outputFilename}': ok to resume`);
             resumeAtOffset = onDiskSize;
           }
         }
@@ -198,13 +197,13 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
 
   if (resumeAtOffset === 0) {
     // clearly we mean to not resume. clean any existing file.
-    session.channels.debug(`Acquire '${outputFilename}': not resuming file, full download.`);
+    session.channels.debug(`Acquire '${outputFilename}': not resuming file, full download`);
     await outputFile.delete();
   }
 
   url = url || await locations.availableLocation;
-  strict.ok(!!url, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}.`);
-  session.channels.debug(`Acquire '${outputFilename}': initiating download.`);
+  strict.ok(!!url, `Requested file ${outputFilename} has no accessible locations ${uris.map(each => each.toString()).join(',')}`);
+  session.channels.debug(`Acquire '${outputFilename}': initiating download`);
   const length = await locations.contentLength;
 
   const inputStream = getStream(url, { start: resumeAtOffset, end: length > 0 ? length : undefined, credentials: options?.credentials });
@@ -225,16 +224,16 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
 
   // we've downloaded the file, let's see if it matches the hash we have.
   if (options?.algorithm) {
-    session.channels.debug(`Acquire '${outputFilename}': checking downloaded file hash.`);
+    session.channels.debug(`Acquire '${outputFilename}': checking downloaded file hash`);
     // does it match the hash that we have?
     if (!await outputFile.hashValid(options)) {
       await outputFile.delete();
       throw new Error(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}:${options.value}) `);
     }
-    session.channels.debug(`Acquire '${outputFilename}': downloaded file hash matches specified hash.`);
+    session.channels.debug(`Acquire '${outputFilename}': downloaded file hash matches specified hash`);
   }
 
-  session.channels.debug(`Acquire '${outputFilename}': downloading file successful.`);
+  session.channels.debug(`Acquire '${outputFilename}': downloading file successful`);
   ee.emit('download', outputFilename, 1000);
   ee.emit('complete');
   return outputFile;
@@ -242,7 +241,7 @@ async function http(session: Session, uris: Array<Uri>, outputFilename: string, 
 
 export async function resolveNugetUrl(session: Session, pkg: string) {
   const [, name, version] = pkg.match(/^(.*)\/(.*)$/) ?? [];
-  strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version}).`);
+  strict.ok(version, i`package reference '${pkg}' is not a valid nuget package reference ({name}/{version})`);
 
   // let's resolve the redirect first, since nuget servers don't like us getting HEAD data on the targets via a redirect.
   // even if this wasn't the case, this is lower cost now rather than later.

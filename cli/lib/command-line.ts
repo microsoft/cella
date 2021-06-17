@@ -8,6 +8,7 @@ import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { Command } from './command';
+import { cmdSwitch } from './format';
 
 export type switches = {
   [key: string]: Array<string>;
@@ -111,13 +112,13 @@ export class CommandLine {
 
   get language() {
     const l = this.switches['language'] || [];
-    strict.ok((l?.length || 0) < 2, i`Expected a single value for '--${'language'}' -- found multiple.`);
+    strict.ok((l?.length || 0) < 2, i`Expected a single value for ${cmdSwitch('language')} - found multiple`);
     return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
   get allLanguages(): boolean {
     const l = this.switches['all-languages'] || [];
-    strict.ok((l?.length || 0) < 2, i`Expected a single value for '--${'all-languages'}' -- found multiple.`);
+    strict.ok((l?.length || 0) < 2, i`Expected a single value for ${cmdSwitch('all-languages')} - found multiple`);
     return !!l[0];
   }
 

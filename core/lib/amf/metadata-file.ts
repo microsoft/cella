@@ -17,7 +17,6 @@ import { createInstallerNode } from './installer';
 import { SettingsNode } from './settings';
 import { getVersionRef, setVersionRef } from './version-reference';
 
-
 /** @internal */
 export class Amf extends DictionaryImpl<Demands> implements ProfileBase, DictionaryOf<Demands> {
   /** @internal */
@@ -45,12 +44,12 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
 
   #contacts!: DictionaryOf<Contact>
   get contacts(): DictionaryOf<Contact> {
-    return this.#contacts || (this.#contacts = proxyDictionary(getOrCreateMap(this.document, 'contacts'), (m, p) => new ContactNode(getOrCreateMap(m, p), p), () => { fail('Can not set entries directly.'); }));
+    return this.#contacts || (this.#contacts = proxyDictionary(getOrCreateMap(this.document, 'contacts'), (m, p) => new ContactNode(getOrCreateMap(m, p), p), () => { fail('Can not set entries directly'); }));
   }
 
   #sources!: DictionaryOf<ArtifactSource>;
   get sources(): DictionaryOf<ArtifactSource> {
-    return this.#sources || (this.#sources = proxyDictionary(getOrCreateMap(this.document, 'sources'), createArtifactSourceNode, () => { fail('Can not set entries directly.'); }));
+    return this.#sources || (this.#sources = proxyDictionary(getOrCreateMap(this.document, 'sources'), createArtifactSourceNode, () => { fail('Can not set entries directly'); }));
   }
 
   get insert(): 'allowed' | 'only' | undefined {
@@ -121,7 +120,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       const message = each.message;
       const line = each.linePos?.[0] || 1;
       const column = each.linePos?.[1] || 1;
-      return `\`${this.filename}:${line}:${column}\` ${each.name}, ${message}`;
+      return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
     }));
   }
 
@@ -139,7 +138,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
     for (const { message, range, rangeOffset, category } of this.validate()) {
       const { line, column } = this.positionAt(range, rangeOffset);
       if (line) {
-        this.#validationErrors.push(`\`${this.filename}:${line}:${column}\` ${category}, ${message}`);
+        this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
       } else {
         this.#validationErrors.push(`${this.filename}: ${category}, ${message}`);
       }
@@ -214,7 +213,7 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
 
         const query = parseQuery(each);
         if (!query.isValid) {
-          yield { message: i`Error parsing conditional demand '${each}'--${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
+          yield { message: i`Error parsing conditional demand '${each}'- ${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
           continue;
         }
 

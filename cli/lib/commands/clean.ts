@@ -5,14 +5,15 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { log } from '../styling';
+import { debug, log } from '../styling';
 import { Switch } from '../switch';
+import { WhatIf } from '../switches/whatIf';
 
 export class All extends Switch {
   switch = 'all';
   get help() {
     return [
-      i`cleans out everything (cache, installed artifacts).`
+      i`cleans out everything (cache, installed artifacts)`
     ];
   }
 }
@@ -21,7 +22,7 @@ export class Cache extends Switch {
   switch = 'cache';
   get help() {
     return [
-      i`cleans out the cache.`
+      i`cleans out the cache`
     ];
   }
 }
@@ -30,7 +31,7 @@ export class Artifacts extends Switch {
   switch = 'artifacts';
   get help() {
     return [
-      i`removes all the artifacts that are installed.`
+      i`removes all the artifacts that are installed`
     ];
   }
 }
@@ -43,6 +44,7 @@ export class CleanCommand extends Command {
   all = new All(this);
   artifacts = new Artifacts(this);
   cache = new Cache(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
     return i`cleans up`;
@@ -55,11 +57,17 @@ export class CleanCommand extends Command {
   }
 
   async run() {
+
     if (this.all.active || this.artifacts.active) {
+      // if we're removing artifacts
+      debug(i`Deactivating project`);
+      await session.deactivate();
+
       await session.installFolder.delete({ recursive: true });
       await session.installFolder.createDirectory();
       log(i`Installed Artifact folder cleared (${session.installFolder.fsPath}) `);
     }
+
     if (this.all.active || this.cache.active) {
       await session.cache.delete({ recursive: true });
       await session.cache.createDirectory();

@@ -40,7 +40,6 @@ export class SetOfDemands {
       throw new MultipleInstallsMatched(install.map(each => each[0]));
     }
 
-
     return install[0]?.[1].install || [];
   }
 

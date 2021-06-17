@@ -4,19 +4,23 @@
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
-import { showArtifacts } from '../artifacts';
 import { Command } from '../command';
+import { projectFile } from '../format';
 import { activateProject } from '../project';
-import { error } from '../styling';
+import { debug } from '../styling';
+import { Project } from '../switches/project';
+import { WhatIf } from '../switches/whatIf';
 
 export class ActivateCommand extends Command {
   readonly command = 'activate';
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
+  whatIf = new WhatIf(this)
+  project: Project = new Project(this);
 
   get summary() {
-    return i`Activates the tools required for a project.`;
+    return i`Activates the tools required for a project`;
   }
 
   get description() {
@@ -26,21 +30,14 @@ export class ActivateCommand extends Command {
   }
 
   async run() {
-
-    // find the project file
-    const projectFile = await session.findProjectProfile(session.currentDirectory);
-    if (!projectFile) {
-      error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
+    const project = await this.project.value;
+    if (!project) {
       return false;
     }
+
+    debug(i`Deactivating project ${projectFile(project)}`);
     await session.deactivate();
 
-    // track what got installed
-    const [success, artifactStatus] = await activateProject(projectFile);
-
-    // print the status of the activation
-    await showArtifacts(new Set(artifactStatus.keys()));
-
-    return success;
+    return await activateProject(project, this.commandLine);
   }
 }

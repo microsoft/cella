@@ -23,7 +23,7 @@ export function parseConfiguration(filename: string, content: string): MetadataF
     (m, p) => {
       return new DemandNode(getOrCreateMap(m, p), p);
     },
-    () => fail('Fatal Error: this should never get called.'),
+    () => fail('Fatal Error: this should never get called'),
     new Amf(doc, filename, lc));
   return q;
 }

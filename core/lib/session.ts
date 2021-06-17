@@ -185,7 +185,7 @@ export class Session {
         this.channels.debug(error?.message);
       }
       // check if it got made, because at an absolute minimum, we need a folder, so failing this is catastrophic.
-      strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created.`);
+      strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created`);
     }
 
     if (!await this.fileSystem.isFile(this.globalConfig)) {
@@ -195,7 +195,7 @@ export class Session {
         // if this throws, let it
       }
       // check if it got made, because at an absolute minimum, we need the config file, so failing this is catastrophic.
-      strict.ok(await this.fileSystem.isFile(this.globalConfig), i`Fatal: The global configuration file '${this.globalConfig.fsPath}' can not be created.`);
+      strict.ok(await this.fileSystem.isFile(this.globalConfig), i`Fatal: The global configuration file '${this.globalConfig.fsPath}' can not be created`);
     }
 
     // got past the checks, let's load the configuration.
@@ -205,7 +205,7 @@ export class Session {
     return this;
   }
 
-  async findProjectProfile(startLocation = this.currentDirectory): Promise<Uri | undefined> {
+  async findProjectProfile(startLocation = this.currentDirectory, search = true): Promise<Uri | undefined> {
     let location = startLocation;
     for (const loc of profileName) {
       const path = location.join(loc);
@@ -214,8 +214,10 @@ export class Session {
       }
     }
     location = location.join('..');
-
-    return (location.toString() === startLocation.toString()) ? undefined : this.findProjectProfile(location);
+    if (search) {
+      return (location.toString() === startLocation.toString()) ? undefined : this.findProjectProfile(location);
+    }
+    return undefined;
   }
 
   #postscript = new Dictionary<string>();

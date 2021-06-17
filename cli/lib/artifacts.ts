@@ -8,26 +8,27 @@ import { Activation } from '@microsoft/cella.core/dist/lib/activation';
 import { MultiBar, SingleBar } from 'cli-progress';
 import { session } from '../main';
 import { UpdateCommand } from './commands/update';
+import { artifactIdentity, artifactReference } from './format';
 import { Table } from './markdown-table';
-import { debug, error, formatName, log } from './styling';
+import { debug, error, log } from './styling';
 
-export async function showArtifacts(artifacts: Set<Artifact>) {
+export async function showArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }) {
   let failing = false;
-  const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Summary`);
+  const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Dependency`, i`Summary`);
   for (const artifact of artifacts) {
 
-    const name = formatName(artifact.info.id, artifact.shortName);
+    const name = artifactIdentity(artifact.info.id, artifact.shortName);
     if (!artifact.isValid) {
       failing = true;
       for (const err of artifact.validationErrors) {
         error(err);
       }
     }
-    table.push(name, artifact.info.version, await artifact.isInstalled ? 'installed' : 'not installed', artifact.info.summary || '');
+    table.push(name, artifact.info.version, options?.force || await artifact.isInstalled ? 'installed' : 'will install', artifact.isPrimary ? ' ' : '*', artifact.info.summary || '');
   }
   log(table.toString());
 
-  return failing;
+  return !failing;
 }
 
 export type Selections = Array<[string, string | undefined]>;
@@ -38,7 +39,7 @@ export async function selectArtifacts(selections: Selections): Promise<false | S
   for (const [identity, version] of selections) {
     const artifact = await session.getArtifact(identity, version);
     if (!artifact) {
-      error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);
+      error(`Unable to resolve artifact: ${artifactReference(identity, version || '*')}`);
       return false;
     }
     artifacts.add(artifact);
@@ -48,7 +49,7 @@ export async function selectArtifacts(selections: Selections): Promise<false | S
   return artifacts;
 }
 
-export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }): Promise<[boolean, Map<Artifact, boolean>]> {
+export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean, allLanguages?: boolean, language?: string }): Promise<[boolean, Map<Artifact, boolean>]> {
   // resolve the full set of artifacts to install.
   const installed = new Map<Artifact, boolean>();
 
@@ -66,7 +67,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
 
     try {
       const actuallyInstalled = await artifact.install({
-        force: options?.force,
+        ...options,
         events: {
           verifying: (name, percent) => {
             if (percent >= 100) {
@@ -76,7 +77,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
             }
             if (percent) {
               if (!p) {
-                p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
+                p = bar.create(100, 0, { action: i`verifying`, name: artifactIdentity(id), current: name });
               }
               p.update(percent);
             }
@@ -91,25 +92,25 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
             }
             if (percent) {
               if (!dl) {
-                dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
+                dl = bar.create(100, 0, { action: i`downloading`, name: artifactIdentity(id), current: name });
               }
               dl.update(percent);
             }
           },
           fileProgress: (entry) => {
-            p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
+            p?.update({ action: i`unpacking`, name: artifactIdentity(id), current: entry.extractPath });
           },
           progress: (percent: number) => {
             if (percent >= 100) {
               if (p) {
-                p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
+                p.update(percent, { action: i`unpacked`, name: artifactIdentity(id), current: '' });
               }
               p = undefined;
               return;
             }
             if (percent) {
               if (!p) {
-                p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
+                p = bar.create(100, 0, { action: i`unpacking`, name: artifactIdentity(id), current: '' });
               }
               p.update(percent);
             }
@@ -121,7 +122,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
     } catch (e) {
       bar.stop();
       debug(e);
-      error(i`Error installing ${formatName(id)} - ${e} `);
+      error(i`Error installing ${artifactIdentity(id)} - ${e} `);
       return [false, installed];
     }
 

@@ -4,13 +4,16 @@
  *--------------------------------------------------------------------------------------------*/
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
-import { selectArtifacts, Selections, showArtifacts } from '../artifacts';
+import { selectArtifacts, Selections } from '../artifacts';
 import { Command } from '../command';
+import { cmdSwitch, projectFile } from '../format';
 import { activateProject } from '../project';
-import { debug, error, log } from '../styling';
+import { debug, error } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
+import { Project } from '../switches/project';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
+import { WhatIf } from '../switches/whatIf';
 
 export class AddCommand extends Command {
   readonly command = 'add';
@@ -20,9 +23,11 @@ export class AddCommand extends Command {
   repo = new Repo(this);
   ghAuth = new GithubAuthToken(this);
   version = new Version(this)
+  project: Project = new Project(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Adds an artifact to the project.`;
+    return i`Adds an artifact to the project`;
   }
 
   get description() {
@@ -32,52 +37,41 @@ export class AddCommand extends Command {
   }
 
   async run() {
-    const projectFile = await session.findProjectProfile(session.currentDirectory);
-    if (!projectFile) {
-      error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
+    const project = await this.project.value;
+    if (!project) {
       return false;
     }
 
     if (this.inputs.length === 0) {
-      error(i`No artifacts specified.`);
+      error(i`No artifacts specified`);
       return false;
     }
 
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
-      error(i`Multiple packages specified, but not an equal number of '--version=' switches. `);
+      error(i`Multiple artifacts specified, but not an equal number of ${cmdSwitch('version')} switches`);
       return false;
     }
 
     const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
-    const artifacts = await selectArtifacts(selections);
+    const selectedArtifacts = await selectArtifacts(selections);
 
-    if (!artifacts) {
+    if (!selectedArtifacts) {
       return false;
     }
 
-    const manifest = await session.openManifest(projectFile);
+    const manifest = await session.openManifest(project);
 
-    if (!artifacts) {
-      error(i`Unable to add artifacts`);
-      return false;
-    }
-
-    for (const artifact of artifacts) {
+    for (const artifact of selectedArtifacts) {
       manifest.requires[artifact.id] = <any>artifact.info.version;
     }
 
     // write the file out.
-    await projectFile.writeFile(Buffer.from(manifest.content));
+    await project.writeFile(Buffer.from(manifest.content));
 
-    debug('Deactivating manifest...');
+    debug(i`Deactivating project ${projectFile(project)}`);
     await session.deactivate();
 
-    log(i`Activating '${projectFile.fsPath}'`);
-    const [success, results] = await activateProject(projectFile);
-
-    await showArtifacts(new Set(results.keys()));
-
-    return true;
+    return await activateProject(project, this.commandLine);
   }
 }

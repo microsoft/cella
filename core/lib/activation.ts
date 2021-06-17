@@ -7,7 +7,6 @@ import { delimiter } from 'path';
 import { linq } from './linq';
 import { Uri } from './uri';
 
-
 export class Activation {
   defines = new Map<string, string>();
   tools = new Map<string, Uri>();

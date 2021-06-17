@@ -56,7 +56,6 @@ export interface OutputOptions {
   events?: Partial<UnpackEvents>;
 }
 
-
 /** Unpacker base class definition */
 export abstract class Unpacker extends ExtendedEmitter<UnpackEvents> {
   /* Event Emitters */
