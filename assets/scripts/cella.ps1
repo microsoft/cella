@@ -71,6 +71,7 @@ if( $reset -or -$remove ) {
   remove-item -force -ea 0 "${CELLA_HOME}/cella.ps1"
   remove-item -force -ea 0 "${CELLA_HOME}/cella.cmd"
   remove-item -force -ea 0 "${CELLA_HOME}/cella"  
+  remove-item -force -ea 0 "${CELLA_HOME}/NOTICE.txt"
   $error.clear();
 
   if( $remove ) { 
@@ -221,6 +222,9 @@ function bootstrap-cella {
 
   # we should also copy the .bin files into the $CELLA_HOME folder to make reactivation (without being on the PATH) easy
   copy-item ./node_modules/.bin/cella.* 
+
+  # Copy the NOTICE file to $CELLA_HOME to improve discoverability.
+  copy-item ./node_modules/cella/NOTICE.txt
 
   popd
 
