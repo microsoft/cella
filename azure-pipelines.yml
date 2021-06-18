@@ -82,6 +82,14 @@ steps:
   - script: rush deploy
     displayName: Collect dependencies
 
+  # Run Component Governance and inject the NOTICE file.
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    displayName: Detect components
+  - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
+    displayName: Generate NOTICE file
+    inputs:
+      outputfile: $(Build.SourcesDirectory)/common/deploy/NOTICE.txt
+
   # Sign JavaScript and PowerShell files.
   - task: NuGetCommand@2
     displayName: Restore MicroBuild Core
@@ -125,8 +133,6 @@ steps:
     displayName: Publish artifacts
 
   # Do final compliance checks.
-  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-    displayName: Detect components
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@1
     displayName: Check for compliance errors
     # To avoid spirious warnings about missing logs, explicitly declare what we scanned.
