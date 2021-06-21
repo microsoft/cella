@@ -102,6 +102,9 @@ export class VersionCommand extends Command {
     log(i`${cli} version information\n`);
     log(i`  core version: ${Version} `);
     log(i`  cli version: ${cliVersion} `);
+
+    // Make the NOTICE file discoverable. This file is generated during the official build.
+    log(i`Third-party license information is available at ${session.cellaHome.join('NOTICE.txt').fsPath}`);
     return true;
   }
 

@@ -136,6 +136,11 @@ if [ ! -z "$CELLA_REMOVE" ]; then
   if [ -f $CELLA_HOME/cella ]; then 
     rm -f $CELLA_HOME/cella
   fi
+
+  if [ -f $CELLA_HOME/NOTICE.txt ]; then 
+    rm -f $CELLA_HOME/NOTICE.txt
+  fi
+
   # cleanup environment.
   . <(set | grep -i ^CELLA | sed -e 's/[=| |\W].*//;s/^/unset /')
   
@@ -302,7 +307,10 @@ cella_bootstrap_cella() {
   PATH=$OLD_PATH
 
   cp $CELLA_HOME/node_modules/.bin/* .
-  
+
+  # Copy the NOTICE file to $CELLA_HOME to improve discoverability.
+  cp $CELLA_HOME/node_modules/cella/NOTICE.txt .
+
   # go back where we were
   cd $CELLA_PWD
   
@@ -396,6 +404,10 @@ cella() {
 
     if [ -f $CELLA_HOME/cella ]; then 
       rm -f $CELLA_HOME/cella
+    fi
+
+    if [ -f $CELLA_HOME/NOTICE.txt ]; then 
+      rm -f $CELLA_HOME/NOTICE.txt
     fi
 
     # cleanup environment
