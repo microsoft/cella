@@ -11,7 +11,6 @@ import { Uri } from './uri';
 // md5, sha1, sha256, sha512, sha384
 export type Algorithm = 'sha256' | 'sha384' | 'sha512' | 'md5'
 
-// export async function hash(stream: Readable, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
 export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
   stream = await stream;
 
