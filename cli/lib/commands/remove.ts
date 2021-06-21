@@ -8,12 +8,14 @@ import { Command } from '../command';
 import { projectFile } from '../format';
 import { activateProject } from '../project';
 import { debug, error, log } from '../styling';
+import { WhatIf } from '../switches/whatIf';
 
 export class RemoveCommand extends Command {
   readonly command = 'remove';
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
+  whatIf = new WhatIf(this);
 
   get summary() {
     return i`Removes an artifact from a project`;
