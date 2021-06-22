@@ -38,6 +38,7 @@
     "@types/node": "14.14.22",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
+    "@types/micromatch": "4.0.1",
     "eslint-plugin-notice": "0.9.10",
     "eslint": "^7.20.0",
     "@types/semver": "~7.3.4",
@@ -57,6 +58,7 @@
     "got": "11.8.2",
     "sorted-btree": "1.4.0",
     "sed-lite": "~0.8.2",
-    "unbzip2-stream": "~1.4.3"
+    "unbzip2-stream": "~1.4.3",
+    "micromatch": "4.0.4"
   }
 }

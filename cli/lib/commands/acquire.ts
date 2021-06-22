@@ -4,14 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 import { Artifact, i } from '@microsoft/cella.core';
 import { MultiBar, SingleBar } from 'cli-progress';
-import { session } from '../../main';
+import { getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
-import { Table } from '../markdown-table';
 import { error, formatName, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
-import { UpdateCommand } from './update';
 
 export class AcquireCommand extends Command {
   readonly command = 'acquire';
@@ -33,14 +31,9 @@ export class AcquireCommand extends Command {
   }
 
   async run() {
-    const repository = session.getRepository('default');
-    try {
-      await repository.load();
-    } catch (e) {
-      // try to update the repo
-      if (!await UpdateCommand.update(repository)) {
-        return false;
-      }
+    if (this.inputs.length === 0) {
+      error(i`No artifacts specified.`);
+      return false;
     }
 
     const versions = this.version.values;
@@ -49,52 +42,28 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    let failing = false;
-
-    const artifacts = new Set<Artifact>();
-
-    let n = 0;
-    for (const identity of this.inputs) {
-      const version = versions[n++];
-
-      const artifact = await session.getArtifact(identity, version);
-      if (!artifact) {
-        error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);
-        return false;
-      }
-
-      artifacts.add(artifact);
-      await artifact.resolveDependencies(artifacts);
+    const repository = await getRepository();
+    if (!repository) {
+      // the repository isn't functional
+      return false;
     }
 
-    if (artifacts.size) {
-      const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Summary`);
-      for (const artifact of artifacts) {
+    const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
+    const artifacts = await selectArtifacts(selections);
 
-        const name = formatName(artifact.info.id, artifact.shortName);
-        if (!artifact.isValid) {
-          failing = true;
-          for (const err of artifact.validationErrors) {
-            error(err);
-          }
-        }
-        table.push(name, artifact.info.version, await artifact.isInstalled ? 'installed' : 'not installed', artifact.info.summary || '');
-      }
-      log(table.toString());
+    if (!artifacts) {
+      return false;
     }
 
-    log();
-
-    if (failing) {
+    if (await showArtifacts(artifacts)) {
       warning(i`No artifacts are being acquired.`);
       return false;
     }
 
-    if (await this.install(artifacts)) {
-      log(i`Installation completed successfully`);
+    if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
+      log(i`Installation completed successfuly`);
       return true;
     }
-
     return false;
   }
 

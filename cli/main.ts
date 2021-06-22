@@ -9,7 +9,7 @@ import { i, Session, setLocale, Version } from '@microsoft/cella.core';
 import { green, white } from 'chalk';
 import { argv } from 'process';
 import { Version as cliVersion } from './exports';
-import { parseArgs } from './lib/command-line';
+import { CommandLine } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
@@ -19,12 +19,13 @@ import { HelpCommand } from './lib/commands/help';
 import { ListCommand } from './lib/commands/list';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
 import { UpdateCommand } from './lib/commands/update';
+import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
 import { blank, cli } from './lib/constants';
 import { debug, error, initStyling, log } from './lib/styling';
 
 // parse the command line
-const commandline = parseArgs(argv.slice(2));
+const commandline = new CommandLine(argv.slice(2));
 
 // try to set the locale based on the users's settings.
 setLocale(commandline.language, `${__dirname}/i18n/`);
@@ -65,6 +66,7 @@ async function main() {
   const list = new ListCommand(commandline);
   const cache = new CacheCommand(commandline);
   const clean = new CleanCommand(commandline);
+  const use = new UseCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 

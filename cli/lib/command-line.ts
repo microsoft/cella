@@ -21,15 +21,15 @@ export interface Help {
 class Ctx {
   constructor(cmdline: CommandLine) {
     this.os =
-      cmdline.switches['windows'] ? 'win32' :
-        cmdline.switches['osx'] ? 'darwin' :
-          cmdline.switches['linux'] ? 'linux' :
-            cmdline.switches['freebsd'] ? 'freebsd' :
+      cmdline.isSet('windows') ? 'win32' :
+        cmdline.isSet('osx') ? 'darwin' :
+          cmdline.isSet('linux') ? 'linux' :
+            cmdline.isSet('freebsd') ? 'freebsd' :
               process.platform;
-    this.arch = cmdline.switches['x64'] ? 'x64' :
-      cmdline.switches['x86'] ? 'x32' :
-        cmdline.switches['arm'] ? 'arm' :
-          cmdline.switches['arm64'] ? 'arm64' :
+    this.arch = cmdline.isSet('x64') ? 'x64' :
+      cmdline.isSet('x86') ? 'x32' :
+        cmdline.isSet('arm') ? 'arm' :
+          cmdline.isSet('arm64') ? 'arm64' :
             process.arch;
   }
 
@@ -77,7 +77,7 @@ export class CommandLine {
   readonly commands = new Array<Command>();
   readonly inputs = new Array<string>();
   readonly switches: switches = {};
-  readonly context = intersect(new Ctx(this), this.switches);
+  readonly context: Ctx & switches;
 
   #home?: string;
   get cella_home() {
@@ -115,7 +115,7 @@ export class CommandLine {
     return l[0] || Intl.DateTimeFormat().resolvedOptions().locale;
   }
 
-  get allLanguages() : boolean {
+  get allLanguages(): boolean {
     const l = this.switches['all-languages'] || [];
     strict.ok((l?.length || 0) < 2, i`Expected a single value for '--${'all-languages'}' -- found multiple.`);
     return !!l[0];
@@ -124,6 +124,14 @@ export class CommandLine {
   #environment?: Environment;
   get environment(): Environment {
     return this.#environment || (this.#environment = intersect(this, process.env, ['constructor', 'environment']));
+  }
+
+  isSet(sw: string) {
+    const s = this.switches[sw];
+    if (s && s.last !== 'false') {
+      return true;
+    }
+    return false;
   }
 
   claim(sw: string) {
@@ -140,23 +148,22 @@ export class CommandLine {
   get command() {
     return this.commands.find(cmd => cmd.command === this.inputs[0] || !!cmd.aliases.find(alias => alias === this.inputs[0]));
   }
-}
 
-export function parseArgs(args: Array<string>) {
-  const cli = new CommandLine();
+  constructor(args: Array<string>) {
+    for (const each of args) {
+      // --name
+      // --name:value
+      // --name=value
+      const [, name, value] = /^--([^=:]+)[=:]?(.+)?$/g.exec(each) || [];
+      if (name) {
+        this.switches[name] = this.switches[name] === undefined ? [] : this.switches[name];
+        this.switches[name].push(value);
+        continue;
+      }
 
-  for (const each of args) {
-    // --name
-    // --name:value
-    // --name=value
-    const [, name, value] = /^--([^=:]+)[=:]?(.+)?$/g.exec(each) || [];
-    if (name) {
-      cli.switches[name] = cli.switches[name] === undefined ? [] : cli.switches[name];
-      cli.switches[name].push(value);
-      continue;
+      this.inputs.push(each);
     }
-
-    cli.inputs.push(each);
+    this.context = intersect(new Ctx(this), this.switches);
   }
-  return cli;
 }
+

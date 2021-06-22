@@ -255,7 +255,7 @@ export interface Paths extends DictionaryImpl<StringOrStrings> {
 /** settings that should be applied to the context */
 export interface Settings extends DictionaryOf<any>, Validation {
   /** a map of path categories to one or more values */
-  paths: Paths;
+  paths: DictionaryOf<Array<string>>;
 
   /** a map of the known tools to actual tool executable name */
   tools: DictionaryOf<string>;
@@ -265,7 +265,7 @@ export interface Settings extends DictionaryOf<any>, Validation {
    *
    * arrays mean that the values should be joined with spaces
    */
-  variables: DictionaryOf<StringOrStrings>;
+  variables: DictionaryOf<Array<string>>;
   // this is where we'd see things like
   // CFLAGS: [...] where you can have a bunch of things that would end up in the CFLAGS variable (or used to set values in a vcxproj/cmake settings file.)
   //

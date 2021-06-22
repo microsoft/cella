@@ -370,7 +370,7 @@ describe('TarUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });
 
@@ -397,7 +397,7 @@ describe('TarBzUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-bz2-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });
 
@@ -424,6 +424,6 @@ describe('TarGzUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-gz-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });

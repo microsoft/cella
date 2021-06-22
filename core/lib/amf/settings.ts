@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { YAMLMap } from 'yaml';
-import { DictionaryOf, Paths, Settings, StringOrStrings, ValidationError } from '../metadata-format';
+import { DictionaryOf, Settings, ValidationError } from '../metadata-format';
 import { getOrCreateMap, getStrings, setStrings } from '../util/yaml';
 import { DictionaryImpl, proxyDictionary } from './dictionary';
 
@@ -14,9 +14,9 @@ export class SettingsNode extends DictionaryImpl<any> implements Settings {
     super(node);
   }
 
-  #paths!: Paths;
-  get paths(): Paths {
-    return this.#paths || (this.#paths = <Paths><unknown>proxyDictionary(getOrCreateMap(this.node, 'paths'), (m, p) => getStrings(m, p), setStrings));
+  #paths!: DictionaryOf<Array<string>>;
+  get paths(): DictionaryOf<Array<string>> {
+    return this.#paths || (this.#paths = proxyDictionary<Array<string>>(getOrCreateMap(this.node, 'paths'), (m, p) => getStrings(m, p), setStrings));
   }
 
   #tools!: DictionaryOf<string>;
@@ -24,9 +24,9 @@ export class SettingsNode extends DictionaryImpl<any> implements Settings {
     return this.#tools || (this.#tools = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'tools'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
-  #variables!: DictionaryOf<StringOrStrings>;
-  get variables(): DictionaryOf<StringOrStrings> {
-    return this.#variables || (this.#variables = proxyDictionary<StringOrStrings>(getOrCreateMap(this.node, 'variables'), getStrings, setStrings));
+  #variables!: DictionaryOf<Array<string>>;
+  get variables(): DictionaryOf<Array<string>> {
+    return this.#variables || (this.#variables = proxyDictionary<Array<string>>(getOrCreateMap(this.node, 'variables'), getStrings, setStrings));
   }
 
   #defines!: DictionaryOf<string>;

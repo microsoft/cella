@@ -48,7 +48,7 @@ export class UnifiedFileSystem extends FileSystem {
    *
    * @returns the filesystem. Will throw if no filesystem is valid.
    */
-  protected filesystem(uri: string | Uri) {
+  public filesystem(uri: string | Uri) {
     const scheme = schemeOf(uri.toString());
     strict.ok(scheme, i`uri ${uri.toString()} has no scheme`);
 
@@ -72,8 +72,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).stat(uri);
   }
 
-  async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
-    return this.filesystem(uri).readDirectory(uri);
+  async readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
+    return this.filesystem(uri).readDirectory(uri, options);
   }
 
   createDirectory(uri: Uri): Promise<void> {
@@ -111,5 +111,9 @@ export class UnifiedFileSystem extends FileSystem {
 
   copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<number> {
     return target.fileSystem.copy(source, target);
+  }
+
+  createSymlink(original: Uri, symlink: Uri): Promise<void> {
+    return symlink.fileSystem.createSymlink(original, symlink);
   }
 }
