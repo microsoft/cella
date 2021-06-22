@@ -6,7 +6,7 @@
 # set | grep -i ^CELLA
 
 # GLOBALS
-CELLA_NODE_LATEST=14.16.0
+CELLA_NODE_LATEST=14.17.0
 CELLA_NODE_REMOTE=https://nodejs.org/dist/
 CELLA_PWD=`pwd`
 
