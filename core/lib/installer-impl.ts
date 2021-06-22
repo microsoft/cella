@@ -1,13 +1,11 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './acquire';
 import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from './archive';
 import { Installer, Nupkg, UnpackSettings, UnTar, UnZip, Verifiable } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
-
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 
 export interface InstallArtifactInfo {
   readonly name: string;

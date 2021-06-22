@@ -2,6 +2,9 @@
 if #ftw NEQ '' goto :init
 ($true){ $Error.clear(); }
 
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 # wrapper script for cella.
 # this is intended to be dot-sourced and then you can use the cella() function
 

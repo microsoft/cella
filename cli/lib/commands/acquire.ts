@@ -1,7 +1,6 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { Artifact, i } from '@microsoft/cella.core';
 import { MultiBar, SingleBar } from 'cli-progress';
 import { getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
