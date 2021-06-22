@@ -145,12 +145,6 @@ function digest(headers: Headers) {
     return { hash, algorithm: 'sha512' };
   }
 
-  // an md5 (either in digest or content-md5 or ...etag :o )
-  hash = md5(headers['digest'], headers['content-md5'], headers['etag']);
-  if (hash) {
-    return { hash, algorithm: 'md5' };
-  }
-
   // nothing we know about.
   return { hash: undefined, algorithm: undefined };
 }
@@ -168,7 +162,7 @@ export class RemoteFile {
   constructor(protected locations: Array<Uri>, options?: { credentials?: Credentials }) {
     this.info = locations.map(location => {
       return head(location, setCredentials({
-        'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
+        'want-digest': 'sha-256;q=1, sha-512;q=0.9',
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
       }, location, options?.credentials)).then(data => {
         if (data.statusCode === 200) {
@@ -220,41 +214,6 @@ export class RemoteFile {
  */
 function decode(data?: string): string | undefined {
   return data ? Buffer.from(data, 'base64').toString('hex').toLowerCase() : undefined;
-}
-
-/**
- * Pulls the MD5 from either the 'Digest' header or 'Content-MD5' header.
- * @param digest
- * @param contentMd5
- */
-function md5(digest: string | Array<string> | undefined, contentMd5: string | Array<string> | undefined, etag: string | Array<string> | undefined): string | undefined {
-  // do we have an md5 digest?
-  for (const each of (digest ? Array.isArray(digest) ? digest : [digest] : [])) {
-    if (each.startsWith('md5=')) {
-      return decode(each.substr(4));
-    }
-  }
-
-  // do we have a content-md5?
-  if (contentMd5?.length ?? 0 > 0) {
-    return decode(contentMd5 ? Array.isArray(contentMd5) ? contentMd5[0] : contentMd5 : undefined);
-  }
-
-  // ok, last ditch effort.
-  //
-  // maybe if they had an etag, it'd be an md5 hash perchance? (V) (°,,,,°) (V)
-  // even if this isn't the md5 hash, it's ok, we only use this to short circut the download process if possible.
-  etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
-  if (etag) {
-    etag = etag.replace(/\W/g, '').toLowerCase(); // drop quoutes and such, which are common.
-    if (etag.length === 32) {
-      // woop woop woop woop
-      return etag;
-    }
-  }
-
-  // nothing.
-  return undefined;
 }
 
 /**
