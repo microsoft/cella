@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { Uri } from '@microsoft/cella.core';
 import { bold, cyan, gray, green, greenBright, grey, underline, whiteBright, yellowBright } from 'chalk';
 

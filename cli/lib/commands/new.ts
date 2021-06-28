@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
