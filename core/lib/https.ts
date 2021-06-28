@@ -95,16 +95,8 @@ function setRange(headers: Headers | undefined, start?: number, end?: number) {
 
 function setCredentials(headers: Headers | undefined, target: Uri, credentials?: Credentials) {
   if (credentials) {
-    if (credentials.githubToken) {
-      switch (target.authority) {
-        case 'github.com':
-        case 'raw.githubusercontent.com':
-          headers = headers || {};
-          headers['Authorization'] = `token ${credentials.githubToken}`;
-          break;
-      }
-
-    }
+    // todo: if we have to add some credential headers, we'd do it here.
+    // we've removed github auth support until we actually need such a thing
   }
   return headers;
 }
