@@ -12,7 +12,7 @@ export interface InstallArtifactInfo {
   readonly targetLocation: Uri;
 }
 
-function artifactFileName(artifact: InstallArtifactInfo, install: Installer, extension: string) : string {
+function artifactFileName(artifact: InstallArtifactInfo, install: Installer, extension: string): string {
   let result = artifact.name;
   if (install.nametag) {
     result += '-';
@@ -28,16 +28,19 @@ function artifactFileName(artifact: InstallArtifactInfo, install: Installer, ext
   return result;
 }
 
-function applyAcquireOptions(options: AcquireOptions, install: Verifiable) : AcquireOptions {
+function applyAcquireOptions(options: AcquireOptions, install: Verifiable): AcquireOptions {
   if (install.sha256) {
-    return {...options, algorithm: 'sha256', value: install.sha256};
+    return { ...options, algorithm: 'sha256', value: install.sha256 };
+  }
+  if (install.sha512) {
+    return { ...options, algorithm: 'sha512', value: install.sha512 };
   }
 
   return options;
 }
 
-function applyUnpackOptions(options: OutputOptions, install: UnpackSettings) : OutputOptions {
-  return {...options, strip: install.strip, transform: install.transform ? [...install.transform] : undefined };
+function applyUnpackOptions(options: OutputOptions, install: UnpackSettings): OutputOptions {
+  return { ...options, strip: install.strip, transform: install.transform ? [...install.transform] : undefined };
 }
 
 export async function installNuGet(session: Session, artifact: InstallArtifactInfo, install: Nupkg, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
@@ -46,11 +49,11 @@ export async function installNuGet(session: Session, artifact: InstallArtifactIn
     session,
     install.location,
     targetFile,
-    applyAcquireOptions(options,install));
+    applyAcquireOptions(options, install));
   return new ZipUnpacker(session).unpack(
     file,
     artifact.targetLocation,
-    applyUnpackOptions(options,install));
+    applyUnpackOptions(options, install));
 }
 
 
@@ -59,14 +62,14 @@ async function acquireInstallArtifactFile(session: Session, targetFile: string, 
     session,
     locations.map(each => session.fileSystem.parse(each)),
     targetFile,
-    applyAcquireOptions(options,install));
+    applyAcquireOptions(options, install));
   return file;
 }
 
 export async function installUnTar(session: Session, artifact: InstallArtifactInfo, install: UnTar, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
   const file = await acquireInstallArtifactFile(session, artifactFileName(artifact, install, '.tar'), install.location, options, install);
   const x = await file.readBlock(0, 128);
-  let unpacker : Unpacker;
+  let unpacker: Unpacker;
   if (x[0] === 0x1f && x[1] === 0x8b) {
     unpacker = new TarGzUnpacker(session);
   } else if (x[0] === 66 && x[1] === 90) {
@@ -75,7 +78,7 @@ export async function installUnTar(session: Session, artifact: InstallArtifactIn
     unpacker = new TarUnpacker(session);
   }
 
-  return unpacker.unpack(file,artifact.targetLocation, applyUnpackOptions(options,install));
+  return unpacker.unpack(file, artifact.targetLocation, applyUnpackOptions(options, install));
 }
 
 export async function installUnZip(session: Session, artifact: InstallArtifactInfo, install: UnZip, options: { events?: Partial<UnpackEvents & AcquireEvents> }): Promise<void> {
@@ -83,5 +86,5 @@ export async function installUnZip(session: Session, artifact: InstallArtifactIn
   await new ZipUnpacker(session).unpack(
     file,
     artifact.targetLocation,
-    applyUnpackOptions(options,install));
+    applyUnpackOptions(options, install));
 }

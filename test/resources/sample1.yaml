@@ -40,3 +40,4 @@ settings:
 windows and arm:
   install: 
     nupkg: floobaloo/1.2.3
+    sha256: fluffyKittenBunnies
