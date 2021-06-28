@@ -1,10 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { ManyMap } from './lib/linq';
 import { Queue } from './lib/promise';
 
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 export * from './lib/acquire';
 export * from './lib/activation';
 export * from './lib/archive';

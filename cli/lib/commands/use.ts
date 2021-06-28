@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
@@ -9,10 +12,6 @@ import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { WhatIf } from '../switches/whatIf';
 
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 export class UseCommand extends Command {
   readonly command = 'use';
   readonly aliases = [];

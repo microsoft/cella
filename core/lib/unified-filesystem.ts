@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { strict } from 'assert';
 import { Readable, Writable } from 'stream';
@@ -59,7 +57,7 @@ export class UnifiedFileSystem extends FileSystem {
   }
 
   /**
-  * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+  * Creates a new URI from a string, e.g. `https://www.msft.com/some/path`,
   * `file:///usr/home`, or `scheme:with/path`.
   *
   * @param uri A string which represents an URI (see `URI#toString`).

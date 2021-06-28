@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 $ENV:NODE_OPTIONS="--enable-source-maps"
 
 
