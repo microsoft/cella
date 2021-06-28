@@ -60,9 +60,9 @@ steps:
 
   # Build and test the project.
   - task: UseNode@1
-    displayName: Use Node 14
+    displayName: Use Node 14.17 or later
     inputs:
-      version: "14.x"
+      version: ">=14.17.0"
   - script: npm install -g @microsoft/rush
     displayName: Install Rush
   - script: rush update

@@ -8,10 +8,10 @@ import { Readable } from 'stream';
 import { ProgressTrackingStream } from './streams';
 import { Uri } from './uri';
 
-// md5, sha1, sha256, sha512, sha384
-export type Algorithm = 'sha256' | 'sha384' | 'sha512' | 'md5'
+// sha256, sha512, sha384
+export type Algorithm = 'sha256' | 'sha384' | 'sha512'
 
-export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 'sha256' | 'sha1' | 'sha384' | 'sha512' | 'md5' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
+export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
   stream = await stream;
 
   try {
@@ -34,6 +34,6 @@ export interface VerifyEvents {
 
 export interface Hash {
   value?: string;
-  algorithm?: 'sha256' | 'sha384' | 'sha512' | 'md5'
+  algorithm?: 'sha256' | 'sha384' | 'sha512'
   events?: Partial<VerifyEvents>;
 }

@@ -75,14 +75,6 @@ abstract class FileInstallerNode extends InstallerNode {
     this.setString('sha256', value);
   }
 
-  get md5() {
-    return this.getString('md5');
-  }
-
-  set md5(value: string | undefined) {
-    this.setString('md5', value);
-  }
-
   get strip() {
     return this.getNumber('strip');
   }
