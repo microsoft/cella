@@ -17,7 +17,6 @@ class CommandName extends Argument {
       i`the name of the command for which you want help`
     ];
   }
-
 }
 
 /**@internal */
