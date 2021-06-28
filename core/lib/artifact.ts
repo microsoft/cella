@@ -25,7 +25,7 @@ export class SetOfDemands {
     this.#demands.set('', metadata);
 
     for (const query of metadata.demands) {
-      if (parseQuery(query).match(session.environment.context)) {
+      if (parseQuery(query).match(session.context)) {
         session.channels.debug(`Matching demand query: '${query}'`);
         this.#demands.set(query, metadata[query]);
       }
@@ -40,7 +40,7 @@ export class SetOfDemands {
       throw new MultipleInstallsMatched(install.map(each => each[0]));
     }
 
-    return install[0]?.[1].install;
+    return install[0]?.[1].install || [];
   }
 
   get errors() {
@@ -83,6 +83,8 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
 
+  isPrimary = false;
+
   readonly applicableDemands: SetOfDemands;
   constructor(protected session: Session, protected metadata: MetadataFile, public shortName: string) {
     this.applicableDemands = new SetOfDemands(this.metadata, this.session);
@@ -118,14 +120,14 @@ class ArtifactInfo {
     }
   }
 
-  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }) {
+  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }): Promise<boolean> {
     if (!options) {
       options = {};
     }
 
     // is it installed?
     if (await this.isInstalled && !options.force) {
-      return;
+      return false;
     }
 
     if (options.force) {
@@ -168,6 +170,8 @@ class ArtifactInfo {
 
     // after we unpack it, write out the installed manifest
     await this.writeManifest();
+
+    return true;
   }
 
   get name() {

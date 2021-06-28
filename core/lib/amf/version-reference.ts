@@ -30,7 +30,6 @@ export function getVersionRef(map: YAMLMap, property: string) {
   return (map.has(property)) ? new VRef(map, property) : <VersionReference><unknown>undefined;
 }
 
-
 /** @internal */
 export class VRef implements VersionReference {
   /** @internal */
@@ -68,7 +67,6 @@ export class VRef implements VersionReference {
           //
         }
       }
-
 
       if (a) {
         // we have at least a range going on here.

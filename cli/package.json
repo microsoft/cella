@@ -1,6 +1,6 @@
 {
   "name": "cella",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Cella CLI",
   "main": "dist/main.js",
   "directories": {
@@ -51,7 +51,7 @@
     "yaml": "2.0.0-5",
     "semver": "~7.3.4",
     "chalk": "4.1.0",
-    "@microsoft/cella.core": "~0.2.0",
+    "@microsoft/cella.core": "~0.3.0",
     "marked-terminal": "4.1.0",
     "marked": "2.0.0",
     "cli-progress": "3.9.0"

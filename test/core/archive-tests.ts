@@ -82,7 +82,7 @@ class ProgressCheckerEntry {
 
   test() {
     strict.ok(this.seenUnpacked, 'Should have got an unpacked message');
-    strict.ok(this.seenZero, 'Should have seen a zero progress.');
+    strict.ok(this.seenZero, 'Should have seen a zero progress');
     this.filePercentage.testRequireZero();
   }
 }

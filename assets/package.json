@@ -1,6 +1,6 @@
 {
   "name": "cella",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "description": "Cella CLI",
   "main": "cli/dist/main.js",
   "bin": {

@@ -66,13 +66,13 @@ describe('LocalFileSystemTests', () => {
     await fs.writeFile(file, expectedBuffer);
 
     // is there a file there?
-    strict.ok(await fs.isFile(file), `the file ${file.fsPath} is not present.`);
+    strict.ok(await fs.isFile(file), `the file ${file.fsPath} is not present`);
 
     // read it back
     const actualBuffer = await fs.readFile(file);
     strict.deepEqual(expectedBuffer, actualBuffer, 'contents should be the same');
     const actualText = actualBuffer.toString();
-    strict.equal(expectedText, actualText, 'text should be equal too.');
+    strict.equal(expectedText, actualText, 'text should be equal too');
 
   });
 

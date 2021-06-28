@@ -11,7 +11,6 @@ import { Command } from '../command';
 import { cli } from '../constants';
 import { debug, error, log } from '../styling';
 import { Switch } from '../switch';
-import { Debug } from '../switches/debug';
 
 class Check extends Switch {
   switch = 'check';
@@ -38,7 +37,6 @@ export class VersionCommand extends Command {
   argumentsHelp = [];
   check = new Check(this);
   update = new Update(this);
-  debug = new Debug(this);
 
   versionUrl = session.fileSystem.parse('https://aka.ms/cella.version');
 
@@ -55,7 +53,7 @@ export class VersionCommand extends Command {
 
   private async getRemoteVersion() {
     const version = session.utf8(await session.fileSystem.readFile(this.versionUrl));
-    const semver = parse(version);
+    const semver = parse(version.trim());
     strict.ok(semver, i`Unable to parse version ${version}`);
 
     return semver;
@@ -75,7 +73,7 @@ export class VersionCommand extends Command {
         }
 
       } catch (err) {
-        error('Failed to get latest version number.');
+        error('Failed to get latest version number');
         return false;
       }
       return true;
@@ -88,7 +86,7 @@ export class VersionCommand extends Command {
         const semver = await this.getRemoteVersion();
 
         if (semver.compare(cliVersion) > 0) {
-          log(i`There is a new version (${semver.version}) of ${cli} available.`);
+          log(i`There is a new version (${semver.version}) of ${cli} available`);
         }
         return true;
       } catch (err) {

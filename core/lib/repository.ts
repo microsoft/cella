@@ -11,6 +11,7 @@ import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
+import { i } from './i18n';
 import { MetadataFile, parseConfiguration } from './metadata-format';
 import { Queue } from './promise';
 import { Session } from './session';
@@ -28,11 +29,13 @@ const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 export interface Repository {
   readonly count: number;
   readonly where: RepoIndex;
+  readonly loaded: boolean;
 
   load(): Promise<void>;
   save(): Promise<void>;
   update(): Promise<void>;
   regenerate(): Promise<void>;
+
   openArtifact(manifestPath: string): Promise<Artifact>;
   openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
   readonly baseFolder: Uri;
@@ -63,7 +66,6 @@ export class CellaRepository implements Repository {
       }
       try {
         const amf = parseConfiguration(uri.fsPath, content);
-
 
         if (!amf.isValidYaml) {
           for (const err of amf.yamlErrors) {
@@ -109,9 +111,22 @@ export class CellaRepository implements Repository {
     this.catalog.doneInsertion();
   }
 
+  #loaded = false;
+
+  get loaded() {
+    return this.#loaded;
+  }
+
   async load(): Promise<void> {
+    if (! await this.indexYaml.exists()) {
+      await this.update();
+    }
+
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
+
+    this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
+    this.#loaded = true;
   }
 
   async save(): Promise<void> {
@@ -123,6 +138,8 @@ export class CellaRepository implements Repository {
   }
 
   async update() {
+    this.session.channels.message(i`Updating repository data from ${this.remoteLocation.toString()}`);
+
     const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {
       credentials: {
         githubToken: this.session.environment['githubAuthToken']
@@ -132,12 +149,6 @@ export class CellaRepository implements Repository {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.baseFolder, { strip: 1 });
     }
-  }
-
-  async resolveDependencies(manifests: Array<string>) {
-    // open all the ones that are listed
-    // go thru each one, and add in the dependencies
-    //
   }
 
   private async openManifest(manifestPath: string) {
@@ -169,7 +180,7 @@ export class DefaultRepository extends CellaRepository {
   constructor(session: Session) {
     const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
     //('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    const repositoryFolder = session.environment['repositoryFolder'];
+    const repositoryFolder = session.settings['repositoryFolder'];
     const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.cellaHome.join('repo', 'default');
     super(session, localUri, remoteUri);
   }

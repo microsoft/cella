@@ -11,7 +11,6 @@ import { Uri } from './uri';
 // sha256, sha512, sha384
 export type Algorithm = 'sha256' | 'sha384' | 'sha512'
 
-// export async function hash(stream: Readable, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
 export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256', options?: { events?: Partial<VerifyEvents> }) {
   stream = await stream;
 
@@ -26,7 +25,7 @@ export async function hash(stream: Readable, uri: Uri, size: number, algorithm: 
   } finally {
     stream.destroy();
   }
-  fail('Should have returned a chunk from the pipe.');
+  fail('Should have returned a chunk from the pipe');
 }
 
 export interface VerifyEvents {

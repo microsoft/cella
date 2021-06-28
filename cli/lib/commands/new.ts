@@ -5,36 +5,40 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
-import { cli } from '../constants';
+import { project } from '../constants';
 import { log } from '../styling';
-import { Repo } from '../switches/repo';
 import { WhatIf } from '../switches/whatIf';
 
-export class RegenerateCommand extends Command {
-  readonly command = 'regenerate';
-  readonly aliases = ['regen'];
+export class NewCommand extends Command {
+  readonly command = 'new';
+  readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
-  repo = new Repo(this);
   whatIf = new WhatIf(this);
+
   get summary() {
-    return i`regenerate the index for a repository`;
+    return i`Creates a new project file`;
   }
 
   get description() {
     return [
-      i`This allows the user to regenerate the index.yaml files for a ${cli} repository.`,
+      i`This allows the consumer create a new project file ('${project}').`,
     ];
   }
 
   async run() {
-    const repository = session.getRepository('default');
+    if (await session.currentDirectory.exists(project)) {
+      log(i`The folder at ${session.currentDirectory.fsPath} already contains a project file '${project}'`);
+      return false;
+    }
 
-    log(i`Regenerating index.yaml file for the repository at ${repository.baseFolder.fsPath}`);
-    await repository.regenerate();
-    await repository.save();
-    log(i`Regeneration complete. Index contains ${repository.count} metadata files`);
+    await session.currentDirectory.join(project).writeFile(Buffer.from(`# Environment configuration
+info:
+  name: NAME
+  version: 1.0.0
+  summary: My Project
 
+`));
     return true;
   }
 }

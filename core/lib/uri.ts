@@ -138,13 +138,13 @@ bad.fragment === '/project1';
   }
 
   relative(target: Uri): string {
-    strict.ok(target.authority === this.authority, `Uris '${target.toString()}' and '${this.toString()}' are not of the same base.`);
+    strict.ok(target.authority === this.authority, `Uris '${target.toString()}' and '${this.toString()}' are not of the same base`);
     return relative(this.path, target.path).replace(/\\/g, '/');
   }
 
   /** returns true if the uri represents a file:// resource. */
   get isLocal(): boolean {
-    return this.scheme === 'file';
+    return this.scheme === 'file' || this.scheme === 'vsix';
   }
 
   get isHttp(): boolean {

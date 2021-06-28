@@ -6,9 +6,11 @@ import { i, RemoteFileUnavailable, Repository } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { CommandLine } from '../command-line';
+import { count } from '../format';
 import { error, log, writeException } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
+import { WhatIf } from '../switches/whatIf';
 export class UpdateCommand extends Command {
   readonly command = 'update';
   readonly aliases = [];
@@ -16,6 +18,7 @@ export class UpdateCommand extends Command {
   argumentsHelp = [];
   repo = new Repo(this);
   ghAuth = new GithubAuthToken(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
     return i`update the repository from the remote`;
@@ -31,16 +34,16 @@ export class UpdateCommand extends Command {
 
     const repository = session.getRepository('default');
     if (!repository) {
-      throw new Error('Repository is not accessible.');
+      throw new Error('Repository is not accessible');
     }
     try {
       log(i`Downloading repository data`);
       await repository.update();
       await repository.load();
-      log(i`Repository update complete. Repository contains \`${repository.count}\` metadata files.`);
+      log(i`Repository update complete. Repository contains ${count(repository.count)} metadata files`);
     } catch (e) {
       if (e instanceof RemoteFileUnavailable) {
-        log(i`Unable to download repository snapshot.`);
+        log(i`Unable to download repository snapshot`);
         return false;
       }
       writeException(e);
@@ -50,8 +53,8 @@ export class UpdateCommand extends Command {
   }
 
   static async update(repository: Repository) {
-    log(i`Artifact repository data is not loaded.`);
-    log(i`Attempting to update artifact repository.`);
+    log(i`Artifact repository data is not loaded`);
+    log(i`Attempting to update artifact repository`);
     const update = new UpdateCommand(new CommandLine([]));
 
     let success = true;
@@ -62,7 +65,7 @@ export class UpdateCommand extends Command {
       success = false;
     }
     if (!success) {
-      error(i`Unable to load repository index.`);
+      error(i`Unable to load repository index`);
       return false;
     }
     try {
@@ -70,7 +73,7 @@ export class UpdateCommand extends Command {
     } catch (e) {
       writeException(e);
       // it just doesn't want to load.
-      error(i`Unable to load repository index.`);
+      error(i`Unable to load repository index`);
       return false;
     }
     return true;

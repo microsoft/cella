@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CellaRepository, serialize } from '@microsoft/cella.core';
-import { rejects, strict } from 'assert';
+import { strict } from 'assert';
 import { createHash } from 'crypto';
 import { describe, it } from 'mocha';
 import { getNouns, paragraph, sentence } from 'txtgen';
@@ -98,11 +98,6 @@ describe('Repository Tests', () => {
     await local.fs.copy(local.rootFolderUri.join('resources', 'repo'), repoFolder);
   });
 
-  it('fails without an index', async () => {
-    const repository = local.session.getRepository('default');
-    await rejects(async () => await repository.load(), 'Should fail when there is not an index ');
-  });
-
   it('can save and load the index', async () => {
     const repository = local.session.getRepository('default');
     await repository.regenerate();
@@ -110,7 +105,7 @@ describe('Repository Tests', () => {
 
     const anotherRepository = new CellaRepository(local.session, local.session.cellaHome.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
-    strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one.');
+    strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one');
   });
 
   it('Loads a bunch items', async () => {
@@ -119,7 +114,7 @@ describe('Repository Tests', () => {
 
     const all = await repository.openArtifacts(repository.where.items);
     const items = [...all.values()].flat();
-    strict.equal(items.length, repository.count, 'Should have loaded everything.');
+    strict.equal(items.length, repository.count, 'Should have loaded everything');
 
   });
 

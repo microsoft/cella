@@ -33,6 +33,23 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
+    console.log(doc.content);
+  });
+
+  it('load/persist environment.yaml', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'environment.yaml'))).toString('utf-8');
+    const doc = parse('cenvironment.yaml', content);
+
+    console.log(doc.content);
+    for (const each of doc.validationErrors) {
+      console.log(each);
+    }
+
+
+    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isValid, 'better be valid!');
+
+    console.log(doc.content);
 
   });
 
@@ -101,15 +118,16 @@ describe('Amf', () => {
     strict.deepEqual(doc.settings.variables['test'], ['abc', 'another value'], 'variables should be an array of two items now');
 
     doc.settings.paths['bin'] = [...doc.settings.paths['bin'], 'hello/there'];
-    strict.deepEqual(doc.settings.paths['bin'].length, 3, 'there should be three paths in bin now.');
+    strict.deepEqual(doc.settings.paths['bin'].length, 3, 'there should be three paths in bin now');
 
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
-    const install = doc['windows and arm'].install;
-    strict.ok(isNupkg(install[0]), 'the install type should be nupkg');
-    strict.equal(install[0].location, 'floobaloo/1.2.3', 'should have correct location');
+    const install = doc['windows and arm'].install[0];
 
-    // console.log(doc.toString());
+    strict.ok(isNupkg(install), 'the install type should be nupkg');
+    strict.equal((install).location, 'floobaloo/1.2.3', 'should have correct location');
+
+    console.log(doc.toString());
   });
 
   it('read invalid yaml file', async () => {
@@ -131,7 +149,7 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
-    strict.equal(doc.validationErrors[0], '`empty.yaml:1:1` SectionMessing, Missing section \'info\'', 'Should have an error about info');
+    strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');
   });
 
   it('validation errors', async () => {

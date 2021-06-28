@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Session } from '@microsoft/cella.core';
-import { blue, cyan, gray, green, red, white, yellow, yellowBright } from 'chalk';
+import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
 import { CommandLine } from './command-line';
@@ -91,11 +91,4 @@ export function initStyling(commandline: CommandLine, session: Session) {
   session.channels.on('warning', (text: string, context: any, msec: number) => {
     warning(text);
   });
-}
-
-export function formatName(fullName: string, shortName?: string) {
-  if (shortName) {
-    return `${fullName.substr(0, fullName.length - shortName.length)}${yellowBright(shortName)}`;
-  }
-  return yellowBright(fullName);
 }

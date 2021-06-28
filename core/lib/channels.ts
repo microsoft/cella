@@ -14,7 +14,6 @@ export interface ChannelEvents {
   debug(text: string, context: any, msec: number): void;
 }
 
-
 /**
  * @internal
  *

@@ -5,12 +5,12 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
+import { artifactIdentity } from '../format';
 import { Table } from '../markdown-table';
-import { formatName, log } from '../styling';
+import { log } from '../styling';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { UpdateCommand } from './update';
-
 
 export class FindCommand extends Command {
   readonly command = 'find';
@@ -21,7 +21,7 @@ export class FindCommand extends Command {
   version = new Version(this)
 
   get summary() {
-    return i`Find artifacts in the repository.`;
+    return i`Find artifacts in the repository`;
   }
 
   get description() {
@@ -56,7 +56,7 @@ export class FindCommand extends Command {
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
       if (!latest.info.dependencyOnly) {
-        const name = formatName(fullName, latest.shortName);
+        const name = artifactIdentity(fullName, latest.shortName);
         table.push(name, latest.info.version, latest.info.summary || '');
       }
     }
