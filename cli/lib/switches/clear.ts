@@ -8,7 +8,7 @@ export class Clear extends Switch {
   switch = 'clear';
   get help() {
     return [
-      i`removes all files in the local cache.`
+      i`removes all files in the local cache`
     ];
   }
 }

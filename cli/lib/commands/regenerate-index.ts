@@ -7,7 +7,7 @@ import { Command } from '../command';
 import { cli } from '../constants';
 import { log } from '../styling';
 import { Repo } from '../switches/repo';
-
+import { WhatIf } from '../switches/whatIf';
 
 export class RegenerateCommand extends Command {
   readonly command = 'regenerate';
@@ -15,7 +15,7 @@ export class RegenerateCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
-
+  whatIf = new WhatIf(this);
   get summary() {
     return i`regenerate the index for a repository`;
   }
@@ -32,7 +32,7 @@ export class RegenerateCommand extends Command {
     log(i`Regenerating index.yaml file for the repository at ${repository.baseFolder.fsPath}`);
     await repository.regenerate();
     await repository.save();
-    log(i`Regeneration complete. Index contains ${repository.count} metadata files.`);
+    log(i`Regeneration complete. Index contains ${repository.count} metadata files`);
 
     return true;
   }

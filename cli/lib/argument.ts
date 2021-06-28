@@ -12,6 +12,4 @@ export abstract class Argument implements Help {
   constructor(protected command: Command) {
     command.arguments.push(this);
   }
-
-
 }

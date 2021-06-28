@@ -9,17 +9,23 @@ import { argv } from 'process';
 import { Version as cliVersion } from './exports';
 import { CommandLine } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
+import { ActivateCommand } from './lib/commands/activate';
+import { AddCommand } from './lib/commands/add';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
+import { DeactivateCommand } from './lib/commands/deactivate';
 import { DeleteCommand } from './lib/commands/delete';
 import { FindCommand } from './lib/commands/find';
 import { HelpCommand } from './lib/commands/help';
 import { ListCommand } from './lib/commands/list';
+import { NewCommand } from './lib/commands/new';
 import { RegenerateCommand } from './lib/commands/regenerate-index';
+import { RemoveCommand } from './lib/commands/remove';
 import { UpdateCommand } from './lib/commands/update';
 import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
 import { blank, cli } from './lib/constants';
+import { command as formatCommand, hint } from './lib/format';
 import { debug, error, initStyling, log } from './lib/styling';
 
 // parse the command line
@@ -40,7 +46,7 @@ export let session: Session;
 
 async function main() {
   // create our session for this process.
-  session = new Session(process.cwd(), commandline.environment);
+  session = new Session(process.cwd(), commandline.context, <any>commandline, process.env);
 
   initStyling(commandline, session);
 
@@ -55,48 +61,60 @@ async function main() {
   // console.log((await session.findProjectProfile())?.fsPath);
 
   const help = new HelpCommand(commandline);
-  const version = new VersionCommand(commandline);
+
+  const find = new FindCommand(commandline);
+  const list = new ListCommand(commandline);
+
+  const add = new AddCommand(commandline);
+  const acquire = new AcquireCommand(commandline);
+  const use = new UseCommand(commandline);
+
+  const remove = new RemoveCommand(commandline);
+  const del = new DeleteCommand(commandline);
+
+  const activate = new ActivateCommand(commandline);
+  const deactivate = new DeactivateCommand(commandline);
+
+  const newcmd = new NewCommand(commandline);
+
   const regenerate = new RegenerateCommand(commandline);
   const update = new UpdateCommand(commandline);
-  const find = new FindCommand(commandline);
-  const acquire = new AcquireCommand(commandline);
-  const del = new DeleteCommand(commandline);
-  const list = new ListCommand(commandline);
+
+  const version = new VersionCommand(commandline);
   const cache = new CacheCommand(commandline);
   const clean = new CleanCommand(commandline);
-  const use = new UseCommand(commandline);
 
   debug(`Postscript file ${session.postscriptFile}`);
 
-  const command = commandline.command;
-  if (!command) {
-    // no command recognized.
-    // check if --help -h -? --? /? are asked for
-    if (commandline.switches['help'] || commandline.switches['?'] || (['-h', '-help', '-?', '/?'].indexOf(commandline.inputs[0]) > -1)) {
-      // let's just run general help
-      await help.run();
-      return process.exit(0);
-    }
-
-    // did they specify inputs?
-    if (commandline.inputs.length > 0) {
-      // unrecognized command
-      error(i`Unrecognized command '${commandline.inputs[0]}'.`);
-      log(blank);
-      log(green.dim(i`Use \`${cli} ${help.command}\` ${green.dim(i`to get help`)}`));
-      return process.exit(1);
-    }
-    return;
-  }
-
-  // if they added --help, we treat it just like help <command>
-  if (commandline.switches['help'] || commandline.switches['?'] || (['-h', '-help', '-?', '/?'].indexOf(commandline.inputs[0]) > -1)) {
+  const needsHelp = !!(commandline.switches['help'] || commandline.switches['?'] || (['-h', '-help', '-?', '/?'].find(each => argv.includes(each))));
+  // check if --help -h -? --? /? are asked for
+  if (needsHelp) {
     // let's just run general help
     await help.run();
     return process.exit(0);
   }
 
+  const command = commandline.command;
+  if (!command) {
+    // no command recognized.
+
+    // did they specify inputs?
+    if (commandline.inputs.length > 0) {
+      // unrecognized command
+      error(i`Unrecognized command '${commandline.inputs[0]}'`);
+      log(blank);
+      log(hint(i`Use ${formatCommand(`${cli} ${help.command}`)} to get help`));
+      return process.exitCode = 1;
+    }
+
+    log(blank);
+    log(hint(i`Use ${formatCommand(`${cli} ${help.command}`)} to get help`));
+
+    return process.exitCode = 0;
+  }
+
   const result = await command.run();
+  log(blank);
 
   await session.writePostscript();
 

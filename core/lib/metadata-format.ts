@@ -17,7 +17,13 @@ export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly cont
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('Fatal Error: this should never get called.'), new Amf(doc, filename, lc));
+  const q = <Amf>proxyDictionary(<YAMLMap>doc.contents,
+    (m, p) => {
+      return new DemandNode(getOrCreateMap(m, p), p);
+    },
+    () => fail('Fatal Error: this should never get called'),
+    new Amf(doc, filename, lc));
+  return q;
 }
 
 /**
@@ -280,8 +286,6 @@ export interface Settings extends DictionaryOf<any>, Validation {
 export interface Verifiable {
   /** SHA-256 hash */
   sha256?: string;
-  /** MD5 hash */
-  md5?: string; // example, MD5 might not be a good idea
 }
 
 /**

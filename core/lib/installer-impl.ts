@@ -33,10 +33,6 @@ function applyAcquireOptions(options: AcquireOptions, install: Verifiable) : Acq
     return {...options, algorithm: 'sha256', value: install.sha256};
   }
 
-  if (install.md5) {
-    return {...options, algorithm: 'md5', value: install.md5};
-  }
-
   return options;
 }
 

@@ -4,8 +4,9 @@
 import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { Command } from '../command';
+import { artifactIdentity } from '../format';
 import { Table } from '../markdown-table';
-import { formatName, log } from '../styling';
+import { log } from '../styling';
 import { Installed } from '../switches/installed';
 
 export class ListCommand extends Command {
@@ -16,7 +17,7 @@ export class ListCommand extends Command {
   installed = new Installed(this);
 
   get summary() {
-    return i`Lists the artifacts.`;
+    return i`Lists the artifacts`;
   }
 
   get description() {
@@ -32,14 +33,14 @@ export class ListCommand extends Command {
 
       for (const { artifact, id, folder } of artifacts) {
         const latest = artifacts[0];
-        const name = formatName(id);
+        const name = artifactIdentity(id);
         table.push(name, artifact.info.version, artifact.info.summary || '');
       }
       log(table.toString());
       log();
     }
     else {
-      log('use --installed for now.');
+      log('use --installed for now');
     }
 
     return true;

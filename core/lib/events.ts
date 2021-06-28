@@ -6,7 +6,6 @@ import { EventEmitter } from 'events';
 import { Stream } from 'stream';
 import { promisify } from 'util';
 
-
 /**
  * Creates a promise that resolves after a delay
  *
@@ -80,7 +79,6 @@ export function completed(stream: Stream): Promise<void> {
     stream.once('error', reject);
   });
 }
-
 
 const ignore = new Set([
   'constructor',

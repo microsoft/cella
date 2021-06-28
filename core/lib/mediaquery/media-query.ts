@@ -228,22 +228,3 @@ class Expression {
     }
   }
 }
-/**
-
-# query-list
-\s* #query \s* [, #query ]* ]?
-
-# query
-- \s* #expression \s* ['AND' \s* #expression ]*
-
-# expression
-- \s* #identifier \s*
-- \s* #identifier \s* ':' \s* #constant  \s*
-- '(' #expression ')' \s*
-- ['NOT']? #expression
-
-
-# constant
-<string>|<number>|<boolean>
-
- */

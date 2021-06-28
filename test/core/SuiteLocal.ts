@@ -33,12 +33,9 @@ export class SuiteLocal {
 
   constructor() {
     this.tempFolder = uniqueTempFolder();
-    this.session = new Session(this.tempFolder, {
+    this.session = new Session(this.tempFolder, <any>{}, {
       cella_home: join(this.tempFolder, 'cella_home'),
-      context: <any>{
-
-      }
-    });
+    }, {});
 
     this.fs = new LocalFileSystem(this.session);
     this.rootFolderUri = this.fs.file(this.rootFolder);

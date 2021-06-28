@@ -5,29 +5,7 @@ import { delimiter } from 'path';
 import { linq } from './linq';
 import { Uri } from './uri';
 
-function mapSerializer(key: any, value: any) {
-  return (value instanceof Map) ? { dataType: 'Map', value: Array.from(value.entries()) } : value;
-}
-
-function mapDeserializer(key: any, value: any) {
-  return (typeof value === 'object' && value !== null && value.dataType === 'Map') ? new Map(value.value) : value;
-}
-
 export class Activation {
-  toJSON() {
-    return JSON.stringify(this, mapSerializer);
-  }
-
-  static fromJSON(text: string) {
-    const v = JSON.parse(text, mapDeserializer);
-    const result = new Activation();
-    result.defines = v.defines;
-    result.tools = v.tools;
-    result.paths = v.paths;
-    result.environment = v.environment;
-    return result;
-  }
-
   defines = new Map<string, string>();
   tools = new Map<string, Uri>();
   paths = new Map<string, Array<Uri>>();

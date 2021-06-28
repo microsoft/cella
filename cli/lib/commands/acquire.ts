@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
-import { Artifact, i } from '@microsoft/cella.core';
-import { MultiBar, SingleBar } from 'cli-progress';
-import { getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
+import { i } from '@microsoft/cella.core';
+import { installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
-import { error, formatName, log, warning } from '../styling';
+import { blank } from '../constants';
+import { cmdSwitch } from '../format';
+import { debug, error, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
+import { WhatIf } from '../switches/whatIf';
 
 export class AcquireCommand extends Command {
   readonly command = 'acquire';
@@ -17,133 +18,64 @@ export class AcquireCommand extends Command {
   argumentsHelp = [];
   repo = new Repo(this);
   ghAuth = new GithubAuthToken(this);
-  version = new Version(this)
+  version = new Version(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Acquire artifacts in the repository.`;
+    return i`Acquire artifacts in the repository`;
   }
 
   get description() {
     return [
-      i`This allows the consumer to acquire (download and unpack) artifacts. Artifacts must be activated to be used.`,
+      i`This allows the consumer to acquire (download and unpack) artifacts. Artifacts must be activated to be used`,
     ];
   }
 
   async run() {
     if (this.inputs.length === 0) {
-      error(i`No artifacts specified.`);
+      error(i`No artifacts specified`);
       return false;
     }
 
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
-      error(i`Multiple packages specified, but not an equal number of '--version=' switches. `);
+      error(i`Multiple packages specified, but not an equal number of ${cmdSwitch('version')} switches.`);
       return false;
     }
 
-    const repository = await getRepository();
-    if (!repository) {
-      // the repository isn't functional
-      return false;
-    }
-
-    const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
-    const artifacts = await selectArtifacts(selections);
+    const artifacts = await selectArtifacts(<Selections>this.inputs.map((v, i) => [v, versions[i]]));
 
     if (!artifacts) {
+      debug('No artifacts selected - stopping');
       return false;
     }
 
-    if (await showArtifacts(artifacts)) {
-      warning(i`No artifacts are being acquired.`);
+    if (!await showArtifacts(artifacts, this.commandLine)) {
+      warning(i`No artifacts are acquired`);
       return false;
     }
 
-    if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
-      log(i`Installation completed successfuly`);
+    const numberOfArtifacts = await [...artifacts].count(async each => !(!this.commandLine.force && await each.isInstalled));
+
+    if (!numberOfArtifacts) {
+      log(blank);
+      log(i`All artifacts are already installed`);
       return true;
     }
-    return false;
-  }
 
-  async install(artifacts: Iterable<Artifact>) {
-    // resolve the full set of artifacts to install.
+    debug(`Installing ${numberOfArtifacts} artifacts`);
 
-    const bar = new MultiBar({
-      clearOnComplete: true, hideCursor: true, format: '{name} {bar}\u25A0 {percentage}% {action} {current}',
-      barCompleteChar: '\u25A0',
-      barIncompleteChar: ' ',
-      etaBuffer: 40
-    });
-    let dl: SingleBar | undefined;
-    let p: SingleBar | undefined;
+    const [success] = await installArtifacts(artifacts, { force: this.commandLine.force, language: this.commandLine.language, allLanguages: this.commandLine.allLanguages });
 
-    for (const artifact of artifacts) {
-      const id = artifact.id;
-
-      try {
-        await artifact.install({
-          force: this.commandLine.force,
-          allLanguages: this.commandLine.allLanguages,
-          language: this.commandLine.language,
-          events: {
-            verifying: (name, percent) => {
-              if (percent >= 100) {
-                p?.update(percent);
-                p = undefined;
-                return;
-              }
-              if (percent) {
-                if (!p) {
-                  p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
-                }
-                p.update(percent);
-              }
-            },
-            download: (name, percent) => {
-              if (percent >= 100) {
-                if (dl) {
-                  dl.update(percent);
-                }
-                dl = undefined;
-                return;
-              }
-              if (percent) {
-                if (!dl) {
-                  dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
-                }
-                dl.update(percent);
-              }
-            },
-            fileProgress: (entry) => {
-              p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
-            },
-            progress: (percent: number) => {
-              if (percent >= 100) {
-                if (p) {
-                  p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
-                }
-                p = undefined;
-                return;
-              }
-              if (percent) {
-                if (!p) {
-                  p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
-                }
-                p.update(percent);
-              }
-            }
-          }
-        });
-      } catch (e) {
-        bar.stop();
-        error(i`Error installing ${formatName(id)} - ${e} `);
-        return false;
-      }
-
-
-      bar.stop();
+    if (success) {
+      log(blank);
+      log(i`${numberOfArtifacts} artifacts installed successfuly`);
+      return true;
     }
-    return true;
+
+    log(blank);
+    log(i`Installation failed -- stopping`);
+
+    return false;
   }
 }

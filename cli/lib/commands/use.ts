@@ -5,10 +5,12 @@ import { i } from '@microsoft/cella.core';
 import { session } from '../../main';
 import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
+import { cmdSwitch } from '../format';
 import { error, log, warning } from '../styling';
 import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
+import { WhatIf } from '../switches/whatIf';
 
 export class UseCommand extends Command {
   readonly command = 'use';
@@ -17,10 +19,11 @@ export class UseCommand extends Command {
   argumentsHelp = [];
   repo = new Repo(this);
   ghAuth = new GithubAuthToken(this);
-  version = new Version(this)
+  version = new Version(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Instantly activates an artifact outside of the project.`;
+    return i`Instantly activates an artifact outside of the project`;
   }
 
   get description() {
@@ -31,13 +34,13 @@ export class UseCommand extends Command {
 
   async run() {
     if (this.inputs.length === 0) {
-      error(i`No artifacts specified.`);
+      error(i`No artifacts specified`);
       return false;
     }
 
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
-      error(i`Multiple packages specified, but not an equal number of '--verison=' switches. `);
+      error(i`Multiple packages specified, but not an equal number of ${cmdSwitch('version')} switches`);
       return false;
     }
 
@@ -54,14 +57,15 @@ export class UseCommand extends Command {
       return false;
     }
 
-    if (await showArtifacts(artifacts)) {
-      warning(i`No artifacts are being acquired.`);
+    if (!await showArtifacts(artifacts, this.commandLine)) {
+      warning(i`No artifacts are being acquired`);
       return false;
     }
 
-    if (await installArtifacts(artifacts, { force: this.commandLine.force })) {
-      log(i`Activating Artifacts...`);
-      session.setActivationInPostscript(await getArtifactActivation(artifacts));
+    const [success, artifactStatus] = await installArtifacts(artifacts, { force: this.commandLine.force, language: this.commandLine.language, allLanguages: this.commandLine.allLanguages });
+    if (success) {
+      log(i`Activating individual artifacts`);
+      await session.setActivationInPostscript(await getArtifactActivation(artifacts), false);
     } else {
       return false;
     }

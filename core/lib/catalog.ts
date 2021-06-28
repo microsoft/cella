@@ -446,7 +446,6 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
     return this.index;
   }
 
-
   /** deserializes an object graph back into this key */
   deserialize(content: any) {
     super.deserialize(content);
@@ -476,13 +475,14 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
     // think the perf will suffer much doing it this way.
 
     const set = new Set<number>();
+    const range = new Range(value);
 
     for (const node of this.values.entries()) {
       for (const id of node[1]) {
 
         if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
           // it's currently in the keep list.
-          if (new Range(value).test(node[0])) {
+          if (range.test(node[0])) {
             set.add(id);
           }
         }

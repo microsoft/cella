@@ -8,7 +8,7 @@ export class Installed extends Switch {
   switch = 'installed';
   get help() {
     return [
-      i`shows the _installed_ artifacts.`
+      i`shows the _installed_ artifacts`
     ];
   }
 }

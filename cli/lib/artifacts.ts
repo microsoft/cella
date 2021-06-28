@@ -6,48 +6,50 @@ import { Activation } from '@microsoft/cella.core/dist/lib/activation';
 import { MultiBar, SingleBar } from 'cli-progress';
 import { session } from '../main';
 import { UpdateCommand } from './commands/update';
+import { artifactIdentity, artifactReference } from './format';
 import { Table } from './markdown-table';
-import { error, formatName, log } from './styling';
+import { debug, error, log } from './styling';
 
-export async function showArtifacts(artifacts: Set<Artifact>) {
+export async function showArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }) {
   let failing = false;
-  const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Summary`);
+  const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Dependency`, i`Summary`);
   for (const artifact of artifacts) {
 
-    const name = formatName(artifact.info.id, artifact.shortName);
+    const name = artifactIdentity(artifact.info.id, artifact.shortName);
     if (!artifact.isValid) {
       failing = true;
       for (const err of artifact.validationErrors) {
         error(err);
       }
     }
-    table.push(name, artifact.info.version, await artifact.isInstalled ? 'installed' : 'not installed', artifact.info.summary || '');
+    table.push(name, artifact.info.version, options?.force || await artifact.isInstalled ? 'installed' : 'will install', artifact.isPrimary ? ' ' : '*', artifact.info.summary || '');
   }
   log(table.toString());
 
-  return failing;
+  return !failing;
 }
 
 export type Selections = Array<[string, string | undefined]>;
 
-export async function selectArtifacts(selections: Selections) {
+export async function selectArtifacts(selections: Selections): Promise<false | Set<Artifact>> {
   const artifacts = new Set<Artifact>();
 
   for (const [identity, version] of selections) {
     const artifact = await session.getArtifact(identity, version);
     if (!artifact) {
-      error(`Unable to resolve artifact: \`${identity}/${version || '*'}\``);
+      error(`Unable to resolve artifact: ${artifactReference(identity, version || '*')}`);
       return false;
     }
-
     artifacts.add(artifact);
+    artifact.isPrimary = true;
     await artifact.resolveDependencies(artifacts);
   }
   return artifacts;
 }
 
-export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean }) {
+export async function installArtifacts(artifacts: Iterable<Artifact>, options?: { force?: boolean, allLanguages?: boolean, language?: string }): Promise<[boolean, Map<Artifact, boolean>]> {
   // resolve the full set of artifacts to install.
+  const installed = new Map<Artifact, boolean>();
 
   const bar = new MultiBar({
     clearOnComplete: true, hideCursor: true, format: '{name} {bar}\u25A0 {percentage}% {action} {current}',
@@ -62,8 +64,8 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
     const id = artifact.id;
 
     try {
-      await artifact.install({
-        force: options?.force,
+      const actuallyInstalled = await artifact.install({
+        ...options,
         events: {
           verifying: (name, percent) => {
             if (percent >= 100) {
@@ -73,7 +75,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
             }
             if (percent) {
               if (!p) {
-                p = bar.create(100, 0, { action: i`verifying`, name: formatName(id), current: name });
+                p = bar.create(100, 0, { action: i`verifying`, name: artifactIdentity(id), current: name });
               }
               p.update(percent);
             }
@@ -88,40 +90,43 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
             }
             if (percent) {
               if (!dl) {
-                dl = bar.create(100, 0, { action: i`downloading`, name: formatName(id), current: name });
+                dl = bar.create(100, 0, { action: i`downloading`, name: artifactIdentity(id), current: name });
               }
               dl.update(percent);
             }
           },
           fileProgress: (entry) => {
-            p?.update({ action: i`unpacking`, name: formatName(id), current: entry.extractPath });
+            p?.update({ action: i`unpacking`, name: artifactIdentity(id), current: entry.extractPath });
           },
           progress: (percent: number) => {
             if (percent >= 100) {
               if (p) {
-                p.update(percent, { action: i`unpacked`, name: formatName(id), current: '' });
+                p.update(percent, { action: i`unpacked`, name: artifactIdentity(id), current: '' });
               }
               p = undefined;
               return;
             }
             if (percent) {
               if (!p) {
-                p = bar.create(100, 0, { action: i`unpacking`, name: formatName(id), current: '' });
+                p = bar.create(100, 0, { action: i`unpacking`, name: artifactIdentity(id), current: '' });
               }
               p.update(percent);
             }
           }
         }
       });
+      // remember what was actually installed
+      installed.set(artifact, actuallyInstalled);
     } catch (e) {
       bar.stop();
-      error(i`Error installing ${formatName(id)} - ${e} `);
-      return false;
+      debug(e);
+      error(i`Error installing ${artifactIdentity(id)} - ${e} `);
+      return [false, installed];
     }
 
     bar.stop();
   }
-  return true;
+  return [true, installed];
 }
 
 // more options in the future...

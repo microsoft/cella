@@ -6,7 +6,7 @@ import { Session } from './session';
 import { Uri } from './uri';
 
 export class VsixLocalFilesystem extends LocalFileSystem {
-  private readonly vsixBaseUri : Uri | undefined;
+  private readonly vsixBaseUri: Uri | undefined;
 
   constructor(session: Session) {
     super(session);

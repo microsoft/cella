@@ -34,7 +34,7 @@ export class UnifiedFileSystem extends FileSystem {
       }
       return this;
     }
-    strict.ok(!this.filesystems[scheme], i`scheme '${scheme}' already registered.`);
+    strict.ok(!this.filesystems[scheme], i`scheme '${scheme}' already registered`);
     this.filesystems[scheme] = fileSystem;
     return this;
   }

@@ -2,16 +2,24 @@
 // Licensed under the MIT License.
 
 import { i } from '@microsoft/cella.core';
+import { session } from '../../main';
 import { Command } from '../command';
+import { projectFile } from '../format';
+import { activateProject } from '../project';
+import { debug } from '../styling';
+import { Project } from '../switches/project';
+import { WhatIf } from '../switches/whatIf';
 
 export class ActivateCommand extends Command {
   readonly command = 'activate';
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
+  whatIf = new WhatIf(this)
+  project: Project = new Project(this);
 
   get summary() {
-    return i`Activates the tools required for a project.`;
+    return i`Activates the tools required for a project`;
   }
 
   get description() {
@@ -21,7 +29,14 @@ export class ActivateCommand extends Command {
   }
 
   async run() {
+    const project = await this.project.value;
+    if (!project) {
+      return false;
+    }
 
-    return true;
+    debug(i`Deactivating project ${projectFile(project)}`);
+    await session.deactivate();
+
+    return await activateProject(project, this.commandLine);
   }
 }

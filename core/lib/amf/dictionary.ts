@@ -39,9 +39,13 @@ export function proxyDictionary<T = string>(thisNode: YAMLMap, onGet: (thisNode:
           r.bind(instance) : // rebind the function back to the actual instance (so we don't have to deref it with valueof.)
           r; // just the property then.
       }
+      // temporary workaround for case when something is checking to see if it's a promise.
+      // will investigate.
+      if (property === 'then') {
+        return undefined;
+      }
 
       return onGet(thisNode, property) || undefined;
-      // return thisNode.get(property) || undefined;
     },
 
     set: (dummy: DictionaryOf<T>, property: string, value: any, unused: any) => {
@@ -70,9 +74,7 @@ export class DictionaryImpl<T> implements DictionaryOf<T> {
 
   get keys(): Array<string> {
     const filter = [...Object.getOwnPropertyNames(Object.getPrototypeOf(this)), 'then'];
-
     return this.node ? this.node.items.map((each: any) => {
-
       const k = each.key;
       return (k instanceof Scalar) ? k.value : k;
     }).filter(each => filter.indexOf(each) === -1) : []; // filter out actual known property names from the dictionary.

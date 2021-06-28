@@ -18,7 +18,7 @@ if ($hash.count -gt 0) {
 $args=[System.Collections.ArrayList][System.Array]$args
 
 # GLOBALS
-$CELLA_NODE_LATEST='14.16.0'
+$CELLA_NODE_LATEST='14.17.0'
 $CELLA_NODE_REMOTE='https://nodejs.org/dist/'
 $CELLA_PWD=$pwd
 

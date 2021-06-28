@@ -8,6 +8,7 @@ import { Command } from '../command';
 import { Table } from '../markdown-table';
 import { log } from '../styling';
 import { Clear } from '../switches/clear';
+import { WhatIf } from '../switches/whatIf';
 
 export class CacheCommand extends Command {
   readonly command = 'cache';
@@ -15,9 +16,10 @@ export class CacheCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   clear = new Clear(this);
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Manages the download cache.`;
+    return i`Manages the download cache`;
   }
 
   get description() {
@@ -39,8 +41,9 @@ export class CacheCommand extends Command {
     } catch {
       // shh
     }
+
     if (!files.length) {
-      log('The download cache is empty.');
+      log('The download cache is empty');
       return true;
     }
 
@@ -51,7 +54,6 @@ export class CacheCommand extends Command {
     }
     log(table.toString());
     log();
-
 
     return true;
   }
