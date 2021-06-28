@@ -7,10 +7,10 @@ import { get, getStream, head } from './https';
 import { Uri } from './uri';
 
 /**
- * HTTP/HTTPS Filesystem
+ * HTTPS Filesystem
  *
  */
-export class HttpFileSystem extends FileSystem {
+export class HttpsFileSystem extends FileSystem {
 
   async stat(uri: Uri): Promise<FileStat> {
     const result = await head(uri);
@@ -20,7 +20,7 @@ export class HttpFileSystem extends FileSystem {
       mtime: Date.parse(result.headers.date || ''),
       ctime: Date.parse(result.headers.date || ''),
       size: Number.parseInt(result.headers['content-length'] || '0'),
-      mode: 0o555 // http is read only but always 'executable'
+      mode: 0o555 // https is read only but always 'executable'
     };
   }
   readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
@@ -55,12 +55,12 @@ export class HttpFileSystem extends FileSystem {
   }
 
   async openFile(uri: Uri): Promise<ReadHandle> {
-    return new HttpReadHandle(uri);
+    return new HttpsReadHandle(uri);
   }
 }
 
 
-class HttpReadHandle extends ReadHandle {
+class HttpsReadHandle extends ReadHandle {
   position = 0;
   constructor(private target: Uri) {
     super();

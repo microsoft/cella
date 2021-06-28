@@ -138,11 +138,7 @@ export class CellaRepository implements Repository {
   async update() {
     this.session.channels.message(i`Updating repository data from ${this.remoteLocation.toString()}`);
 
-    const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {
-      credentials: {
-        githubToken: this.session.environment['githubAuthToken']
-      }
-    });
+    const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {});
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.baseFolder, { strip: 1 });

@@ -8,7 +8,6 @@ import { Command } from '../command';
 import { cmdSwitch, projectFile } from '../format';
 import { activateProject } from '../project';
 import { debug, error } from '../styling';
-import { GithubAuthToken } from '../switches/auth';
 import { Project } from '../switches/project';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
@@ -20,7 +19,6 @@ export class AddCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
-  ghAuth = new GithubAuthToken(this);
   version = new Version(this)
   project: Project = new Project(this);
   whatIf = new WhatIf(this);
