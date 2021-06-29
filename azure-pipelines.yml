@@ -182,6 +182,7 @@ steps:
         $(OutputDirectory)\cella.tgz
         $(OutputDirectory)\signature.cat
         $(OutputDirectory)\cella.tgz.asc
+        $(OutputDirectory)\cella.tgz.cat
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
