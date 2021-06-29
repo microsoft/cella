@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(OutDir)\signature.cat">
+    <FilesToSign Include="$(OutDir)\signature.cat;$(OutDir)\cella.tgz.cat">
       <Authenticode>Microsoft400</Authenticode>
     </FilesToSign>
     <FilesToSign Include="$(OutDir)\cella.tgz.asc">
