@@ -12,6 +12,9 @@
     <FilesToSign Include="$(OutDir)\signature.cat">
       <Authenticode>Microsoft400</Authenticode>
     </FilesToSign>
+    <FilesToSign Include="$(OutDir)\cella.tgz">
+      <Authenticode>LinuxSign</Authenticode>
+    </FilesToSign>
   </ItemGroup>
 
   <Import Project="packages\Microsoft.VisualStudioEng.MicroBuild.Core.0.4.1\build\Microsoft.VisualStudioEng.MicroBuild.Core.targets" />
