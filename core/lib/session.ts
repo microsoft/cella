@@ -9,7 +9,7 @@ import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { undo } from './constants';
 import { FileSystem } from './filesystem';
-import { HttpFileSystem } from './http-filesystem';
+import { HttpsFileSystem } from './http-filesystem';
 import { i } from './i18n';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
@@ -74,7 +74,7 @@ export class Session {
     this.fileSystem = new UnifiedFileSystem(this).
       register('file', new LocalFileSystem(this)).
       register('vsix', new VsixLocalFilesystem(this)).
-      register(['http', 'https'], new HttpFileSystem(this)
+      register(['https'], new HttpsFileSystem(this)
       );
 
     this.channels = new Channels(this);

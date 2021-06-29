@@ -7,7 +7,7 @@ import { anyWhere } from './promise';
 import { Uri } from './uri';
 
 /**
- * Resolves an HTTP GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request
+ * Resolves an HTTPS GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request
  * @param location the URL to get the final location of
  */
 export async function resolveRedirect(location: Uri) {
@@ -30,7 +30,7 @@ export async function resolveRedirect(location: Uri) {
 }
 
 /**
- * Does an HTTP HEAD request, and on a 404, tries to do an HTTP GET and see if we get a redirect, and harvest the headers from that.
+ * Does an HTTPS HEAD request, and on a 404, tries to do an HTTPS GET and see if we get a redirect, and harvest the headers from that.
  * @param location the target URL
  * @param headers any headers to put in the request.
  */
@@ -75,7 +75,7 @@ export async function head(location: Uri, headers: Headers = {}, credentials?: C
   }
 }
 
-/** HTTP Get request, returns a buffer  */
+/** HTTPS Get request, returns a buffer  */
 export function get(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, options?.end);
@@ -95,21 +95,13 @@ function setRange(headers: Headers | undefined, start?: number, end?: number) {
 
 function setCredentials(headers: Headers | undefined, target: Uri, credentials?: Credentials) {
   if (credentials) {
-    if (credentials.githubToken) {
-      switch (target.authority) {
-        case 'github.com':
-        case 'raw.githubusercontent.com':
-          headers = headers || {};
-          headers['Authorization'] = `token ${credentials.githubToken}`;
-          break;
-      }
-
-    }
+    // todo: if we have to add some credential headers, we'd do it here.
+    // we've removed github auth support until we actually need such a thing
   }
   return headers;
 }
 
-/** HTTP Get request, returns a stream  */
+/** HTTPS Get request, returns a stream  */
 export function getStream(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
   let headers: Headers | undefined = options?.headers;
   headers = setRange(headers, options?.start, undefined);

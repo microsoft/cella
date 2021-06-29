@@ -74,18 +74,18 @@ export async function acquireArtifactFile(session: Session, uris: Array<Uri>, ou
   }
 
   // we don't have a local file
-  // http/https is all that we know at the moment.
-  const httpUris = uris.where(each => each.isHttp);
-  if (httpUris.length === 0) {
-    // wait, no http uris?
+  // https is all that we know at the moment.
+  const webUris = uris.where(each => each.isHttps);
+  if (webUris.length === 0) {
+    // wait, no web uris?
     throw new RemoteFileUnavailable(uris);
   }
 
-  return http(session, httpUris, outputFilename, options);
+  return https(session, webUris, outputFilename, options);
 }
 
 /** */
-async function http(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
+async function https(session: Session, uris: Array<Uri>, outputFilename: string, options?: AcquireOptions) {
   const ee = new ExtendedEmitter<AcquireEvents>();
   ee.subscribe(options?.events);
   session.channels.debug(`Attempting to download file '${outputFilename}' from [${uris.map(each => each.toString()).join(',')}]`);
@@ -250,7 +250,7 @@ export async function resolveNugetUrl(session: Session, pkg: string) {
 }
 
 export async function nuget(session: Session, pkg: string, outputFilename: string, options?: AcquireOptions): Promise<Uri> {
-  return http(session, [await resolveNugetUrl(session, pkg)], outputFilename, options);
+  return https(session, [await resolveNugetUrl(session, pkg)], outputFilename, options);
 }
 
 /** @internal */
