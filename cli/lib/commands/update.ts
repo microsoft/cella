@@ -7,7 +7,6 @@ import { Command } from '../command';
 import { CommandLine } from '../command-line';
 import { count } from '../format';
 import { error, log, writeException } from '../styling';
-import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { WhatIf } from '../switches/whatIf';
 export class UpdateCommand extends Command {
@@ -16,7 +15,6 @@ export class UpdateCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
-  ghAuth = new GithubAuthToken(this);
   whatIf = new WhatIf(this);
 
   get summary() {

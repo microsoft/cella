@@ -17,7 +17,7 @@ export class VsixLocalFilesystem extends LocalFileSystem {
   }
 
   /**
-   * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+   * Creates a new URI from a string, e.g. `https://www.msft.com/some/path`,
    * `file:///usr/home`, or `scheme:with/path`.
    *
    * @param value A string which represents an URI (see `URI#toString`).

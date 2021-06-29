@@ -7,7 +7,6 @@ import { Command } from '../command';
 import { blank } from '../constants';
 import { cmdSwitch } from '../format';
 import { debug, error, log, warning } from '../styling';
-import { GithubAuthToken } from '../switches/auth';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { WhatIf } from '../switches/whatIf';
@@ -18,7 +17,6 @@ export class AcquireCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   repo = new Repo(this);
-  ghAuth = new GithubAuthToken(this);
   version = new Version(this);
   whatIf = new WhatIf(this);
 

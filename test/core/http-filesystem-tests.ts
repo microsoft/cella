@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType, HttpFileSystem } from '@microsoft/cella.core';
+import { FileType, HttpsFileSystem } from '@microsoft/cella.core';
 import { fail, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -10,7 +10,7 @@ describe('HttpFileSystemTests', () => {
   const local = new SuiteLocal();
 
   after(local.after.bind(local));
-  const fs = new HttpFileSystem(local.session);
+  const fs = new HttpsFileSystem(local.session);
 
   it('stat a file', async () => {
 

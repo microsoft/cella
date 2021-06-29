@@ -147,7 +147,8 @@ export enum ErrorKind {
   ParseError = 'ParseError',
   DuplicateKey = 'DuplicateKey',
   NoInstallInDemand = 'NoInstallInDemand',
-  HostOnly = 'HostOnly'
+  HostOnly = 'HostOnly',
+  MissingHash = 'MissingHashValue'
 }
 
 export interface Validation {
@@ -282,10 +283,11 @@ export interface Settings extends DictionaryOf<any>, Validation {
   defines: DictionaryOf<string>;
 }
 
-/** One of several choices for a CRC/HASH/etc */
+/** One of several choices for a HASH etc */
 export interface Verifiable {
   /** SHA-256 hash */
   sha256?: string;
+  sha512?: string;
 }
 
 /**
