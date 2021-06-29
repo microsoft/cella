@@ -12,7 +12,7 @@
     <FilesToSign Include="$(OutDir)\signature.cat">
       <Authenticode>Microsoft400</Authenticode>
     </FilesToSign>
-    <FilesToSign Include="$(OutDir)\cella.tgz">
+    <FilesToSign Include="$(OutDir)\cella.tgz.asc">
       <Authenticode>LinuxSign</Authenticode>
     </FilesToSign>
   </ItemGroup>

@@ -120,6 +120,8 @@ steps:
   - powershell: New-FileCatalog -Path .\cella,.\cella.ps1,.\cella.cmd,.\cella.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
     displayName: Create catalog for detached signatures
     workingDirectory: $(OutputDirectory)
+  - powershell: copy $(OutputDirectory)/cella.tgz $(OutputDirectory)/cella.tgz.asc
+    displayName: Duplicate pack for PGP signing
   - task: MSBuild@1
     displayName: Sign catalog
     inputs:
