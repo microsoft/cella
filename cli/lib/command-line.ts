@@ -88,7 +88,7 @@ export class CommandLine {
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#home || (this.#home = resolvePath(this.switches['ce-home']?.[0] || this.switches['ce']?.[0] || process.env['CE_HOME'] || join(process.env['HOME'] || tmpdir(), '.ce')));
+    return this.#home || (this.#home = resolvePath(this.switches['ce-home']?.[0] || this.switches['ce_home']?.[0] || process.env['CE_HOME'] || join(process.env['HOME'] || tmpdir(), '.ce')));
   }
 
   get repositoryFolder() {
@@ -155,4 +155,3 @@ export class CommandLine {
     this.context = intersect(new Ctx(this), this.switches);
   }
 }
-
