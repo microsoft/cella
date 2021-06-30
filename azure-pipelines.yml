@@ -21,10 +21,8 @@ trigger:
 pr:
 - main
 
-# This pool is marked as deprecated, but MicroBuild signing plugins fail to install in other pools.
-# https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_wiki/wikis/DevDiv.wiki/724/Software-Inventory
 pool:
-  name: VSEng-MicroBuildVS2019
+  name: VSEngSS-MicroBuild2019
 
 variables:
   # MicroBuild requires TeamName to be set.
