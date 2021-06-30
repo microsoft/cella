@@ -225,7 +225,7 @@ __options__
 Removing an artifact from a project removes the `requires:`  reference to the target
 and performs an activation on the project again (which should remove references to the target)
 
-This does not delete the artifact from the `$ce_HOME` folder.
+This does not delete the artifact from the `$CE_HOME` folder.
 This can not be used to remove artifacts that have been 'inserted' into the project (since there is no reference)
 
 ``` powershell
