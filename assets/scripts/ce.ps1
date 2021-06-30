@@ -211,11 +211,11 @@ function bootstrap-vcpkg-ce {
       write-host -fore cyan Using Local Package: $USE_LOCAL_CE_PKG
       & $CE_NODE $CE_NPM install --force --no-save --scripts-prepend-node-path=true $USE_LOCAL_CE_PKG  2>&1 >> $CE_HOME/log.txt
     } else {
-      & $CE_NODE $CE_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/ce.tgz  2>&1 >> $CE_HOME/log.txt
+      & $CE_NODE $CE_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz  2>&1 >> $CE_HOME/log.txt
     }
     
   } else {
-    & $CE_NODE $CE_NPM install --force --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/ce.tgz 2>&1 >> $CE_HOME/log.txt
+    & $CE_NODE $CE_NPM install --force --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz 2>&1 >> $CE_HOME/log.txt
   }
   if( $error.count -gt 0 ) {
     $error |% { add-content -encoding UTF8 $CE_HOME/log.txt $_ }
@@ -273,7 +273,7 @@ $shh = New-Module -name vcpkg-ce -ArgumentList @($CE_NODE,$CE_MODULE,$CE_HOME) -
     if( -not (test-path $CE_MODULE )) {
       write-error "vcpkg-ce is not installed."
       write-host -nonewline "You can reinstall vcpkg-ce by running "
-      write-host -fore green "iex (iwr -useb aka.ms/ce.ps1)"
+      write-host -fore green "iex (iwr -useb aka.ms/install-ce.ps1)"
       return
     }
 

@@ -16,7 +16,7 @@ While the usage of `ce` is the same on all platforms, the installation/loading/r
 From PowerShell and Windows PowerShell you can install `ce` with the following command:
 
 ``` powershell 
-iex (iwr -useb aka.ms/ce.ps1)
+iex (iwr -useb aka.ms/install-ce.ps1)
 ```
 
 #### **Loading** `ce` in another window.
@@ -44,7 +44,7 @@ rmdir -recurse -force ~/.ce
 From CMD you can install `ce` with the following command on Windows 10 (curl is built in now!): 
 
 ``` bash
-curl -L aka.ms/ce.cmd -o ce.cmd && ce.cmd
+curl -LO aka.ms/install-ce.cmd -o install-ce.cmd && install-ce.cmd
 ```
 
 #### **Loading** `ce` in another window.
@@ -71,12 +71,12 @@ rmdir /s /q %USERPROFILE%/.ce
 
 From a POSIX shell (like `bash` or `zsh` ) you should be able to install `ce` with one of the following commands:
 
-  - `. <(curl aka.ms/ce.sh -L )`  
+  - `. <(curl aka.ms/install-ce.sh -L )`  
 
-  - `. <(wget aka.ms/ce.sh -q -O -)`
+  - `. <(wget aka.ms/install-ce.sh -q -O -)`
   
   - if those don't work well, try bringing the file local and dot-sourcing it.  
-    `wget aka.ms/ce.sh -q && . ./ce.sh` 
+    `wget aka.ms/install-ce.sh -q && . ./install-ce.sh` 
 
 Ain't dot-sourcing fun?
 

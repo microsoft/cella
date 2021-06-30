@@ -14,7 +14,7 @@ describe('HttpFileSystemTests', () => {
 
   it('stat a file', async () => {
 
-    const uri = fs.parse('https://aka.ms/ce.version');
+    const uri = fs.parse('https://aka.ms/vcpkg-ce.version');
     const s = await fs.stat(uri);
     strict.equal(s.type, FileType.File, 'Should be a file');
     strict.ok(s.size < 40, 'should be less than 40 bytes');
@@ -33,7 +33,7 @@ describe('HttpFileSystemTests', () => {
   });
 
   it('read a stream', async () => {
-    const uri = fs.parse('https://aka.ms/ce.version');
+    const uri = fs.parse('https://aka.ms/vcpkg-ce.version');
 
     let text = '';
 

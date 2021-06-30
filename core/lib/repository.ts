@@ -172,8 +172,7 @@ export class Repository implements IRepository {
 
 export class DefaultRepository extends Repository {
   constructor(session: Session) {
-    const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
-    //('https://github.com/microsoft/ce-metadata/archive/refs/heads/main.zip');
+    const remoteUri = session.fileSystem.parse('https://aka.ms/vcpkg-ce-default');
     const repositoryFolder = session.settings['repositoryFolder'];
     const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.homeFolder.join('repo', 'default');
     super(session, localUri, remoteUri);

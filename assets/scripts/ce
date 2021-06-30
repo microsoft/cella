@@ -305,7 +305,7 @@ ce_bootstrap_ce() {
     echo USING LOCAL CE PACKAGE $USE_LOCAL_CE_PKG
     $CE_NODE $CE_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true $USE_LOCAL_CE_PKG  >> $CE_HOME/log.txt 2>&1
   else
-    $CE_NODE $CE_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/ce.tgz  >> $CE_HOME/log.txt 2>&1
+    $CE_NODE $CE_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz  >> $CE_HOME/log.txt 2>&1
   fi
 
   PATH=$OLD_PATH
@@ -381,7 +381,7 @@ ce() {
       echo USING LOCAL CE SCRIPT $USE_LOCAL_CE_SCRIPT
       . <(cat $USE_LOCAL_CE_SCRIPT) "${CE_ARGS[@]}"
     else
-      . <(curl -L -# aka.ms/ce.sh) "${CE_ARGS[@]}"
+      . <(curl -L -# aka.ms/install-ce.sh) "${CE_ARGS[@]}"
     fi
 
     return 0
@@ -424,13 +424,13 @@ ce() {
 
   if [ ! -f $CE_NODE ]; then
     echo The installation of nodejs $CE_NODE that ce is using is missing
-    echo You may need to reacquire ce with '. <(curl aka.ms/ce.sh -L)'
+    echo You may need to reacquire ce with '. <(curl aka.ms/install-ce.sh -L)'
     echo or fix your nodejs installation.
   fi
 
   if [ ! -d $CE_MAIN ]; then
     echo The installation of ce is corrupted. $CE_MAIN
-    echo You may need to reacquire ce with '. <(curl aka.ms/ce.sh -L)'
+    echo You may need to reacquire ce with '. <(curl aka.ms/install-ce.sh -L)'
   fi
 
   # set the response file
