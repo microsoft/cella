@@ -166,7 +166,7 @@ steps:
     displayName: Publish to GitHub
     inputs:
       gitHubConnection: embeddedbot
-      repositoryName: microsoft/ce
+      repositoryName: microsoft/vcpkg-ce
       action: create
       target: $(Build.SourceVersion)
       tagSource: auto
