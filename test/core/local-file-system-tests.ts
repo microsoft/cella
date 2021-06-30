@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType, hash } from '@microsoft/cella.core';
+import { FileType, hash } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { pipeline as origPipeline, Writable } from 'stream';
 import { promisify } from 'util';
@@ -200,7 +200,7 @@ describe('LocalFileSystemTests', () => {
 
   it('can copy files', async () => {
     // now copy the files from the test folder
-    const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
+    const files = await local.fs.copy(local.rootFolderUri, local.session.homeFolder.join('junk'));
     strict.ok(files > 3000, `There should be at least 3000 files copied. Only copied ${files}`);
   });
 });

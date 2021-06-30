@@ -1,4 +1,4 @@
-# Project 'Cella'
+# vcpkg-ce Project
 
 In this case however, it's a tool for installing development tools, compilers, libraries, frameworks and board support profiles. 
 

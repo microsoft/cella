@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType, HttpsFileSystem } from '@microsoft/cella.core';
+import { FileType, HttpsFileSystem } from '@microsoft/vcpkg-ce.core';
 import { fail, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -14,7 +14,7 @@ describe('HttpFileSystemTests', () => {
 
   it('stat a file', async () => {
 
-    const uri = fs.parse('https://aka.ms/cella.version');
+    const uri = fs.parse('https://aka.ms/ce.version');
     const s = await fs.stat(uri);
     strict.equal(s.type, FileType.File, 'Should be a file');
     strict.ok(s.size < 40, 'should be less than 40 bytes');
@@ -33,7 +33,7 @@ describe('HttpFileSystemTests', () => {
   });
 
   it('read a stream', async () => {
-    const uri = fs.parse('https://aka.ms/cella.version');
+    const uri = fs.parse('https://aka.ms/ce.version');
 
     let text = '';
 

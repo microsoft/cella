@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { sanitizePath } from '@microsoft/cella.core';
+import { sanitizePath } from '@microsoft/vcpkg-ce.core';
 import { notStrictEqual, strict } from 'assert';
 import { describe, it } from 'mocha';
 import { pipeline as origPipeline } from 'stream';

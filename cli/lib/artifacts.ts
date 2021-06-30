@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Artifact, i } from '@microsoft/cella.core';
-import { Activation } from '@microsoft/cella.core/dist/lib/activation';
+import { Artifact, i } from '@microsoft/vcpkg-ce.core';
+import { Activation } from '@microsoft/vcpkg-ce.core/dist/lib/activation';
 import { MultiBar, SingleBar } from 'cli-progress';
 import { session } from '../main';
 import { UpdateCommand } from './commands/update';

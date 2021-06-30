@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { isNupkg, parseConfiguration as parse } from '@microsoft/cella.core';
+import { isNupkg, parseConfiguration as parse } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';

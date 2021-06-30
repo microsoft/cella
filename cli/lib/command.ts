@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from '@microsoft/cella.core';
+import { i } from '@microsoft/vcpkg-ce.core';
 import { Argument } from './argument';
 import { CommandLine, Help } from './command-line';
 import { blank, cli } from './constants';

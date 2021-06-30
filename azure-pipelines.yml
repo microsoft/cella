@@ -105,21 +105,21 @@ steps:
   # Create pack and extract files to staging directory.
   - script: npm pack $(Build.SourcesDirectory)/common/deploy
     displayName: Create pack
-  - powershell: mkdir $(OutputDirectory); copy cella-*.tgz $(OutputDirectory)/cella.tgz
+  - powershell: mkdir $(OutputDirectory); copy ce-*.tgz $(OutputDirectory)/ce.tgz
     displayName: Copy pack
   - task: CopyFiles@2
     displayName: Copy bootstrapping scripts
     inputs:
       sourceFolder: $(Build.SourcesDirectory)/common/deploy/scripts
       contents: |
-        cella
-        cella.ps1
+        ce
+        ce.ps1
       targetFolder: $(OutputDirectory)
-  - powershell: copy $(OutputDirectory)/cella.ps1 $(OutputDirectory)/cella.cmd
+  - powershell: copy $(OutputDirectory)/ce.ps1 $(OutputDirectory)/ce.cmd
     displayName: Duplicate PowerShell bootstrapper for CMD
 
   # Add detached signatures for the pack and bootstrapping scripts.
-  - powershell: New-FileCatalog -Path .\cella,.\cella.ps1,.\cella.cmd,.\cella.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
+  - powershell: New-FileCatalog -Path .\ce,.\ce.ps1,.\ce.cmd,.\ce.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
     displayName: Create catalog for detached signatures
     workingDirectory: $(OutputDirectory)
   - task: MSBuild@1
@@ -168,15 +168,15 @@ steps:
     displayName: Publish to GitHub
     inputs:
       gitHubConnection: embeddedbot
-      repositoryName: microsoft/cella
+      repositoryName: microsoft/ce
       action: create
       target: $(Build.SourceVersion)
       tagSource: auto
       assets: |
-        $(OutputDirectory)\cella
-        $(OutputDirectory)\cella.ps1
-        $(OutputDirectory)\cella.cmd
-        $(OutputDirectory)\cella.tgz
+        $(OutputDirectory)\ce
+        $(OutputDirectory)\ce.ps1
+        $(OutputDirectory)\ce.cmd
+        $(OutputDirectory)\ce.tgz
         $(OutputDirectory)\signature.cat
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))

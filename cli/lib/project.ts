@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Artifact, createArtifact, i, Uri } from '@microsoft/cella.core';
+import { Artifact, createArtifact, i, Uri } from '@microsoft/vcpkg-ce.core';
 import { session } from '../main';
 import { activateArtifacts, installArtifacts, showArtifacts } from './artifacts';
 import { blank } from './constants';

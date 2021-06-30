@@ -1,10 +1,10 @@
 {
-  "name": "cella",
+  "name": "ce",
   "version": "0.3.0",
-  "description": "Cella CLI",
+  "description": "VCPkg-ce CLI",
   "main": "cli/dist/main.js",
   "bin": {
-    "cella_": "./cli/dist/main.js"
+    "ce_": "./cli/dist/main.js"
   },
   "directories": {
     "doc": "docs"
@@ -19,19 +19,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/cella.git"
+    "url": "git+https://github.com/Microsoft/vcpkg-ce.git"
   },
   "files": [
     "**/*"
   ],
   "keywords": [
-    "cella"
+    "vcpkg-ce",
+    "vcpkg",
+    "ce"
   ],
   "author": "Microsoft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Microsoft/cella/issues"
+    "url": "https://github.com/Microsoft/vcpkg-ce/issues"
   },
-  "homepage": "https://github.com/Microsoft/cella#readme",
-  "readme": "https://github.com/Microsoft/cella/blob/master/readme.md"
+  "homepage": "https://github.com/Microsoft/vcpkg-ce#readme",
+  "readme": "https://github.com/Microsoft/vcpkg-ce/blob/master/readme.md"
 }

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/cella.core';
+import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 

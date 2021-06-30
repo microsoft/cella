@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, Version } from '@microsoft/cella.core';
+import { i, Version } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { parse } from 'semver';
 import { Version as cliVersion } from '../../exports';
@@ -37,7 +37,7 @@ export class VersionCommand extends Command {
   check = new Check(this);
   update = new Update(this);
 
-  versionUrl = session.fileSystem.parse('https://aka.ms/cella.version');
+  versionUrl = session.fileSystem.parse('https://aka.ms/ce.version');
 
   get summary() {
     return i`manage the version of ${cli}`;
@@ -103,7 +103,7 @@ export class VersionCommand extends Command {
     log(i`  cli version: ${cliVersion} `);
 
     // Make the NOTICE file discoverable. This file is generated during the official build.
-    log(i`Third-party license information is available at ${session.cellaHome.join('NOTICE.txt').fsPath}`);
+    log(i`Third-party license information is available at ${session.homeFolder.join('NOTICE.txt').fsPath}`);
     return true;
   }
 

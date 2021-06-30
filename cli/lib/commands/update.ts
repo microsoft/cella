@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, RemoteFileUnavailable, Repository } from '@microsoft/cella.core';
+import { i, IRepository, RemoteFileUnavailable } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { CommandLine } from '../command-line';
@@ -49,7 +49,7 @@ export class UpdateCommand extends Command {
     return true;
   }
 
-  static async update(repository: Repository) {
+  static async update(repository: IRepository) {
     log(i`Artifact repository data is not loaded`);
     log(i`Attempting to update artifact repository`);
     const update = new UpdateCommand(new CommandLine([]));

@@ -168,7 +168,7 @@ export interface Info extends Validation {
    *
    * ie, 'compilers/microsoft/msvc'
    *
-   * FYI: artifacts install to $CELLA_HOME/<id>/<VER> or if from another artifact source: $CELLA_HOME/<source>/<id>/<VER>
+   * FYI: artifacts install to $CE_HOME/<id>/<VER> or if from another artifact source: $CE_HOME/<source>/<id>/<VER>
    */
   id: string;
 

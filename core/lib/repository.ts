@@ -24,7 +24,7 @@ class RepoIndex extends Index<MetadataFile, RepoIndex> {
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
-export interface Repository {
+export interface IRepository {
   readonly count: number;
   readonly where: RepoIndex;
   readonly loaded: boolean;
@@ -39,7 +39,7 @@ export interface Repository {
   readonly baseFolder: Uri;
 }
 
-export class CellaRepository implements Repository {
+export class Repository implements IRepository {
 
   private catalog = new Catalog(RepoIndex);
   private indexYaml: Uri;
@@ -170,12 +170,12 @@ export class CellaRepository implements Repository {
   }
 }
 
-export class DefaultRepository extends CellaRepository {
+export class DefaultRepository extends Repository {
   constructor(session: Session) {
     const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
-    //('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
+    //('https://github.com/microsoft/ce-metadata/archive/refs/heads/main.zip');
     const repositoryFolder = session.settings['repositoryFolder'];
-    const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.cellaHome.join('repo', 'default');
+    const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.homeFolder.join('repo', 'default');
     super(session, localUri, remoteUri);
   }
 }
