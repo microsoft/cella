@@ -166,7 +166,7 @@ These commands modify a project allowing the user to use artifacts and store the
 
 
 'Adding' an artifact means to 
- - ensure that it is installed to the local `$ce_HOME`
+ - ensure that it is installed to the local `$CE_HOME`
  - add a `requires` entry to the current project 
  - activate the settings immediately (update cmake,env,etc )
 
