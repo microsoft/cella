@@ -316,7 +316,7 @@ export class Session {
 
         case 'cmd':
           // update environment variables. (cmd)
-          content += [...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n');
+          content += [...items(this.#postscript)].map((k) => { return `set ${k[0]}=${k[1]}`; }).join('\r\n');
           break;
 
         case '.sh':

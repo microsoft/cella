@@ -187,7 +187,7 @@ ce_bootstrap_node() {
   local N=`which $NODE_EXE`
   if [ ! -z "$N" ]; then
     if [ -f $N ]; then
-      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12) )"` = "true" ]; then
+      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17) )"` = "true" ]; then
         CE_NODE=$N
         CE_NPM=`which npm`
         ce_debug using node in path
@@ -204,7 +204,7 @@ ce_bootstrap_node() {
   CE_NODE=${CE_HOME}/cache/bin/node
   
   if [ -f $CE_NODE ]; then 
-    if [ `$CE_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12))"` = "true" ]; then
+    if [ `$CE_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17))"` = "true" ]; then
       # looks good, lets grab NPM in case we need it, and get out.
       CE_NPM=`which ${CE_HOME}/cache/bin/npm`
       ce_debug using node from ce cache

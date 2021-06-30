@@ -38,9 +38,9 @@ function header() {
 
   if (commandline.debug) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    console.log(`${green.bold(`${cli} command line utility`)} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
+    console.log(`${green.bold('VCPkg-ce command line utility')} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
   } else {
-    console.log(`${green.bold(`${cli} command line utility`)}`);
+    console.log(`${green.bold('VCPkg-ce command line utility')}`);
   }
   console.log('');
 }
