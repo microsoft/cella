@@ -243,7 +243,7 @@ Removed from 'ce.yaml':
 Insertion differs from 'add' in that instead of registering the artifact into the project and referencing it,
 the whole artifact is copied to the project folder.
 
-The artifact is installed to the `$ce_HOME` folder structure first. 
+This does not delete the artifact from the `$CE_HOME` folder.
 
 Activation is not done for 'inserted' artifacts, since the project intends to use them in a very particular way.
 
