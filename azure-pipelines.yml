@@ -125,6 +125,8 @@ steps:
     workingDirectory: $(OutputDirectory)
   - powershell: copy $(OutputDirectory)/cella.tgz $(OutputDirectory)/cella.tgz.asc
     displayName: Duplicate pack for PGP signing
+  - powershell: copy $(OutputDirectory)/cella $(OutputDirectory)/cella.asc
+    displayName: Duplicate Linux bootstrapper
   - task: MSBuild@1
     displayName: Sign catalogs
     inputs:
@@ -183,6 +185,7 @@ steps:
         $(OutputDirectory)\signature.cat
         $(OutputDirectory)\cella.tgz.asc
         $(OutputDirectory)\cella.tgz.cat
+        $(OutputDirectory)\cella.asc
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
