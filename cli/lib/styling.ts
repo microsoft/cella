@@ -5,6 +5,7 @@ import { Session } from '@microsoft/cella.core';
 import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
+import { argv } from 'process';
 import { CommandLine } from './command-line';
 
 function formatTime(t: number) {
@@ -57,7 +58,11 @@ function md(text = '', session?: Session) {
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;
 export let error: (message?: any, ...optionalParams: Array<any>) => void = console.error;
 export let warning: (message?: any, ...optionalParams: Array<any>) => void = console.error;
-export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => { console.log(`${cyan.bold('debug: ')}${text}`); };
+export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => {
+  if (argv.any(arg => arg === '--debug')) {
+    console.log(`${cyan.bold('debug: ')}${text}`);
+  }
+};
 
 export function writeException(e: any) {
   if (e instanceof Error) {
