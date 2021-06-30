@@ -187,7 +187,7 @@ cella_bootstrap_node() {
   local N=`which $NODE_EXE`
   if [ ! -z "$N" ]; then
     if [ -f $N ]; then
-      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12) )"` = "true" ]; then
+      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17) )"` = "true" ]; then
         CELLA_NODE=$N
         CELLA_NPM=`which npm`
         cella_debug using node in path
@@ -204,7 +204,7 @@ cella_bootstrap_node() {
   CELLA_NODE=${CELLA_HOME}/cache/bin/node
   
   if [ -f $CELLA_NODE ]; then 
-    if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 12))"` = "true" ]; then
+    if [ `$CELLA_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17))"` = "true" ]; then
       # looks good, lets grab NPM in case we need it, and get out.
       CELLA_NPM=`which ${CELLA_HOME}/cache/bin/npm`
       cella_debug using node from cella cache

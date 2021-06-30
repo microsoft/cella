@@ -88,7 +88,7 @@ function verify-node() {
 
   if( $NODE ) {
     if( get-command -ea 0 $NODE ) {
-      if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 15)") -gt 0 ) {
+      if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 17)") -gt 0 ) {
         # good version of node
         # set the variables 
 
