@@ -120,8 +120,15 @@ steps:
   - powershell: New-FileCatalog -Path .\ce,.\ce.ps1,.\ce.cmd,.\ce.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
     displayName: Create catalog for detached signatures
     workingDirectory: $(OutputDirectory)
+  - powershell: New-FileCatalog -Path .\cella.tgz -CatalogFilePath .\cella.tgz.cat -CatalogVersion 2.0
+    displayName: Create standalone tgz catalog
+    workingDirectory: $(OutputDirectory)
+  - powershell: copy $(OutputDirectory)/cella.tgz $(OutputDirectory)/cella.tgz.asc
+    displayName: Duplicate pack for PGP signing
+  - powershell: copy $(OutputDirectory)/cella $(OutputDirectory)/cella.asc
+    displayName: Duplicate Linux bootstrapper
   - task: MSBuild@1
-    displayName: Sign catalog
+    displayName: Sign catalogs
     inputs:
       solution: .scripts/signing/SignDetached.proj
       msbuildArguments: /p:SignType=$(SignType) /p:BaseOutputDirectory=$(OutputDirectory)
@@ -176,6 +183,9 @@ steps:
         $(OutputDirectory)\ce.cmd
         $(OutputDirectory)\ce.tgz
         $(OutputDirectory)\signature.cat
+        $(OutputDirectory)\cella.tgz.asc
+        $(OutputDirectory)\cella.tgz.cat
+        $(OutputDirectory)\cella.asc
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
