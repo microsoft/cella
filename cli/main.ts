@@ -24,7 +24,7 @@ import { RemoveCommand } from './lib/commands/remove';
 import { UpdateCommand } from './lib/commands/update';
 import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
-import { blank, cli } from './lib/constants';
+import { blank, cli, product } from './lib/constants';
 import { command as formatCommand, hint } from './lib/format';
 import { debug, error, initStyling, log } from './lib/styling';
 
@@ -38,9 +38,9 @@ function header() {
 
   if (commandline.debug) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    console.log(`${green.bold('VCPkg-ce command line utility')} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
+    console.log(`${green.bold(`${product} command line utility`)} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
   } else {
-    console.log(`${green.bold('VCPkg-ce command line utility')}`);
+    console.log(`${green.bold(`${product} command line utility`)} [${white.bold(cliVersion)}]`);
   }
   console.log('');
 }

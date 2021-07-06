@@ -7,7 +7,7 @@ import { parse } from 'semver';
 import { Version as cliVersion } from '../../exports';
 import { session } from '../../main';
 import { Command } from '../command';
-import { cli } from '../constants';
+import { cli, product } from '../constants';
 import { debug, error, log } from '../styling';
 import { Switch } from '../switch';
 
@@ -98,7 +98,7 @@ export class VersionCommand extends Command {
     }
 
     // dump version information
-    log(i`${cli} version information\n`);
+    log(i`${product} version information\n`);
     log(i`  core version: ${Version} `);
     log(i`  cli version: ${cliVersion} `);
 
