@@ -9,6 +9,29 @@
 # DEBUGGING :
 # set | grep -i ^CE
 
+# check to see if we've been dot-sourced (should work for most POSIX shells)
+sourced=0
+
+if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
+  case $ZSH_EVAL_CONTEXT in *:file) sourced=1;; esac
+elif [ -n "$KSH_VERSION" ]; then
+  [ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ] && sourced=1
+elif [ -n "$BASH_VERSION" ]; then
+  (return 0 2>/dev/null) && sourced=1 
+else # All other shells: examine $0 for known shell binary filenames
+  # Detects `sh` and `dash`; add additional shell filenames as needed.
+  case ${0##*/} in sh|dash) sourced=1;; esac
+fi
+
+if [ $sourced -eq 0 ]; then
+  echo 'This script is expected to be dot-sourced so that it may load ce into the'
+  echo 'current environment and not require permanent changes to the system when you activate.'
+  echo ''
+  echo "You should instead run '. $(basename $0)' first to import ce into the current session."
+  exit
+fi
+
+
 # GLOBALS
 CE_NODE_LATEST=14.17.0
 CE_NODE_REMOTE=https://nodejs.org/dist/
@@ -42,28 +65,6 @@ ce_init() {
 
 ce_init "$@"
 shift $#
-
-# check to see if we've been dot-sourced (should work for most POSIX shells)
-sourced=0
-
-if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
-  case $ZSH_EVAL_CONTEXT in *:file) sourced=1;; esac
-elif [ -n "$KSH_VERSION" ]; then
-  [ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ] && sourced=1
-elif [ -n "$BASH_VERSION" ]; then
-  (return 0 2>/dev/null) && sourced=1 
-else # All other shells: examine $0 for known shell binary filenames
-  # Detects `sh` and `dash`; add additional shell filenames as needed.
-  case ${0##*/} in sh|dash) sourced=1;; esac
-fi
-
-if [ $sourced -eq 0 ]; then
-  echo 'This script is expected to be dot-sourced so that it may load ce into the'
-  echo 'current environment and not require permanent changes to the system when you activate.'
-  echo ''
-  echo "You should instead run '. $(basename $0)' first to import ce into the current session."
-  exit
-fi
 
 # at this point, we're pretty sure we've been dot-sourced 
 # Try to locate the $CE_HOME folder, where the ce is installed.
@@ -278,7 +279,7 @@ ce_bootstrap_node() {
 }
 
 CE_SCRIPT=${CE_HOME}/node_modules/.bin/ce
-CE_MAIN=${CE_HOME}/node_modules/ce
+CE_MAIN=${CE_HOME}/node_modules/@microsoft/vcpkg-ce
 
 ce_bootstrap_ce() {
   ce_debug checking for installed ce $CE_SCRIPT
@@ -313,7 +314,7 @@ ce_bootstrap_ce() {
   cp $CE_HOME/node_modules/.bin/* .
 
   # Copy the NOTICE file to $CE_HOME to improve discoverability.
-  cp $CE_HOME/node_modules/ce/NOTICE.txt .
+  cp $CE_HOME/node_modules/@micosoft/vcpkg-ce/NOTICE.txt .
 
   # go back where we were
   cd $CE_PWD

@@ -189,12 +189,22 @@ function bootstrap-node {
 
 function bootstrap-vcpkg-ce {
   $SCRIPT:CE_SCRIPT=(resolve ${CE_HOME}/node_modules/.bin/ce.ps1)
-  $SCRIPT:CE_MODULE=(resolve ${CE_HOME}/node_modules/ce )
+  $SCRIPT:CE_MODULE=(resolve ${CE_HOME}/node_modules/@microsoft/vcpkg-ce )
 
   if( test-path $CE_SCRIPT ) {
     return $TRUE;
   }
 
+  ## if we're running from an installed module location, we'll keep that. 
+  $MODULE=(resolve ${PSScriptRoot}/node_modules/@microsoft/vcpkg-ce )
+
+  if( test-path $MODULE ) {
+    $SCRIPT:CE_MODULE=$MODULE
+    return $TRUE
+  }
+
+  return $FALSE 
+    
   ce-debug "Bootstrapping vcpkg-ce: ${CE_HOME}"
 
   # ensure we have a node_modules here, so npm won't search for one up the tree.
@@ -227,7 +237,7 @@ function bootstrap-vcpkg-ce {
   copy-item ./node_modules/.bin/ce.* 
 
   # Copy the NOTICE file to $CE_HOME to improve discoverability.
-  copy-item ./node_modules/ce/NOTICE.txt
+  copy-item ./node_modules/@microsoft/vcpkg-ce/NOTICE.txt
 
   popd
 
@@ -316,7 +326,16 @@ if exist $null erase $null
 if exist $null erase $null 
 
 IF "%CE_HOME%"=="" SET CE_HOME=%USERPROFILE%\.ce
-set CE_CMD=%CE_HOME%\node_modules\.bin\ce.cmd
+
+if exist %~dp0node_modules\@microsoft\vcpkg-ce\package.json ( 
+  :: we're running the wrapper script for a module-installed vcpkg-ce
+  set CE_CMD=%~dpf0
+  set CE_SCRIPT=%~dp0node_modules\@microsoft\vcpkg-ce
+  goto INVOKE
+)
+
+:: we're running vcpkg-ce from the ce home folder
+set CE_CMD=%CE_HOME%\node_modules\@microsoft\vcpkg-ce\ce.cmd
 
 :: if we're being asked to reset the install, call bootstrap
 if "%1" EQU "--reset-ce" goto BOOTSTRAP
@@ -330,6 +349,8 @@ if "%1" EQU "--remove-ce" (
 
 :: do we even have it installed?
 if NOT exist "%CE_CMD%" goto BOOTSTRAP
+
+set CE_SCRIPT="%CE_HOME%\node_modules\@microsoft\vcpkg-ce"
 
 :: if this is the actual installed vcpkg-ce, let's get to the invocation
 if "%~dfp0" == "%CE_CMD%" goto INVOKE
@@ -352,9 +373,9 @@ if "%CE_NODE%" EQU "" (
 if "%CE_NODE%" EQU "" goto OHNONONODE:
 
 :: call the program
-"%CE_NODE%" --harmony "%CE_HOME%\node_modules\ce" %* 
+"%CE_NODE%" --harmony "%CE_SCRIPT%" %* 
 set CE_EXITCODE=%ERRORLEVEL%
-doskey ce="%CE_HOME%\node_modules\.bin\ce.cmd" $*
+doskey ce="%CE_CMD%" $*
 
 :POSTSCRIPT
 :: Call the post-invocation script if it is present, then delete it.
