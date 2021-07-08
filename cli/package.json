@@ -1,6 +1,6 @@
 {
   "name": "vcpkg-ce.cli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "vcpkg-ce CLI",
   "main": "dist/main.js",
   "directories": {
