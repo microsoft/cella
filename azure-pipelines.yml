@@ -235,14 +235,14 @@ steps:
       tagSource: manual
       tag: $(TagName)
       assets: |
-        $(OutputDirectory)\cella
-        $(OutputDirectory)\cella.ps1
-        $(OutputDirectory)\cella.cmd
-        $(OutputDirectory)\cella.tgz
+        $(OutputDirectory)\ce
+        $(OutputDirectory)\ce.ps1
+        $(OutputDirectory)\ce.cmd
+        $(OutputDirectory)\ce.tgz
         $(OutputDirectory)\signature.cat
-        $(OutputDirectory)\cella.tgz.asc
-        $(OutputDirectory)\cella.tgz.cat
-        $(OutputDirectory)\cella.asc
+        $(OutputDirectory)\ce.tgz.asc
+        $(OutputDirectory)\ce.tgz.cat
+        $(OutputDirectory)\ce.asc
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
