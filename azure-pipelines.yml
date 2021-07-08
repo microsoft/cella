@@ -83,16 +83,10 @@ steps:
   - script: rush deploy
     displayName: Collect dependencies
 
-  # Run Component Governance and inject the NOTICE file.
   - task: ComponentGovernanceComponentDetection@0
     displayName: Detect components
     inputs:
       ignoreDirectories: common/temp
-
-  - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
-    displayName: Generate NOTICE file
-    inputs:
-      outputfile: $(Build.SourcesDirectory)/common/deploy/NOTICE.txt
 
   # Sign JavaScript and PowerShell files.
   - task: NuGetCommand@2
@@ -105,6 +99,12 @@ steps:
     inputs:
       solution: .scripts/signing/SignFiles.proj
       msbuildArguments: /p:SignType=$(SignType)
+
+  # Inject the NOTICE file. This must run after component detection.
+  - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
+    displayName: Generate NOTICE file
+    inputs:
+      outputfile: $(Build.SourcesDirectory)/common/deploy/NOTICE.txt
 
   # Create pack and extract files to staging directory.
   - script: npm pack $(Build.SourcesDirectory)/common/deploy
