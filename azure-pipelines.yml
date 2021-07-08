@@ -84,7 +84,7 @@ steps:
     displayName: Collect dependencies
 
   # Run Component Governance and inject the NOTICE file.
-  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  - task: ComponentGovernanceComponentDetection@0
     displayName: Detect components
     inputs:
       ignoreDirectories: common/temp
