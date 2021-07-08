@@ -3,7 +3,7 @@ const { stat, copyFile, unlink } = require('fs').promises;
 const { join } = require('path');
 
 /**
- * This script creates/removes custom wrapper scripts for cella.
+ * This script creates/removes custom wrapper scripts for vcpkg-ce.
  */
 async function findScriptFolder() {
   const root = `${__dirname}`;
@@ -13,10 +13,10 @@ async function findScriptFolder() {
 
     // did we find a folder where the script is in the folder (windows style)
     if (exists(s) && (await stat(s)).isDirectory() && (
-      exists(join(s, 'cella_.ps1')) ||
-      exists(join(s, 'cella_.cmd')) ||
-      exists(join(s, 'cella.ps1')) ||
-      exists(join(s, 'cella.cmd')))
+      exists(join(s, 'ce_.ps1')) ||
+      exists(join(s, 'ce_.cmd')) ||
+      exists(join(s, 'ce.ps1')) ||
+      exists(join(s, 'ce.cmd')))
     ) {
       return s;
     }
@@ -25,10 +25,10 @@ async function findScriptFolder() {
     for (const f of ['.bin', 'bin']) {
       const b1 = join(s, f);
       if (exists(b1) && (await stat(b1)).isDirectory() && (
-        exists(join(b1, 'cella_')) ||
-        exists(join(b1, 'cella')) ||
-        exists(join(b1, 'cella.ps1')) ||
-        exists(join(b1, 'cella_.ps1')))
+        exists(join(b1, 'ce_')) ||
+        exists(join(b1, 'ce')) ||
+        exists(join(b1, 'ce.ps1')) ||
+        exists(join(b1, 'ce_.ps1')))
       ) {
         return b1;
       }
@@ -47,21 +47,21 @@ async function create() {
     return process.exit(1);
   }
   const files = {
-    'cella': {
-      source: 'cella',
+    'ce': {
+      source: 'ce',
       install: process.platform !== 'win32'
     },
-    'cella.ps1': {
-      source: 'cella.ps1',
+    'ce.ps1': {
+      source: 'ce.ps1',
       install: true
     },
-    'cella.cmd': {
-      source: 'cella.ps1',
+    'ce.cmd': {
+      source: 'ce.ps1',
       install: process.platform === 'win32'
     }
   }
 
-  for (const file of ['cella_', 'cella_.ps1', 'cella_.cmd']) {
+  for (const file of ['ce_', 'ce_.ps1', 'ce_.cmd']) {
     // remove the normally created scripts 
     const target = join(folder, file);
     if (exists(target)) {
@@ -94,7 +94,7 @@ async function remove() {
     return process.exit(0);
   }
 
-  for (const file of ['cella', 'cella.ps1', 'cella.cmd']) {
+  for (const file of ['ce', 'ce.ps1', 'ce.cmd']) {
     // remove the custom created scripts 
     const target = join(folder, file);
     if (exists(target)) {

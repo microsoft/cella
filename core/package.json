@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/cella.core",
+  "name": "@microsoft/vcpkg-ce.core",
   "version": "0.3.0",
-  "description": "Cella core library",
+  "description": "vcpkg-ce.core library",
   "main": "dist/exports.js",
   "typings": "dist/exports.d.ts",
   "directories": {
@@ -22,18 +22,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/cella.git"
+    "url": "git+https://github.com/Microsoft/vcpkg-ce.git"
   },
   "keywords": [
-    "cella"
+    "vcpkg-ce",
+    "vcpkg",
+    "ce"
   ],
   "author": "Microsoft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Microsoft/cella/issues"
+    "url": "https://github.com/Microsoft/vcpkg-ce/issues"
   },
-  "homepage": "https://github.com/Microsoft/cella#readme",
-  "readme": "https://github.com/Microsoft/cella/blob/master/readme.md",
+  "homepage": "https://github.com/Microsoft/vcpkg-ce#readme",
+  "readme": "https://github.com/Microsoft/vcpkg-ce/blob/master/readme.md",
   "devDependencies": {
     "@types/node": "14.14.22",
     "@typescript-eslint/eslint-plugin": "^4.15.2",

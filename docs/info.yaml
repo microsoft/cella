@@ -53,7 +53,7 @@ sources:
   myget:                                # REQUIRED nodes in the sources block are the cosmetic name of the source
     nuget: https://myget.org/api/v3/    # the key is the type (one of 'nuget', 'git', 'path') -- the future could have things like 'rpm', 'dpkg', 'npm' ... etc
                                         # the value is the Location (may be a single string or an array of strings for mirrors)
-                                        # a nuget source would be implemented with an adapter that translates nuget repositories into a cella-style metadata
+                                        # a nuget source would be implemented with an adapter that translates nuget repositories into a ce-style metadata
 
   bobs-source:                          # an example of a local repository that is just a bunch of metadata files in a folder tree
     path: \\server\share\myfolder       

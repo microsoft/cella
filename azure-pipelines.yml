@@ -83,6 +83,9 @@ steps:
   # Run Component Governance and inject the NOTICE file.
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Detect components
+    inputs:
+      ignoreDirectories: common/temp
+
   - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
     displayName: Generate NOTICE file
     inputs:
@@ -103,29 +106,29 @@ steps:
   # Create pack and extract files to staging directory.
   - script: npm pack $(Build.SourcesDirectory)/common/deploy
     displayName: Create pack
-  - powershell: mkdir $(OutputDirectory); copy cella-*.tgz $(OutputDirectory)/cella.tgz
+  - powershell: mkdir $(OutputDirectory); copy ce-*.tgz $(OutputDirectory)/ce.tgz
     displayName: Copy pack
   - task: CopyFiles@2
     displayName: Copy bootstrapping scripts
     inputs:
       sourceFolder: $(Build.SourcesDirectory)/common/deploy/scripts
       contents: |
-        cella
-        cella.ps1
+        ce
+        ce.ps1
       targetFolder: $(OutputDirectory)
-  - powershell: copy $(OutputDirectory)/cella.ps1 $(OutputDirectory)/cella.cmd
+  - powershell: copy $(OutputDirectory)/ce.ps1 $(OutputDirectory)/ce.cmd
     displayName: Duplicate PowerShell bootstrapper for CMD
 
   # Add detached signatures for the pack and bootstrapping scripts.
-  - powershell: New-FileCatalog -Path .\cella,.\cella.ps1,.\cella.cmd,.\cella.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
+  - powershell: New-FileCatalog -Path .\ce,.\ce.ps1,.\ce.cmd,.\ce.tgz -CatalogFilePath .\signature.cat -CatalogVersion 2.0
     displayName: Create catalog for detached signatures
     workingDirectory: $(OutputDirectory)
-  - powershell: New-FileCatalog -Path .\cella.tgz -CatalogFilePath .\cella.tgz.cat -CatalogVersion 2.0
+  - powershell: New-FileCatalog -Path .\ce.tgz -CatalogFilePath .\ce.tgz.cat -CatalogVersion 2.0
     displayName: Create standalone tgz catalog
     workingDirectory: $(OutputDirectory)
-  - powershell: copy $(OutputDirectory)/cella.tgz $(OutputDirectory)/cella.tgz.asc
+  - powershell: copy $(OutputDirectory)/ce.tgz $(OutputDirectory)/ce.tgz.asc
     displayName: Duplicate pack for PGP signing
-  - powershell: copy $(OutputDirectory)/cella $(OutputDirectory)/cella.asc
+  - powershell: copy $(OutputDirectory)/ce $(OutputDirectory)/ce.asc
     displayName: Duplicate Linux bootstrapper
   - task: MSBuild@1
     displayName: Sign catalogs
@@ -173,19 +176,19 @@ steps:
     displayName: Publish to GitHub
     inputs:
       gitHubConnection: embeddedbot
-      repositoryName: microsoft/cella
+      repositoryName: microsoft/vcpkg-ce
       action: create
       target: $(Build.SourceVersion)
       tagSource: auto
       assets: |
-        $(OutputDirectory)\cella
-        $(OutputDirectory)\cella.ps1
-        $(OutputDirectory)\cella.cmd
-        $(OutputDirectory)\cella.tgz
+        $(OutputDirectory)\ce
+        $(OutputDirectory)\ce.ps1
+        $(OutputDirectory)\ce.cmd
+        $(OutputDirectory)\ce.tgz
         $(OutputDirectory)\signature.cat
-        $(OutputDirectory)\cella.tgz.asc
-        $(OutputDirectory)\cella.tgz.cat
-        $(OutputDirectory)\cella.asc
+        $(OutputDirectory)\ce.tgz.asc
+        $(OutputDirectory)\ce.tgz.cat
+        $(OutputDirectory)\ce.asc
       isPreRelease: true
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { length, linq } from '@microsoft/cella.core';
+import { length, linq } from '@microsoft/vcpkg-ce.core';
 import * as assert from 'assert';
 
 const anArray = ['A', 'B', 'C', 'D', 'E'];

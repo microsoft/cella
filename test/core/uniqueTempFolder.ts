@@ -6,5 +6,5 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 
 export function uniqueTempFolder(): string {
-  return mkdtempSync(join(tmpdir(), '/cella-temp!'));
+  return mkdtempSync(join(tmpdir(), '/ce-temp!'));
 }

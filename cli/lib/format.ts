@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Uri } from '@microsoft/cella.core';
+import { Uri } from '@microsoft/vcpkg-ce.core';
 import { bold, cyan, gray, green, greenBright, grey, underline, whiteBright, yellowBright } from 'chalk';
 
 export function projectFile(uri: Uri): string {

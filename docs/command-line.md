@@ -3,12 +3,12 @@
 ## Usage
 
 ``` yaml
-cella <COMMAND> <mandatory-args> [--switches]
+ce <COMMAND> <mandatory-args> [--switches]
 
 Commands:
 
   help [COMMAND]                : get help for a command (or general help without the command).
-  version [--check] [--update]  : manage the version of cella
+  version [--check] [--update]  : manage the version of ce
 
 
 General Switches:
@@ -17,7 +17,7 @@ General Switches:
   --debug         : enable debugging 
   --force         : do the requested action without confirmation
   --language=<LL> : use the given localization language code when running the application (ie, en, de, ... etc)
-  --home=<folder> : use the given folder as the $CELLA_HOME folder 
+  --home=<folder> : use the given folder as the $CE_HOME folder 
   --what-if       : explain what would happen without doing the command
 
   
@@ -25,11 +25,11 @@ General Switches:
     
 Notes: 
 
-  $CELLA_HOME folder is determined by:
-    - command line (--cella-home, --cella_home)
-    - environment (CELLA_HOME)
-    - default 1 $HOME/.cella
-    - default 2 <tmpdir>/.cella
+  $CE_HOME folder is determined by:
+    - command line (--ce-home, --ce_home)
+    - environment (CE_HOME)
+    - default 1 $HOME/.ce
+    - default 2 <tmpdir>/.ce
 ```
 
 
@@ -40,12 +40,12 @@ the tooling.
 
 ### Get tool version infomation  
 ``` bash
-cella version
+ce version
 ```
 
 __Expected Output__
 ``` bash
-cella Version Information: 
+ce Version Information: 
   Core: 1.2.3 
   Node: 14.1.5
 ```
@@ -53,7 +53,7 @@ cella Version Information:
 
 ### Get help about a given command
 ``` bash 
-cella help [command]
+ce help [command]
 ```
 
 __Parameters__
@@ -67,23 +67,23 @@ General command line infomation, or specific information regarding the command s
 ### Check if there is an update available
 
 ``` bash 
-cella check-version
+ce check-version
 ```
 
 __Expected output__
 
 ``` bash
 # scenario 1 - a version update is available
-> cella check-version
-* NOTE: an upgrade to cella is available (version 1.2.3). 
+> ce check-version
+* NOTE: an upgrade to ce is available (version 1.2.3). 
 
 # scenario 2 - no update is available
-> cella check-version
-* NOTE: cella is up-to-date with the latest version (1.1.0)
+> ce check-version
+* NOTE: ce is up-to-date with the latest version (1.1.0)
 
 # scenario 3 - failure (offline, no-access, etc)
-> cella check-version
-* NOTE: unable to check for latest cella version.
+> ce check-version
+* NOTE: unable to check for latest ce version.
 
 ```
 
@@ -95,7 +95,7 @@ interested in.
 
 Command 
 ``` bash 
-> cella find <artifact...>
+> ce find <artifact...>
 ```
 
 __Parameters__
@@ -111,7 +111,7 @@ __options__
 
 ### Installs an artifact given an identity
 ``` bash
-cella install <artifact-identity> 
+ce install <artifact-identity> 
 ```
 __Parameters__
 |Parameter| Description| 
@@ -126,7 +126,7 @@ __options__
 ### Remove an installed artifact 
 
 ``` bash 
-cella uninstall <artifact-identity> 
+ce uninstall <artifact-identity> 
 ```
 
 __Parameters__
@@ -144,7 +144,7 @@ __options__
 Lists the artifacts installed into the system
 
 ``` bash 
-cella list --global 
+ce list --global 
 ```
 
 __Expected output__
@@ -166,13 +166,13 @@ These commands modify a project allowing the user to use artifacts and store the
 
 
 'Adding' an artifact means to 
- - ensure that it is installed to the local `$cella_HOME`
+ - ensure that it is installed to the local `$CE_HOME`
  - add a `requires` entry to the current project 
  - activate the settings immediately (update cmake,env,etc )
 
 
 ``` bash
-cella add <artifact-identity>
+ce add <artifact-identity>
 ```
 
 __Parameters__
@@ -189,7 +189,7 @@ __Expected Output__
 
  ``` powershell
 # use msvc for this project
-> cella add msvc # this is the short name for compilers/microsoft/msvc
+> ce add msvc # this is the short name for compilers/microsoft/msvc
 
 [progress information]
 
@@ -197,10 +197,10 @@ Installed:
   compilers/microsoft/msvc         17.0.0
   ... # whatever packages were installed.
  
-Added to 'cella.yaml':
+Added to 'ce.yaml':
   compilers/microsoft/msvc: * 17.0.0  # this shows that it was asked to grab the latest, and it found 17.0.0
   
-  #note that it does not add the dependencies to the cella.yaml file by default.
+  #note that it does not add the dependencies to the ce.yaml file by default.
 
  ```
 
@@ -208,7 +208,7 @@ Added to 'cella.yaml':
 
 ## Remove artifact from project
 ``` bash
-cella remove <artifact-identity>
+ce remove <artifact-identity>
 ```
 
 
@@ -225,14 +225,14 @@ __options__
 Removing an artifact from a project removes the `requires:`  reference to the target
 and performs an activation on the project again (which should remove references to the target)
 
-This does not delete the artifact from the `$cella_HOME` folder.
+This does not delete the artifact from the `$CE_HOME` folder.
 This can not be used to remove artifacts that have been 'inserted' into the project (since there is no reference)
 
 ``` powershell
 
-> cella remove boost
+> ce remove boost
 
-Removed from 'cella.yaml':
+Removed from 'ce.yaml':
   libraries/boost
   
 >
@@ -243,14 +243,14 @@ Removed from 'cella.yaml':
 Insertion differs from 'add' in that instead of registering the artifact into the project and referencing it,
 the whole artifact is copied to the project folder.
 
-The artifact is installed to the `$cella_HOME` folder structure first. 
+This does not delete the artifact from the `$CE_HOME` folder.
 
 Activation is not done for 'inserted' artifacts, since the project intends to use them in a very particular way.
 
 This would be inadvisable for binary tools.
 
 ``` bash
-cella insert <artifact-identity>
+ce insert <artifact-identity>
 ```
 
 __Parameters__
@@ -268,7 +268,7 @@ __Expected Output__
 
 ``` powershell
 
-c:\projects\myproj > cella insert AzureRTOS
+c:\projects\myproj > ce insert AzureRTOS
 
 [progress information]
 
@@ -297,24 +297,24 @@ Updating an artifact is really a variant of `add` in that it should look for a n
 
 
 ``` bash
-cella list
+ce list
 ```
 
 ## Create a new project profile
 
-`cella` uses a file for the project profile (`cella.yaml`) to store the configuration for a given project
+`ce` uses a file for the project profile (`ce.yaml`) to store the configuration for a given project
 
 there is very little information required, so a user can just create a project profile:
 
 
 ``` bash
-cella new [project-profile.yaml] 
+ce new [project-profile.yaml] 
 ```
 
 __Parameters__
 |Parameter| Description| 
 |-|-|
-| `[project-profile.yaml]` | the file name of the project profile. defaults to `./cella.yaml` |
+| `[project-profile.yaml]` | the file name of the project profile. defaults to `./ce.yaml` |
 
 __options__
 | Option  | Description| 
@@ -330,13 +330,13 @@ __options__
 restores artifacts required and activates the settings
 
 ``` bash
-cella activate [project-profile.yaml] 
+ce activate [project-profile.yaml] 
 ```
 
 __Parameters__
 |Parameter| Description| 
 |-|-|
-| `[project-profile.yaml]` | the file name of the project profile. defaults to `./cella.yaml` |
+| `[project-profile.yaml]` | the file name of the project profile. defaults to `./ce.yaml` |
 
 
 
@@ -345,14 +345,14 @@ __Parameters__
 ## Add an artifact source 
 
 ``` bash
-cella add-source <name> <location>
+ce add-source <name> <location>
 ```
 
 
 ## Remove an artifact source 
 
 ``` bash
-cella remove-source <name>
+ce remove-source <name>
 ```
 
 <hr>

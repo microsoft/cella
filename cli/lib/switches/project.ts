@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType, i, Uri } from '@microsoft/cella.core';
+import { FileType, i, Uri } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { resolvePath } from '../command-line';
 import { projectFile } from '../format';

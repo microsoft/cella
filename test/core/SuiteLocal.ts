@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { LocalFileSystem, Session, Uri } from '@microsoft/cella.core';
+import { LocalFileSystem, Session, Uri } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { statSync } from 'fs';
 import { rm } from 'fs/promises';
@@ -34,7 +34,7 @@ export class SuiteLocal {
   constructor() {
     this.tempFolder = uniqueTempFolder();
     this.session = new Session(this.tempFolder, <any>{}, {
-      cella_home: join(this.tempFolder, 'cella_home'),
+      homeFolder: join(this.tempFolder, 'ce_home'),
     }, {});
 
     this.fs = new LocalFileSystem(this.session);

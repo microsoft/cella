@@ -4,8 +4,8 @@
  */
 {
   "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
-  "rushVersion": "5.40.5",
-  "pnpmVersion": "5.16.0",
+  "rushVersion": "5.47.0",
+  "pnpmVersion": "6.9.1",
   /**
    * Options that are only used when the PNPM package manager is selected
    */
@@ -16,7 +16,7 @@
   "projectFolderMaxDepth": 5,
   "gitPolicy": {},
   "repository": {
-    "url": "https://github.com/microsoft/cella"
+    "url": "https://github.com/microsoft/vcpkg-ce"
   },
   /**
    * Event hooks are customized script actions that Rush executes when specific events occur
@@ -45,19 +45,19 @@
   "telemetryEnabled": false,
   "projects": [
     {
-      "packageName": "@microsoft/cella.core",
+      "packageName": "@microsoft/vcpkg-ce.core",
       "projectFolder": "./core",
       "reviewCategory": "production",
       "shouldPublish": false
     },
     {
-      "packageName": "cella",
+      "packageName": "vcpkg-ce.cli",
       "projectFolder": "./cli",
       "reviewCategory": "production",
       "shouldPublish": false
     },
     {
-      "packageName": "cella.test",
+      "packageName": "vcpkg-ce.test",
       "projectFolder": "./test",
       "reviewCategory": "production",
       "shouldPublish": false

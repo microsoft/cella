@@ -1,29 +1,29 @@
-# Manually verifying Cella updates
+# Manually verifying vcpkg-ce updates
 
-Cella ships as an NPM package. Unfortunately, NPM doesn't provide a built-in
+vcpkg-ce ships as an NPM package. Unfortunately, NPM doesn't provide a built-in
 mechanism for authors to sign packages before publishing them, making supply
-chain verification difficult. Instead, Cella provides a detached PGP signature
+chain verification difficult. Instead, vcpkg-ce provides a detached PGP signature
 and Authenticode signed security catalog for the `tgz` package file in every
-GitHub release. To manually install or upgrade Cella while verifying that the
+GitHub release. To manually install or upgrade vcpkg-ce while verifying that the
 application came from Microsoft, follow these steps.
 
 ## Windows
 
-1. Download the latest Cella release and signature from GitHub. Download both
+1. Download the latest vcpkg-ce release and signature from GitHub. Download both
 files to a new directory.
     ```
-    $ mkdir cella
-    $ curl -LO https://github.com/microsoft/cella/releases/latest/download/cella.tgz.cat
-    $ curl -LO https://github.com/microsoft/cella/releases/latest/download/cella.tgz
+    $ mkdir vcpkg-ce
+    $ curl -LO https://github.com/microsoft/vcpkg-ce/releases/latest/download/ce.tgz.cat
+    $ curl -LO https://github.com/microsoft/vcpkg-ce/releases/latest/download/ce.tgz
     ```
 2. Verify the signature and content of the catalog using PowerShell.
     ```
-    $ Test-FileCatalog .\cella.tgz.cat
+    $ Test-FileCatalog .\ce.tgz.cat
     Valid
     ```
 1. Install the package.
    ```
-   $ npm install -g .\cella.tgz
+   $ npm install -g .\ce.tgz
    ```
 
 ## Linux
@@ -47,15 +47,15 @@ https://docs.microsoft.com/en-us/windows-server/administration/linux-package-rep
     gpg: Total number processed: 1
     gpg:               imported: 1
     ```
-1. Download the latest Cella release and signature from GitHub.
+1. Download the latest vcpkg-ce release and signature from GitHub.
     ```
-    $ curl -LO https://github.com/microsoft/cella/releases/latest/download/cella.tgz
-    $ curl -LO https://github.com/microsoft/cella/releases/latest/download/cella.tgz.asc
+    $ curl -LO https://github.com/microsoft/vcpkg-ce/releases/latest/download/ce.tgz
+    $ curl -LO https://github.com/microsoft/vcpkg-ce/releases/latest/download/cec.tgz.asc
     ```
 1. Verify the signature.
     ```
-    $ gpg --verify cella.tgz.asc
-    gpg: assuming signed data in 'cella.tgz'
+    $ gpg --verify ce.tgz.asc
+    gpg: assuming signed data in 'ce.tgz'
     gpg: Signature made Tue Jun 29 15:23:01 2021 PDT
     gpg:                using RSA key EB3E94ADBE1229CF
     gpg: Good signature from "Microsoft (Release signing) <gpgsecurity@microsoft.com>" [unknown]
@@ -65,5 +65,5 @@ https://docs.microsoft.com/en-us/windows-server/administration/linux-package-rep
     ```
 1. Install the package.
    ```
-   $ npm install -g ./cella.tgz
+   $ npm install -g ./ce.tgz
    ```

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, intersect } from '@microsoft/cella.core';
+import { i, intersect } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
@@ -79,16 +79,16 @@ export class CommandLine {
   readonly context: Ctx & switches;
 
   #home?: string;
-  get cella_home() {
+  get homeFolder() {
     // home folder is determined by
-    // command line (--cella-home, --cella_home)
-    // environment (CELLA_HOME)
-    // default 1 $HOME/.cella
-    // default 2 <tmpdir>/.cella
+    // command line (--ce-home, --ce_home)
+    // environment (CE_HOME)
+    // default 1 $HOME/.ce
+    // default 2 <tmpdir>/.ce
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#home || (this.#home = resolvePath(this.switches['cella-home']?.[0] || this.switches['cella_home']?.[0] || process.env['CELLA_HOME'] || join(process.env['HOME'] || tmpdir(), '.cella')));
+    return this.#home || (this.#home = resolvePath(this.switches['ce-home']?.[0] || this.switches['ce_home']?.[0] || process.env['CE_HOME'] || join(process.env['HOME'] || tmpdir(), '.ce')));
   }
 
   get repositoryFolder() {
@@ -155,4 +155,3 @@ export class CommandLine {
     this.context = intersect(new Ctx(this), this.switches);
   }
 }
-

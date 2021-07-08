@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from '@microsoft/cella.core';
+import { i } from '@microsoft/vcpkg-ce.core';
 import { Switch } from '../switch';
 
 export class Repo extends Switch {

@@ -14,7 +14,7 @@ import { i } from './i18n';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
 import { MetadataFile, parseConfiguration } from './metadata-format';
-import { DefaultRepository, Repository } from './repository';
+import { DefaultRepository, IRepository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
 import { VsixLocalFilesystem } from './vsix-local-filesystem';
@@ -56,7 +56,7 @@ export class Session {
   readonly stopwatch = new Stopwatch();
   readonly fileSystem: FileSystem;
   readonly channels: Channels;
-  readonly cellaHome: Uri;
+  readonly homeFolder: Uri;
   readonly tmpFolder: Uri;
   readonly installFolder: Uri;
 
@@ -68,7 +68,7 @@ export class Session {
   #decoder = new TextDecoder('utf-8');
   readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
 
-  private readonly sources: Map<string, Repository>;
+  private readonly sources: Map<string, IRepository>;
 
   constructor(currentDirectory: string, public readonly context: Context, public readonly settings: Dictionary<string>, public readonly environment: NodeJS.ProcessEnv) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -81,18 +81,18 @@ export class Session {
 
     this.setupLogging();
 
-    this.cellaHome = this.fileSystem.file(settings['cella_home']!);
-    this.cache = this.cellaHome.join('cache');
-    this.globalConfig = this.cellaHome.join('cella.config.yaml');
+    this.homeFolder = this.fileSystem.file(settings['homeFolder']!);
+    this.cache = this.homeFolder.join('cache');
+    this.globalConfig = this.homeFolder.join('ce.config.yaml');
 
-    this.tmpFolder = this.cellaHome.join('tmp');
-    this.installFolder = this.cellaHome.join('artifacts');
+    this.tmpFolder = this.homeFolder.join('tmp');
+    this.installFolder = this.homeFolder.join('artifacts');
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
 
     // built in repository
 
-    this.sources = new Map<string, Repository>([
+    this.sources = new Map<string, IRepository>([
       ['default', new DefaultRepository(this)]
     ]);
   }
@@ -169,21 +169,21 @@ export class Session {
 
   #postscriptFile?: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.environment['CELLA_POSTSCRIPT'] ? this.fileSystem.file(this.environment['CELLA_POSTSCRIPT']) : undefined);
+    return this.#postscriptFile || (this.#postscriptFile = this.environment['CE_POSTSCRIPT'] ? this.fileSystem.file(this.environment['CE_POSTSCRIPT']) : undefined);
   }
 
   async init() {
     // load global configuration
-    if (!await this.fileSystem.isDirectory(this.cellaHome)) {
+    if (!await this.fileSystem.isDirectory(this.homeFolder)) {
       // let's create the folder
       try {
-        await this.fileSystem.createDirectory(this.cellaHome);
+        await this.fileSystem.createDirectory(this.homeFolder);
       } catch (error: any) {
         // if this throws, let it
         this.channels.debug(error?.message);
       }
       // check if it got made, because at an absolute minimum, we need a folder, so failing this is catastrophic.
-      strict.ok(await this.fileSystem.isDirectory(this.cellaHome), i`Fatal: The root folder '${this.cellaHome.fsPath}' can not be created`);
+      strict.ok(await this.fileSystem.isDirectory(this.homeFolder), i`Fatal: The root folder '${this.homeFolder.fsPath}' can not be created`);
     }
 
     if (!await this.fileSystem.isFile(this.globalConfig)) {
@@ -316,7 +316,7 @@ export class Session {
 
         case 'cmd':
           // update environment variables. (cmd)
-          content += [...items(this.#postscript)].map((k) => { return `set ${k[0]}="${k[1]}"`; }).join('\r\n');
+          content += [...items(this.#postscript)].map((k) => { return `set ${k[0]}=${k[1]}`; }).join('\r\n');
           break;
 
         case '.sh':

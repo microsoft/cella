@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Session } from '@microsoft/cella.core';
+import { Session } from '@microsoft/vcpkg-ce.core';
 import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';

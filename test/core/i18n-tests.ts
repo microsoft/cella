@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, setLocale } from '@microsoft/cella.core';
+import { i, setLocale } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 
 // sample test using decorators.

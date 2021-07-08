@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Catalog, Dictionary, Index, keys, SemVer, SemverKey, StringKey } from '@microsoft/cella.core';
+import { Catalog, Dictionary, Index, keys, SemVer, SemverKey, StringKey } from '@microsoft/vcpkg-ce.core';
 import { describe, it } from 'mocha';
 
 interface TestData {
