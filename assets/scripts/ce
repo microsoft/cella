@@ -146,6 +146,10 @@ if [ ! -z "$CE_REMOVE" ]; then
     rm -f $CE_HOME/NOTICE.txt
   fi
 
+  if [ -f $CE_HOME/LICENSE.txt ]; then 
+    rm -f $CE_HOME/LICENSE.txt
+  fi
+
   # cleanup environment.
   . <(set | grep -i ^CE | sed -e 's/[=| |\W].*//;s/^/unset /')
   
@@ -313,8 +317,9 @@ ce_bootstrap_ce() {
 
   cp $CE_HOME/node_modules/.bin/* .
 
-  # Copy the NOTICE file to $CE_HOME to improve discoverability.
+  # Copy the NOTICE and LICENSE files to $CE_HOME to improve discoverability.
   cp $CE_HOME/node_modules/@micosoft/vcpkg-ce/NOTICE.txt .
+  cp $CE_HOME/node_modules/@micosoft/vcpkg-ce/LICENSE.txt .
 
   # go back where we were
   cd $CE_PWD
@@ -413,6 +418,10 @@ ce() {
 
     if [ -f $CE_HOME/NOTICE.txt ]; then 
       rm -f $CE_HOME/NOTICE.txt
+    fi
+
+    if [ -f $CE_HOME/LICENSE.txt ]; then 
+      rm -f $CE_HOME/LICENSE.txt
     fi
 
     # cleanup environment

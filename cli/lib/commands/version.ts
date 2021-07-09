@@ -102,7 +102,8 @@ export class VersionCommand extends Command {
     log(i`  core version: ${Version} `);
     log(i`  cli version: ${cliVersion} `);
 
-    // Make the NOTICE file discoverable. This file is generated during the official build.
+    // Make the NOTICE and LICENSE files discoverable. NOTICE is generated during the official build.
+    log(i`Usage of vcpkg-ce is subject to license terms available at ${session.homeFolder.join('LICENSE.txt').fsPath}`);
     log(i`Third-party license information is available at ${session.homeFolder.join('NOTICE.txt').fsPath}`);
     return true;
   }

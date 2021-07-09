@@ -75,6 +75,7 @@ if( $reset -or -$remove ) {
   remove-item -force -ea 0 "${CE_HOME}/ce.cmd"
   remove-item -force -ea 0 "${CE_HOME}/ce"  
   remove-item -force -ea 0 "${CE_HOME}/NOTICE.txt"
+  remove-item -force -ea 0 "${CE_HOME}/LICENSE.txt"
   $error.clear();
 
   if( $remove ) { 
@@ -236,8 +237,9 @@ function bootstrap-vcpkg-ce {
   # we should also copy the .bin files into the $CE_HOME folder to make reactivation (without being on the PATH) easy
   copy-item ./node_modules/.bin/ce.* 
 
-  # Copy the NOTICE file to $CE_HOME to improve discoverability.
+  # Copy the NOTICE and LICENSE files to $CE_HOME to improve discoverability.
   copy-item ./node_modules/@microsoft/vcpkg-ce/NOTICE.txt
+  copy-item ./node_modules/@microsoft/vcpkg-ce/LICENSE.txt
 
   popd
 
