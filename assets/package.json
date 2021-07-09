@@ -1,5 +1,5 @@
 {
-  "name": "ce",
+  "name": "@microsoft/vcpkg-ce",
   "version": "0.4.0",
   "description": "vcpkg-ce CLI",
   "main": "cli/dist/main.js",
@@ -31,7 +31,6 @@
   ],
   "author": "Microsoft",
   "license": "MIT",
-
   "bugs": {
     "url": "https://github.com/Microsoft/vcpkg-ce/issues"
   },
