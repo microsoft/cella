@@ -25,7 +25,7 @@ import { UpdateCommand } from './lib/commands/update';
 import { UseCommand } from './lib/commands/use';
 import { VersionCommand } from './lib/commands/version';
 import { blank, cli, product } from './lib/constants';
-import { command as formatCommand, hint } from './lib/format';
+import { cmdSwitch, command as formatCommand, hint } from './lib/format';
 import { debug, error, initStyling, log } from './lib/styling';
 
 // parse the command line
@@ -58,6 +58,20 @@ async function main() {
 
   // start up the session and init the channel listeners.
   await session.init();
+
+  if (!session.acceptedEula) {
+    if (commandline.switches['accept-eula']) {
+      log(i`You are accepting the end-user license agreement available at https://aka.ms/vcpkg-ce-eula.txt`);
+      log(blank);
+      await session.acceptEula();
+    } else {
+      log(i`Usage of ${product} is subject to the end-user license agreement available at https://aka.ms/vcpkg-ce-eula.txt`);
+      log(blank);
+      log(i`To accept the end-user license agreement, specify ${cmdSwitch('accept-eula')} on the command line`);
+      log(blank);
+      return process.exitCode = 1;
+    }
+  }
 
   debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
   // find a project profile.

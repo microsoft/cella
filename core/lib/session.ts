@@ -23,7 +23,8 @@ const defaultConfig =
   `# Global configuration
 
 global:
-  send-anonymous-telemetry: true
+  send-anonymous-telemetry: true 
+  accepted-eula: false
 `;
 
 const profileName = ['environment.yaml', 'environment.yml', 'environment.json'];
@@ -165,6 +166,19 @@ export class Session {
 
   get telemetryEnabled() {
     return !!this.configuration.globalSettings['send-anonymous-telemetry'];
+  }
+
+  get acceptedEula() {
+    return !!this.configuration.globalSettings['accepted-eula'];
+  }
+
+  async acceptEula() {
+    this.configuration.globalSettings['accepted-eula'] = <any>true;
+    await this.saveConfig();
+  }
+
+  async saveConfig() {
+    await this.fileSystem.writeFile(this.globalConfig, Buffer.from(this.configuration.content, 'utf-8'));
   }
 
   #postscriptFile?: Uri;
