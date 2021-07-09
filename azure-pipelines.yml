@@ -41,7 +41,7 @@ variables:
   TagName: $[replace(variables['Build.SourceBranch'], 'refs/tags/', '')]
 
 steps:
-  - task: MicroBuildSigningPlugin@2
+  - task: MicroBuildSigningPlugin@3
     displayName: Install MicroBuild Signing
     inputs:
       signType: $(SignType)
