@@ -203,8 +203,6 @@ function bootstrap-vcpkg-ce {
     $SCRIPT:CE_MODULE=$MODULE
     return $TRUE
   }
-
-  return $FALSE 
     
   ce-debug "Bootstrapping vcpkg-ce: ${CE_HOME}"
 
@@ -232,7 +230,6 @@ function bootstrap-vcpkg-ce {
     $error |% { add-content -encoding UTF8 $CE_HOME/log.txt $_ }
     $Error.clear()
   }
-
 
   # we should also copy the .bin files into the $CE_HOME folder to make reactivation (without being on the PATH) easy
   copy-item ./node_modules/.bin/ce.* 
