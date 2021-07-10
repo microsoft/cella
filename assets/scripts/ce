@@ -318,8 +318,8 @@ ce_bootstrap_ce() {
   cp $CE_HOME/node_modules/.bin/* .
 
   # Copy the NOTICE and LICENSE files to $CE_HOME to improve discoverability.
-  cp $CE_HOME/node_modules/@micosoft/vcpkg-ce/NOTICE.txt .
-  cp $CE_HOME/node_modules/@micosoft/vcpkg-ce/LICENSE.txt .
+  cp $CE_HOME/node_modules/@microsoft/vcpkg-ce/NOTICE.txt .
+  cp $CE_HOME/node_modules/@microsoft/vcpkg-ce/LICENSE.txt .
 
   # go back where we were
   cd $CE_PWD
