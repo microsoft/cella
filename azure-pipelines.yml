@@ -194,7 +194,7 @@ steps:
   #       $(OutputDirectory)\ce.tgz.asc
   #       $(OutputDirectory)\ce.tgz.cat
   #       $(OutputDirectory)\ce.asc
-  #     isPreRelease: true
+  #     isPreRelease: false
   #   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
   # The following tasks publish to the issue-only public vcpkg-ce repo. We
@@ -245,7 +245,7 @@ steps:
         $(OutputDirectory)\ce.tgz.asc
         $(OutputDirectory)\ce.tgz.cat
         $(OutputDirectory)\ce.asc
-      isPreRelease: true
+      isPreRelease: false
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
 
   - task: MicroBuildCleanup@1
