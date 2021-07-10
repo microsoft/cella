@@ -109,7 +109,7 @@ steps:
   # Create pack and extract files to staging directory.
   - script: npm pack $(Build.SourcesDirectory)/common/deploy
     displayName: Create pack
-  - powershell: mkdir $(OutputDirectory); copy ce-*.tgz $(OutputDirectory)/ce.tgz
+  - powershell: mkdir $(OutputDirectory); copy @microsoft/vcpkg-ce-*.tgz $(OutputDirectory)/ce.tgz
     displayName: Copy pack
   - task: CopyFiles@2
     displayName: Copy bootstrapping scripts
