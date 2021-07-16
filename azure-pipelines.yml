@@ -161,7 +161,7 @@ steps:
       notificationAlias: embeddeddev@microsoft.com
       instanceUrlForTsaV2: DEVDIV
       projectNameDEVDIV: DevDiv
-      areaPath: DevDiv\Cpp Developer Experience\Cross Platform\IoT Tools
+      areaPath: DevDiv\Cpp Developer Experience\Cross Platform\Embedded
       iterationPath: DevDiv
       # To avoid spurious warnings about missing logs, explicitly declare what we don't upload.
       uploadAPIScan: false
