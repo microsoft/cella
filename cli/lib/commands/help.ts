@@ -42,7 +42,7 @@ export class HelpCommand extends Command {
   }
 
   async run() {
-    const cmd = ['-h', '-help', '-?', '/?'].find(each => each === this.commandLine.inputs[0]) ? this.commandLine.inputs[1] : this.commandLine.inputs[0];
+    const cmd = ['-h', '-help', '-?', '/?'].find(each => (this.commandLine.inputs.indexOf(each) > -1)) ? this.commandLine.inputs[0] : this.commandLine.inputs[1];
     // did they ask for help on a command?
 
     if (cmd) {
