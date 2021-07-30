@@ -75,11 +75,11 @@ abstract class FileInstallerNode extends InstallerNode {
   }
 
   get sha512() {
-    return this.getString('sha256');
+    return this.getString('sha512');
   }
 
   set sha512(value: string | undefined) {
-    this.setString('sha256', value);
+    this.setString('sha512', value);
   }
 
   get strip() {

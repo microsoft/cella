@@ -48,11 +48,14 @@ export function indent(text: string | Array<string>): string | Array<string> {
   return `  ${text}`;
 }
 
-function md(text = '', session?: Session) {
-  text = markdown(text.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
+function md(text = '', session?: Session): string {
+  if (text) {
+    text = markdown(text.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
 
-  // rewrite file:// urls to be locl filesystem urls.
-  return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
+    // rewrite file:// urls to be locl filesystem urls.
+    return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
+  }
+  return '';
 }
 
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;

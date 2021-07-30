@@ -226,7 +226,7 @@ async function https(session: Session, uris: Array<Uri>, outputFilename: string,
     // does it match the hash that we have?
     if (!await outputFile.hashValid(options)) {
       await outputFile.delete();
-      throw new Error(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}:${options.value}) `);
+      throw new Error(i`Downloaded file '${outputFile.fsPath}' did not have the correct hash (${options.algorithm}: ${options.value}) `);
     }
     session.channels.debug(`Acquire '${outputFilename}': downloaded file hash matches specified hash`);
   }
