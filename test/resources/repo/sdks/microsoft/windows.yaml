@@ -1,5 +1,5 @@
 # Windows SDK
-# install with `cella add sdks/microsoft/windows`
+# install with `ce add sdks/microsoft/windows`
 
 info:
   id: sdks/microsoft/windows
@@ -14,6 +14,7 @@ contacts:
 
 install: 
   nupkg: Microsoft.Windows.SDK.cpp/10.0.19041.5
+  sha256: fluffyKittenBunnies
   # https://www.nuget.org/api/v2/package/Microsoft.Windows.SDK.CPP/10.0.19041.5
 
 windows and target:x64:

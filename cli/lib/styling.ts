@@ -1,12 +1,11 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { Session } from '@microsoft/cella.core';
-import { blue, cyan, gray, green, red, white, yellow, yellowBright } from 'chalk';
+import { Session } from '@microsoft/vcpkg-ce.core';
+import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
+import { argv } from 'process';
 import { CommandLine } from './command-line';
 
 function formatTime(t: number) {
@@ -49,17 +48,24 @@ export function indent(text: string | Array<string>): string | Array<string> {
   return `  ${text}`;
 }
 
-function md(text = '', session?: Session) {
-  text = markdown(text.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
+function md(text = '', session?: Session): string {
+  if (text) {
+    text = markdown(text.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
 
-  // rewrite file:// urls to be locl filesystem urls.
-  return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
+    // rewrite file:// urls to be locl filesystem urls.
+    return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
+  }
+  return '';
 }
 
 export let log: (message?: any, ...optionalParams: Array<any>) => void = console.log;
 export let error: (message?: any, ...optionalParams: Array<any>) => void = console.error;
 export let warning: (message?: any, ...optionalParams: Array<any>) => void = console.error;
-export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => { console.log(`${cyan.bold('debug: ')}${text}`); };
+export let debug: (message?: any, ...optionalParams: Array<any>) => void = (text) => {
+  if (argv.any(arg => arg === '--debug')) {
+    console.log(`${cyan.bold('debug: ')}${text}`);
+  }
+};
 
 export function writeException(e: any) {
   if (e instanceof Error) {
@@ -91,11 +97,4 @@ export function initStyling(commandline: CommandLine, session: Session) {
   session.channels.on('warning', (text: string, context: any, msec: number) => {
     warning(text);
   });
-}
-
-export function formatName(fullName: string, shortName?: string) {
-  if (shortName) {
-    return `${fullName.substr(0, fullName.length - shortName.length)}${yellowBright(shortName)}`;
-  }
-  return yellowBright(fullName);
 }

@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { strict } from 'assert';
 import { Readable, Writable } from 'stream';
@@ -36,7 +34,7 @@ export class UnifiedFileSystem extends FileSystem {
       }
       return this;
     }
-    strict.ok(!this.filesystems[scheme], i`scheme '${scheme}' already registered.`);
+    strict.ok(!this.filesystems[scheme], i`scheme '${scheme}' already registered`);
     this.filesystems[scheme] = fileSystem;
     return this;
   }
@@ -48,7 +46,7 @@ export class UnifiedFileSystem extends FileSystem {
    *
    * @returns the filesystem. Will throw if no filesystem is valid.
    */
-  protected filesystem(uri: string | Uri) {
+  public filesystem(uri: string | Uri) {
     const scheme = schemeOf(uri.toString());
     strict.ok(scheme, i`uri ${uri.toString()} has no scheme`);
 
@@ -59,7 +57,7 @@ export class UnifiedFileSystem extends FileSystem {
   }
 
   /**
-  * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+  * Creates a new URI from a string, e.g. `https://www.msft.com/some/path`,
   * `file:///usr/home`, or `scheme:with/path`.
   *
   * @param uri A string which represents an URI (see `URI#toString`).
@@ -72,8 +70,8 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).stat(uri);
   }
 
-  async readDirectory(uri: Uri): Promise<Array<[Uri, FileType]>> {
-    return this.filesystem(uri).readDirectory(uri);
+  async readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
+    return this.filesystem(uri).readDirectory(uri, options);
   }
 
   createDirectory(uri: Uri): Promise<void> {
@@ -111,5 +109,9 @@ export class UnifiedFileSystem extends FileSystem {
 
   copy(source: Uri, target: Uri, options?: { overwrite?: boolean | undefined; }): Promise<number> {
     return target.fileSystem.copy(source, target);
+  }
+
+  createSymlink(original: Uri, symlink: Uri): Promise<void> {
+    return symlink.fileSystem.createSymlink(original, symlink);
   }
 }

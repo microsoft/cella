@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { acquireArtifactFile, FileType, i, parseConfiguration, parseVsManFromChannel, Session, templateAmfApplyVsManifestInformation, Uri, VsManDatabase } from '@microsoft/cella.core';
+import { acquireArtifactFile, FileType, i, parseConfiguration, parseVsManFromChannel, Session, templateAmfApplyVsManifestInformation, Uri, VsManDatabase } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { log } from '../styling';
@@ -96,7 +94,7 @@ export class ApplyVsManCommand extends Command {
   /**
    * Process an input file or directory, recursively.
    */
-  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: VsManDatabase) : Promise<number> {
+  static async processInput(session: Session, inputDirectoryEntry: [Uri, FileType], repoRoot: Uri, vsManLookup: VsManDatabase): Promise<number> {
     if ((inputDirectoryEntry[1] & FileType.Directory) !== 0) {
       let total = 0;
       for (const child of await inputDirectoryEntry[0].readDirectory()) {

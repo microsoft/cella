@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { FileType, hash } from '@microsoft/cella.core';
+import { FileType, hash } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { pipeline as origPipeline, Writable } from 'stream';
 import { promisify } from 'util';
@@ -66,13 +64,13 @@ describe('LocalFileSystemTests', () => {
     await fs.writeFile(file, expectedBuffer);
 
     // is there a file there?
-    strict.ok(await fs.isFile(file), `the file ${file.fsPath} is not present.`);
+    strict.ok(await fs.isFile(file), `the file ${file.fsPath} is not present`);
 
     // read it back
     const actualBuffer = await fs.readFile(file);
     strict.deepEqual(expectedBuffer, actualBuffer, 'contents should be the same');
     const actualText = actualBuffer.toString();
-    strict.equal(expectedText, actualText, 'text should be equal too.');
+    strict.equal(expectedText, actualText, 'text should be equal too');
 
   });
 
@@ -125,7 +123,6 @@ describe('LocalFileSystemTests', () => {
     strict.equal(await hash(await fs.readStream(path), path, 0, 'sha256'), '9cfed8b9e45f47e735098c399fb523755e4e993ac64d81171c93efbb523a57e6', 'hash should match');
     strict.equal(await hash(await fs.readStream(path), path, 0, 'sha384'), '8168d029154548a4e1dd5212b722b03d6220f212f8974f6bd45e71715b13945e343c9d1097f8e393db22c8a07d8cf6f6', 'hash should match');
     strict.equal(await hash(await fs.readStream(path), path, 0, 'sha512'), '1bacd5dd190731b5c3d2a2ad61142b4054137d6adff5fb085543dcdede77e4a1446225ca31b2f4699b0cda4534e91ea372cf8d73816df3577e38700c299eab5e', 'hash should match');
-    strict.equal(await hash(await fs.readStream(path), path, 0, 'md5'), 'c82b854702262508e9210c678282d5a4', 'hash should match');
   });
 
   it('reads blocks via open', async () => {
@@ -203,7 +200,7 @@ describe('LocalFileSystemTests', () => {
 
   it('can copy files', async () => {
     // now copy the files from the test folder
-    const files = await local.fs.copy(local.rootFolderUri, local.session.cellaHome.join('junk'));
+    const files = await local.fs.copy(local.rootFolderUri, local.session.homeFolder.join('junk'));
     strict.ok(files > 3000, `There should be at least 3000 files copied. Only copied ${files}`);
   });
 });

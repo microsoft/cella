@@ -1,6 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-export const cli = 'cella';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+export const cli = 'ce';
+export const product = 'vcpkg-ce';
+export const project = 'environment.yaml';
 export const blank = '\n';

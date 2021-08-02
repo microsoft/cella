@@ -1,17 +1,15 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import { i, Version } from '@microsoft/cella.core';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { i, Version } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { parse } from 'semver';
 import { Version as cliVersion } from '../../exports';
 import { session } from '../../main';
 import { Command } from '../command';
-import { cli } from '../constants';
+import { cli, product } from '../constants';
 import { debug, error, log } from '../styling';
 import { Switch } from '../switch';
-import { Debug } from '../switches/debug';
 
 class Check extends Switch {
   switch = 'check';
@@ -38,9 +36,8 @@ export class VersionCommand extends Command {
   argumentsHelp = [];
   check = new Check(this);
   update = new Update(this);
-  debug = new Debug(this);
 
-  versionUrl = session.fileSystem.parse('https://aka.ms/cella.version');
+  versionUrl = session.fileSystem.parse('https://aka.ms/vcpkg-ce.version');
 
   get summary() {
     return i`manage the version of ${cli}`;
@@ -55,7 +52,7 @@ export class VersionCommand extends Command {
 
   private async getRemoteVersion() {
     const version = session.utf8(await session.fileSystem.readFile(this.versionUrl));
-    const semver = parse(version);
+    const semver = parse(version.trim());
     strict.ok(semver, i`Unable to parse version ${version}`);
 
     return semver;
@@ -75,7 +72,7 @@ export class VersionCommand extends Command {
         }
 
       } catch (err) {
-        error('Failed to get latest version number.');
+        error('Failed to get latest version number');
         return false;
       }
       return true;
@@ -88,7 +85,7 @@ export class VersionCommand extends Command {
         const semver = await this.getRemoteVersion();
 
         if (semver.compare(cliVersion) > 0) {
-          log(i`There is a new version (${semver.version}) of ${cli} available.`);
+          log(i`There is a new version (${semver.version}) of ${cli} available`);
         }
         return true;
       } catch (err) {
@@ -101,9 +98,13 @@ export class VersionCommand extends Command {
     }
 
     // dump version information
-    log(i`${cli} version information\n`);
+    log(i`${product} version information\n`);
     log(i`  core version: ${Version} `);
     log(i`  cli version: ${cliVersion} `);
+
+    // Make the NOTICE and LICENSE files discoverable. NOTICE is generated during the official build.
+    log(i`Usage of vcpkg-ce is subject to license terms available at ${session.homeFolder.join('LICENSE.txt').fsPath}`);
+    log(i`Third-party license information is available at ${session.homeFolder.join('NOTICE.txt').fsPath}`);
     return true;
   }
 

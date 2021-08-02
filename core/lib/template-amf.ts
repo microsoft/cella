@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { assert } from 'console';
 import { isMap, isPair, isScalar, isSeq, LineCounter, Pair, parseDocument, YAMLMap, YAMLSeq } from 'yaml';
@@ -9,7 +7,7 @@ import { i } from './i18n';
 import { Session } from './session';
 import { FlatVsManPayload, VsManDatabase } from './willow';
 
-function lookupVsixVersion(session: Session, vsManLookup: VsManDatabase, id: string) : string | undefined {
+function lookupVsixVersion(session: Session, vsManLookup: VsManDatabase, id: string): string | undefined {
   const adoptedVersionSource = vsManLookup.get(id);
   if (!adoptedVersionSource) {
     session.channels.error(i`template required id (${id}) not present in the Visual Studio manifest.`);
@@ -25,7 +23,7 @@ function lookupVsixVersion(session: Session, vsManLookup: VsManDatabase, id: str
   return adoptedVersion;
 }
 
-function getYamlMapEntryKey(target: any) : string | undefined {
+function getYamlMapEntryKey(target: any): string | undefined {
   if (isScalar(target)) {
     if (typeof target.value === 'string') {
       return target.value;
@@ -41,7 +39,7 @@ function getYamlMapEntryKey(target: any) : string | undefined {
 // if any, with a real version derived from vsManLookup.
 // Returns whether unrecoverable errors occurred.
 function replaceAdoptVsixVersionFromId(session: Session, inputPath: string,
-  inputRootMap : YAMLMap, vsManLookup: VsManDatabase) : boolean {
+  inputRootMap: YAMLMap, vsManLookup: VsManDatabase): boolean {
   const inputInfoMap = inputRootMap.get('info');
   if (!isMap(inputInfoMap)) {
     session.channels.error(i`${inputPath} is missing an 'info' map.`);
@@ -133,8 +131,8 @@ function transformVsixMapToUnzipMaps(session: Session, inputPath: string,
   return result;
 }
 
-function templateAmfProcessInstallCandidate(session : Session, inputPath: string,
-  vsManLookup: VsManDatabase, installParent: YAMLMap) : boolean {
+function templateAmfProcessInstallCandidate(session: Session, inputPath: string,
+  vsManLookup: VsManDatabase, installParent: YAMLMap): boolean {
   const replacement = new Array<YAMLMap>();
   const installNode = installParent.get('install');
   if (isMap(installNode)) {
@@ -179,8 +177,8 @@ function templateAmfProcessInstallCandidate(session : Session, inputPath: string
   return false;
 }
 
-function templateAmfApplyVsixRequireVersion(session : Session, inputPath: string, vsManLookup: VsManDatabase,
-  vsixVersionRequireParent: YAMLMap) : boolean {
+function templateAmfApplyVsixRequireVersion(session: Session, inputPath: string, vsManLookup: VsManDatabase,
+  vsixVersionRequireParent: YAMLMap): boolean {
   const parentItems = vsixVersionRequireParent.items;
   for (let idx = 0; idx < parentItems.length; ++idx) {
     const thisItem = parentItems[idx];
@@ -200,7 +198,7 @@ function templateAmfApplyVsixRequireVersion(session : Session, inputPath: string
       const key = vsixVersionRequireEntry.key;
       const value = vsixVersionRequireEntry.value;
       if (!isScalar(key) || !isScalar(value)
-      || typeof key.value !== 'string' || typeof value.value !== 'string') {
+        || typeof key.value !== 'string' || typeof value.value !== 'string') {
         session.channels.error(i`vsixVersionRequire entry did not have the expected form in ${inputPath}.`);
         return true;
       }
@@ -225,7 +223,7 @@ function templateAmfApplyVsixRequireVersion(session : Session, inputPath: string
 }
 
 export function templateAmfApplyVsManifestInformation(
-  session : Session, inputPath: string, inputContent: string, vsManLookup: VsManDatabase): string | undefined {
+  session: Session, inputPath: string, inputContent: string, vsManLookup: VsManDatabase): string | undefined {
   const genericErrorMessage = i`Failed to interpret ${inputPath} as an AMF template.`;
   const lc = new LineCounter();
   const inputDom = parseDocument(inputContent, { prettyErrors: false, lineCounter: lc, strict: true });

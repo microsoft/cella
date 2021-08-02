@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { FileEntry, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/cella.core';
+import { FileEntry, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, Uri, ZipUnpacker } from '@microsoft/vcpkg-ce.core';
 import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -82,7 +80,7 @@ class ProgressCheckerEntry {
 
   test() {
     strict.ok(this.seenUnpacked, 'Should have got an unpacked message');
-    strict.ok(this.seenZero, 'Should have seen a zero progress.');
+    strict.ok(this.seenZero, 'Should have seen a zero progress');
     this.filePercentage.testRequireZero();
   }
 }
@@ -370,7 +368,7 @@ describe('TarUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });
 
@@ -397,7 +395,7 @@ describe('TarBzUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-bz2-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });
 
@@ -424,6 +422,6 @@ describe('TarGzUnpacker', () => {
     const targetUri = local.tempFolderUri.join('example-tar-gz-transformed');
     await unpacker.unpack(archiveUri, targetUri, transformedTarUnpackOptions);
     await checkExtractedTransformedTar(targetUri);
-    progressChecker.test(8);
+    progressChecker.test(4);
   });
 });

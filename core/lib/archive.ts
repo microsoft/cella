@@ -1,17 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
+import { fail } from 'assert';
 import { sed } from 'sed-lite';
 import { pipeline as origPipeline, Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
 import { promisify } from 'util';
 import { createGunzip } from 'zlib';
 import { ExtendedEmitter } from './events';
+import { i } from './i18n';
 import { Queue } from './promise';
 import { Session } from './session';
 import { ProgressTrackingStream } from './streams';
+import { UnifiedFileSystem } from './unified-filesystem';
 import { ZipEntry, ZipFile } from './unzip';
 import { Uri } from './uri';
 import { PercentageScaler } from './util/percentage-scaler';
@@ -52,7 +53,6 @@ export interface OutputOptions {
 
   events?: Partial<UnpackEvents>;
 }
-
 
 /** Unpacker base class definition */
 export abstract class Unpacker extends ExtendedEmitter<UnpackEvents> {
@@ -152,7 +152,9 @@ export class ZipUnpacker extends Unpacker {
       this.session.channels.debug(`unpacking ZIP file ${archiveUri}/${file.name} => ${destination}`);
       await destination.parent().createDirectory();
       const readStream = await file.read();
-      const writeStream = await destination.writeStream({ mtime: file.time });
+      const mode = ((file.attr >> 16) & 0xfff);
+
+      const writeStream = await destination.writeStream({ mtime: file.time, mode: mode ? mode : undefined });
       const progressStream = new ProgressTrackingStream(0, file.size);
       progressStream.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
       await pipeline(readStream, progressStream, writeStream);
@@ -201,10 +203,6 @@ abstract class BasicTarUnpacker extends Unpacker {
     });
 
     try {
-      if (header?.type !== 'file') {
-        this.session.channels.debug(`in ${archiveUri} skipping ${header.name} because it is a ${header?.type}`);
-        return;
-      }
 
       const extractPath = Unpacker.implementOutputOptions(header.name, options);
       let destination: Uri | undefined = undefined;
@@ -212,27 +210,61 @@ abstract class BasicTarUnpacker extends Unpacker {
         destination = outputUri.join(extractPath);
       }
 
-      const fileEntry = {
-        archiveUri: archiveUri,
-        destination: destination,
-        path: header.name,
-        extractPath: extractPath
-      };
+      if (destination) {
+        switch (header?.type) {
+          case 'symlink': {
+            const linkTargetUri = destination?.parent().join(header.linkname!) || fail('');
+            await destination.parent().createDirectory();
+            await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+          }
+            return;
 
-      this.session.channels.debug(`unpacking TAR ${archiveUri}/${header.name} => ${destination}`);
-      this.fileProgress(fileEntry, 0);
+          case 'link': {
+            // this should be a 'hard-link' -- but I'm not sure if we can make hardlinks on windows. todo: find out
+            const linkTargetUri = outputUri.join(Unpacker.implementOutputOptions(header.linkname!, options)!);
+            // quick hack
+            await destination.parent().createDirectory();
+            await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
+          }
+            return;
 
-      if (destination && header.size) {
-        const parentDirectory = destination.parent();
-        await parentDirectory.createDirectory();
-        const fileProgress = new ProgressTrackingStream(0, header.size);
-        fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
-        fileProgress.on('progress', (filePercentage) => options.events?.fileProgress?.(fileEntry, filePercentage));
-        const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
-        await pipeline(stream, fileProgress, writeStream);
+          case 'directory':
+            this.session.channels.debug(`in ${archiveUri.fsPath} skipping directory ${header.name}`);
+            return;
+
+          case 'file':
+            // files handle below
+            break;
+
+          default:
+            this.session.channels.warning(i`in ${archiveUri.fsPath} skipping ${header.name} because it is a ${header?.type || ''}`);
+            return;
+        }
+
+        const fileEntry = {
+          archiveUri: archiveUri,
+          destination: destination,
+          path: header.name,
+          extractPath: extractPath
+        };
+
+        this.session.channels.debug(`unpacking TAR ${archiveUri}/${header.name} => ${destination}`);
+        this.fileProgress(fileEntry, 0);
+
+        if (header.size) {
+          const parentDirectory = destination.parent();
+          await parentDirectory.createDirectory();
+          const fileProgress = new ProgressTrackingStream(0, header.size);
+          fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));
+          fileProgress.on('progress', (filePercentage) => options.events?.fileProgress?.(fileEntry, filePercentage));
+          const writeStream = await destination.writeStream({ mtime: header.mtime, mode: header.mode });
+          await pipeline(stream, fileProgress, writeStream);
+        }
+
+        this.fileProgress(fileEntry, 100);
+        this.unpacked(fileEntry);
       }
-      this.fileProgress(fileEntry, 100);
-      this.unpacked(fileEntry);
+
     } finally {
       stream.resume();
       await streamPromise;

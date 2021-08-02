@@ -1,11 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * Creates an intersection object from two source objects.
@@ -54,23 +48,24 @@ export function intersect<T extends object, T2 extends object>(primary: T, secon
         };
       }
 
+      const pv = (<any>target.primary)[property];
+      const sv = (<any>target.secondary)[property];
 
-      if (Object.getOwnPropertyNames(target.primary).indexOf(propertyName) > -1) {
-        return (<any>target.primary)[property];
-      }
-      // try binding member function
-      if (typeof ((<any>target.primary)[property]) === 'function') {
-        return (<any>target.primary)[property].bind(primary);
-      }
-
-      if (Object.getOwnPropertyNames(target.secondary).indexOf(propertyName) > -1) {
-        return (<any>target.secondary)[property];
+      if (pv !== undefined) {
+        if (typeof pv === 'function') {
+          return pv.bind(primary);
+        }
+        return pv;
       }
 
-      if (typeof ((<any>target.secondary)[property]) === 'function') {
-        return (<any>target.secondary)[property].bind(secondary);
+      if (sv !== undefined) {
+        if (typeof sv === 'function') {
+          return sv.bind(secondary);
+        }
+        return sv;
       }
-      return (<any>target.primary)[property] || (<any>target.secondary)[property];
+
+      return undefined;
     },
 
     // member set proxy handler

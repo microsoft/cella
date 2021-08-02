@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { strict } from 'assert';
 import { dirname, join, relative } from 'path';
@@ -19,9 +17,9 @@ import { Algorithm, Hash, hash } from './hash';
  * By associating the filesystem with the URI, we can allow for file URIs
  * to be scoped to a given filesystem (ie, a zip could be a filesystem )
  *
- * Uniform Resource Identifier (URI) http://tools.ietf.org/html/rfc3986.
+ * Uniform Resource Identifier (URI) https://tools.ietf.org/html/rfc3986.
  * This class is a simple parser which creates the basic component parts
- * (http://tools.ietf.org/html/rfc3986#section-3) with minimal validation
+ * (https://tools.ietf.org/html/rfc3986#section-3) with minimal validation
  * and encoding.
  *
  *
@@ -42,34 +40,34 @@ export class Uri implements URI {
   }
 
   /**
-  * scheme is the 'http' part of 'http://www.msft.com/some/path?query#fragment'.
+  * scheme is the 'https' part of 'https://www.msft.com/some/path?query#fragment'.
   * The part before the first colon.
   */
   get scheme() { return this.uri.scheme; }
 
   /**
-  * authority is the 'www.msft.com' part of 'http://www.msft.com/some/path?query#fragment'.
+  * authority is the 'www.msft.com' part of 'https://www.msft.com/some/path?query#fragment'.
   * The part between the first double slashes and the next slash.
   */
   get authority() { return this.uri.authority; }
 
   /**
-   * path is the '/some/path' part of 'http://www.msft.com/some/path?query#fragment'.
+   * path is the '/some/path' part of 'https://www.msft.com/some/path?query#fragment'.
    */
   get path() { return this.uri.path; }
 
   /**
-   * query is the 'query' part of 'http://www.msft.com/some/path?query#fragment'.
+   * query is the 'query' part of 'https://www.msft.com/some/path?query#fragment'.
    */
   get query() { return this.uri.query; }
 
   /**
-   * fragment is the 'fragment' part of 'http://www.msft.com/some/path?query#fragment'.
+   * fragment is the 'fragment' part of 'https://www.msft.com/some/path?query#fragment'.
    */
   get fragment() { return this.uri.fragment; }
 
   /**
-  * Creates a new Uri from a string, e.g. `http://www.msft.com/some/path`,
+  * Creates a new Uri from a string, e.g. `https://www.msft.com/some/path`,
   * `file:///usr/home`, or `scheme:with/path`.
   *
   * @param value A string which represents an URI (see `URI#toString`).
@@ -138,17 +136,17 @@ bad.fragment === '/project1';
   }
 
   relative(target: Uri): string {
-    strict.ok(target.authority === this.authority, `Uris '${target.toString()}' and '${this.toString()}' are not of the same base.`);
+    strict.ok(target.authority === this.authority, `Uris '${target.toString()}' and '${this.toString()}' are not of the same base`);
     return relative(this.path, target.path).replace(/\\/g, '/');
   }
 
   /** returns true if the uri represents a file:// resource. */
   get isLocal(): boolean {
-    return this.scheme === 'file';
+    return this.scheme === 'file' || this.scheme === 'vsix';
   }
 
-  get isHttp(): boolean {
-    return this.scheme === 'https' || this.scheme === 'http';
+  get isHttps(): boolean {
+    return this.scheme === 'https';
   }
   /**
    * Returns a string representing the corresponding file system path of this URI.
@@ -217,9 +215,9 @@ bad.fragment === '/project1';
     return uri.fileSystem.stat(uri);
   }
 
-  readDirectory(uri?: Uri | string): Promise<Array<[Uri, FileType]>> {
+  readDirectory(uri?: Uri | string, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>> {
     uri = this.resolve(uri);
-    return uri.fileSystem.readDirectory(uri);
+    return uri.fileSystem.readDirectory(uri, options);
   }
 
   async createDirectory(uri?: Uri | string): Promise<Uri> {

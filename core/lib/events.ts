@@ -1,13 +1,10 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { EventEmitter as eventemitter } from 'ee-ts';
 import { EventEmitter } from 'events';
 import { Stream } from 'stream';
 import { promisify } from 'util';
-
 
 /**
  * Creates a promise that resolves after a delay
@@ -82,7 +79,6 @@ export function completed(stream: Stream): Promise<void> {
     stream.once('error', reject);
   });
 }
-
 
 const ignore = new Set([
   'constructor',

@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/cella.core';
+import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -38,7 +36,7 @@ describe('Acquire', () => {
     acq = acquireArtifactFile(local.session, [remoteFile], 'readme.md');
     await acq;
     const newsize = await outputFile.size();
-    strict.equal(newsize, size, 'the file should be the right size at the end.');
+    strict.equal(newsize, size, 'the file should be the right size at the end');
 
   });
 
@@ -59,7 +57,7 @@ describe('Acquire', () => {
 
 
     // try getting the same file again (so, should hit the cache.)
-    local.session.channels.debug('==== get the same large file again. should hit cache.');
+    local.session.channels.debug('==== get the same large file again. should hit cache');
     await acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 
     local.session.channels.debug('==== was that ok?');
@@ -72,12 +70,12 @@ describe('Acquire', () => {
     await outputFile.delete();
     await outputFile.writeFile(halfFile);
 
-    local.session.channels.debug('==== chopped the large file in half, should resume.');
+    local.session.channels.debug('==== chopped the large file in half, should resume');
     acq = acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 
     await acq;
     const newsize = await outputFile.size();
-    strict.equal(newsize, size, 'the file should be the right size at the end.');
+    strict.equal(newsize, size, 'the file should be the right size at the end');
 
     const newfull = <Buffer>(await outputFile.readFile());
     strict.equal(newfull.compare(fullFile), 0, 'files should be identical');
@@ -96,20 +94,20 @@ describe('Acquire', () => {
   it('Download a nuget file', async () => {
     const url = await resolveNugetUrl(local.session, 'zlib-msvc14-x64/1.2.11.7795');
 
-    local.session.channels.debug('==== Downloading nuget package.');
+    local.session.channels.debug('==== Downloading nuget package');
 
     const acq = acquireArtifactFile(local.session, [url], 'zlib-msvc.zip');
     // or const acq = nuget(local.session, 'zlib-msvc14-x64/1.2.11.7795', 'zlib-msvc.zip');
 
     const outputFile = await acq;
-    local.session.channels.debug('==== done downloading.');
+    local.session.channels.debug('==== done downloading');
     const fullSize = await outputFile.size();
 
     strict.ok(await outputFile.exists(), 'File should exist!');
     strict.ok(fullSize > 1 << 16, 'Should be at least 64k');
 
     const size = await outputFile.size();
-    local.session.channels.debug(`==== Size: ${size}.`);
+    local.session.channels.debug(`==== Size: ${size}`);
 
     // what happens if we try again? We should hit our local cache
     await acquireArtifactFile(local.session, [url], 'zlib-msvc.zip');

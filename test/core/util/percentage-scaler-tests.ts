@@ -1,12 +1,10 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { PercentageScaler } from '@microsoft/cella.core';
+import { PercentageScaler } from '@microsoft/vcpkg-ce.core';
 import { strict, throws } from 'assert';
 
-describe ('PercentageScaler', () => {
+describe('PercentageScaler', () => {
   it('ScalesPercentagesTo100', () => {
     const uut = new PercentageScaler(0, 1000);
     for (let idx = 0; idx < 1000; ++idx) {

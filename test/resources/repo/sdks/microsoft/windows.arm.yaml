@@ -1,5 +1,5 @@
 # Windows SDK
-# install with `cella add sdks/microsoft/windows`
+# install with `ce add sdks/microsoft/windows`
 
 info:
   id: sdks/microsoft/windows/arm
@@ -14,4 +14,5 @@ contacts:
 
 install: 
   nupkg: Microsoft.Windows.SDK.cpp.arm/10.0.19041.5
+  sha256: fluffyKittenBunnies
   

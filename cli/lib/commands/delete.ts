@@ -1,11 +1,11 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import { i } from '@microsoft/cella.core';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { i } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { Version } from '../switches/version';
+import { WhatIf } from '../switches/whatIf';
 
 export class DeleteCommand extends Command {
   readonly command = 'delete';
@@ -13,9 +13,10 @@ export class DeleteCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   version = new Version(this)
+  whatIf = new WhatIf(this);
 
   get summary() {
-    return i`Deletes an artifact from the artifact folder.`;
+    return i`Deletes an artifact from the artifact folder`;
   }
 
   get description() {
@@ -36,8 +37,6 @@ export class DeleteCommand extends Command {
         }
       }
     }
-
-
     return true;
   }
 }

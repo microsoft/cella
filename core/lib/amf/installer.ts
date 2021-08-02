@@ -1,15 +1,14 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { isMap, isSeq, YAMLMap } from 'yaml';
-import { Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
+import { i } from '../i18n';
+import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
 import { getOrCreateMap } from '../util/yaml';
 import { NodeBase } from './base';
 
-function createSingleInstallerNode(n: YAMLMap, containingName: string) : InstallerNode | undefined {
+function createSingleInstallerNode(n: YAMLMap, containingName: string): InstallerNode | undefined {
   if (n.has('unzip')) {
     return new UnzipNode(n, containingName);
   }
@@ -51,7 +50,7 @@ export function createInstallerNode(containingNode: YAMLMap, keyName: string): A
 
 
 abstract class InstallerNode extends NodeBase implements Installer {
-  abstract readonly kind : string;
+  abstract readonly kind: string;
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
     yield* checkOptionalString(this.node, this.node.range!, 'lang');
@@ -75,12 +74,12 @@ abstract class FileInstallerNode extends InstallerNode {
     this.setString('sha256', value);
   }
 
-  get md5() {
-    return this.getString('md5');
+  get sha512() {
+    return this.getString('sha512');
   }
 
-  set md5(value: string | undefined) {
-    this.setString('md5', value);
+  set sha512(value: string | undefined) {
+    this.setString('sha512', value);
   }
 
   get strip() {
@@ -97,6 +96,9 @@ abstract class FileInstallerNode extends InstallerNode {
 
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
+    if (!this.sha256 && !this.sha512) {
+      yield { message: i`artifacts must specify a hash algorithm ('sha256' or 'sha512') and value`, range: this.node.range!, category: ErrorKind.MissingHash };
+    }
   }
 }
 

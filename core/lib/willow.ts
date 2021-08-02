@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { i } from './i18n';
 
@@ -30,7 +28,7 @@ export interface FlatVsManPayload extends VsPayload {
   readonly localPath: string;
 }
 
-function throwUnexpectedManifest() : never {
+function throwUnexpectedManifest(): never {
   throw new Error(i`Unexpected format for Visual Studio manifest in channel.`);
 }
 
@@ -52,13 +50,13 @@ function isMinimalPackage(candidatePackage: any) {
 }
 
 function packageHasInstallSize(candidatePackage: any) {
-  return typeof(candidatePackage.installSizes) === 'object'
-    && typeof(candidatePackage.installSizes.targetDrive) === 'number';
+  return typeof (candidatePackage.installSizes) === 'object'
+    && typeof (candidatePackage.installSizes.targetDrive) === 'number';
 }
 
 function packageGetPointerLikeSingleDependencyId(candidatePackage: any): string | undefined {
   if (packageHasInstallSize(candidatePackage)
-    || typeof candidatePackage.dependencies !== 'object'){
+    || typeof candidatePackage.dependencies !== 'object') {
     return undefined;
   }
 
@@ -83,7 +81,7 @@ export function parseVsManFromChannel(channelManifestContent: string): FlatChMan
     throw new Error(i`Unexpected Visual Studio channel manifest version.`);
   }
 
-  let vsManItem : ChManDef | undefined = undefined;
+  let vsManItem: ChManDef | undefined = undefined;
   for (const channelItem of channelItemsRaw) {
     if (channelItem?.id === 'Microsoft.VisualStudio.Manifests.VisualStudio') {
       if (vsManItem === undefined) {
@@ -114,16 +112,16 @@ function flattenVsManPackage(rawJson: any): FlatVsManPayload | undefined {
     return undefined;
   }
 
-  let language : string | undefined;
-  if (typeof(rawJson.language) === 'string') {
+  let language: string | undefined;
+  if (typeof (rawJson.language) === 'string') {
     language = rawJson.language;
   }
 
   const thePayload = rawJson.payloads[0];
   const theId = <string>rawJson.id;
   const theVersion = <string>rawJson.version;
-  let chip : string | undefined;
-  if (typeof(rawJson.chip) === 'string') {
+  let chip: string | undefined;
+  if (typeof (rawJson.chip) === 'string') {
     chip = rawJson.chip;
   }
 
@@ -168,19 +166,19 @@ function maybeHydratePointerLikePackages(lookup: Map<string, Array<any>>, origin
 }
 
 function escapeRegex(str: string) {
-  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 class NumbersEntry {
-  public readonly numbers : Array<number>; // for example, [10, 29]
-  constructor(public readonly rawStr : string) // for example, 10.0029
+  public readonly numbers: Array<number>; // for example, [10, 29]
+  constructor(public readonly rawStr: string) // for example, 10.0029
   {
     this.numbers = Array.from(rawStr.split('.').select(Number.parseInt));
   }
 }
 
 function cmpNumbersEntry(a: NumbersEntry, b: NumbersEntry) {
-  for (let idx = 0;; ++idx) {
+  for (let idx = 0; ; ++idx) {
     if (a.numbers.length <= idx) {
       if (b.numbers.length <= idx) {
         return 0;
@@ -203,9 +201,9 @@ function cmpNumbersEntry(a: NumbersEntry, b: NumbersEntry) {
   }
 }
 
-function maxElement<T>(subject: Array<T>, cmp: (arg0: T, arg1: T) => number) : T | undefined {
+function maxElement<T>(subject: Array<T>, cmp: (arg0: T, arg1: T) => number): T | undefined {
   if (subject.length === 0) {
-     return undefined;
+    return undefined;
   }
 
   let highest = subject[0];
@@ -218,7 +216,7 @@ function maxElement<T>(subject: Array<T>, cmp: (arg0: T, arg1: T) => number) : T
   return highest;
 }
 
-export function resolveVsManId(ids: Iterable<string>, candidateId: string) : string {
+export function resolveVsManId(ids: Iterable<string>, candidateId: string): string {
   const needle = '$(SxSVersion)';
   const loc = candidateId.indexOf(needle);
   if (loc >= 0) {
@@ -233,10 +231,10 @@ export function resolveVsManId(ids: Iterable<string>, candidateId: string) : str
     const regStr = '^' + escapeRegex(prefix) + '((?:\\d+\\.)*\\d+)' + escapeRegex(suffix) + '$';
     const reg = new RegExp(regStr);
     for (const id of ids) {
-       const match = reg.exec(id);
-       if (match) {
-         matchingIds.push(new NumbersEntry(match[1]));
-       }
+      const match = reg.exec(id);
+      if (match) {
+        matchingIds.push(new NumbersEntry(match[1]));
+      }
     }
 
     const highest = maxElement(matchingIds, cmpNumbersEntry);
@@ -280,7 +278,7 @@ export class VsManDatabase {
       const newArr = new Array<FlatVsManPayload>();
       for (const p of entry[1]) {
         const flattened = flattenVsManPackage(p);
-        if (flattened){
+        if (flattened) {
           newArr.push(flattened);
         }
       }

@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { strict } from 'assert';
 import { LazyPromise, ManualPromise } from './manual-promise';
@@ -121,7 +119,7 @@ export class Queue {
    * @param action
    */
   async enqueue<T>(action: () => Promise<T>): Promise<T> {
-    strict.ok(!this.whenZero, 'items may not be added to the queue while it is being awaited.');
+    strict.ok(!this.whenZero, 'items may not be added to the queue while it is being awaited');
 
     this.active++;
     this.total++;

@@ -1,14 +1,12 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { LocalFileSystem } from './local-filesystem';
 import { Session } from './session';
 import { Uri } from './uri';
 
 export class VsixLocalFilesystem extends LocalFileSystem {
-  private readonly vsixBaseUri : Uri | undefined;
+  private readonly vsixBaseUri: Uri | undefined;
 
   constructor(session: Session) {
     super(session);
@@ -19,7 +17,7 @@ export class VsixLocalFilesystem extends LocalFileSystem {
   }
 
   /**
-   * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+   * Creates a new URI from a string, e.g. `https://www.msft.com/some/path`,
    * `file:///usr/home`, or `scheme:with/path`.
    *
    * @param value A string which represents an URI (see `URI#toString`).

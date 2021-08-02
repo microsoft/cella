@@ -1,11 +1,11 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { ManyMap } from './lib/linq';
 import { Queue } from './lib/promise';
 
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 export * from './lib/acquire';
+export * from './lib/activation';
 export * from './lib/archive';
 export * from './lib/artifact';
 export * from './lib/catalog';
@@ -96,6 +96,8 @@ declare global {
     selectMany<U>(callbackfn: (value: T, index: number, array: Array<T>) => U): Array<U extends ReadonlyArray<infer InnerArr> ? InnerArr : U>;
     groupByMap<TKey, TValue>(keySelector: (each: T) => TKey, selector: (each: T) => TValue): Map<TKey, Array<TValue>>;
     groupBy<TValue>(keySelector: (each: T) => string, selector: (each: T) => TValue): { [s: string]: Array<TValue> };
+    count(predicate: (each: T) => Promise<boolean>): Promise<number>,
+    count(predicate: (each: T) => boolean): number,
     readonly last: T | undefined;
     readonly first: T | undefined;
   }
@@ -132,6 +134,30 @@ if (!Array.prototype.insert) {
     all: { value: Array.prototype.every },
     insert: { value: function (position: number, items: Array<any>) { return (<Array<any>>this).splice(position, 0, ...items); } },
     selectMany: { value: Array.prototype.flatMap },
+    count: {
+      value: function (predicate: (e: any) => boolean | Promise<boolean>) {
+        let v = 0;
+        const all = [];
+        for (const each of this) {
+          const test = <any>predicate(each);
+          if (test.then) {
+            all.push(test.then((antecedent: any) => {
+              if (antecedent) {
+                v++;
+              }
+            }));
+            continue;
+          }
+          if (test) {
+            v++;
+          }
+        }
+        if (all.length) {
+          return Promise.all(all).then(() => v);
+        }
+        return v;
+      }
+    },
     groupByMap: {
       value: function (keySelector: (each: any) => any, selector: (each: any) => any) {
         const result = new ManyMap<any, any>();

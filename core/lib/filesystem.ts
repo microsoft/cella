@@ -1,8 +1,7 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 /* eslint-disable @typescript-eslint/ban-types */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from 'ee-ts';
 import { Readable, Writable } from 'stream';
@@ -225,7 +224,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
   }
 
   /**
- * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+ * Creates a new URI from a string, e.g. `https://www.msft.com/some/path`,
  * `file:///usr/home`, or `scheme:with/path`.
  *
  * @param value A string which represents an URI (see `URI#toString`).
@@ -248,7 +247,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param uri The uri of the folder.
    * @return An array of name/type-tuples or a Promise that resolves to such.
    */
-  abstract readDirectory(uri: Uri, options?: {}): Promise<Array<[Uri, FileType]>>;
+  abstract readDirectory(uri: Uri, options?: { recursive?: boolean }): Promise<Array<[Uri, FileType]>>;
 
   /**
    * Create a new directory (Note, that new files are created via `write`-calls).
@@ -319,6 +318,8 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
    * @param options Defines if existing files should be overwritten.
    */
   abstract copy(source: Uri, target: Uri, options?: { overwrite?: boolean }): Promise<number>;
+
+  abstract createSymlink(symlink: Uri, target: Uri): Promise<void>;
 
   /** checks to see if the target exists */
   async exists(uri: Uri) {

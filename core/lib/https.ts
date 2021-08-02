@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { default as got, Headers, HTTPError, Response } from 'got';
 import { Credentials } from './credentials';
@@ -9,7 +7,7 @@ import { anyWhere } from './promise';
 import { Uri } from './uri';
 
 /**
- * Resolves an HTTP GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request
+ * Resolves an HTTPS GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request
  * @param location the URL to get the final location of
  */
 export async function resolveRedirect(location: Uri) {
@@ -32,7 +30,7 @@ export async function resolveRedirect(location: Uri) {
 }
 
 /**
- * Does an HTTP HEAD request, and on a 404, tries to do an HTTP GET and see if we get a redirect, and harvest the headers from that.
+ * Does an HTTPS HEAD request, and on a 404, tries to do an HTTPS GET and see if we get a redirect, and harvest the headers from that.
  * @param location the target URL
  * @param headers any headers to put in the request.
  */
@@ -77,7 +75,7 @@ export async function head(location: Uri, headers: Headers = {}, credentials?: C
   }
 }
 
-/** HTTP Get request, returns a buffer  */
+/** HTTPS Get request, returns a buffer  */
 export function get(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
   let headers: Headers | undefined = undefined;
   headers = setRange(headers, options?.start, options?.end);
@@ -97,21 +95,13 @@ function setRange(headers: Headers | undefined, start?: number, end?: number) {
 
 function setCredentials(headers: Headers | undefined, target: Uri, credentials?: Credentials) {
   if (credentials) {
-    if (credentials.githubToken) {
-      switch (target.authority) {
-        case 'github.com':
-        case 'raw.githubusercontent.com':
-          headers = headers || {};
-          headers['Authorization'] = `token ${credentials.githubToken}`;
-          break;
-      }
-
-    }
+    // todo: if we have to add some credential headers, we'd do it here.
+    // we've removed github auth support until we actually need such a thing
   }
   return headers;
 }
 
-/** HTTP Get request, returns a stream  */
+/** HTTPS Get request, returns a stream  */
 export function getStream(location: Uri, options?: { start?: number, end?: number, headers?: Headers, credentials?: Credentials }) {
   let headers: Headers | undefined = options?.headers;
   headers = setRange(headers, options?.start, undefined);
@@ -145,12 +135,6 @@ function digest(headers: Headers) {
     return { hash, algorithm: 'sha512' };
   }
 
-  // an md5 (either in digest or content-md5 or ...etag :o )
-  hash = md5(headers['digest'], headers['content-md5'], headers['etag']);
-  if (hash) {
-    return { hash, algorithm: 'md5' };
-  }
-
   // nothing we know about.
   return { hash: undefined, algorithm: undefined };
 }
@@ -168,7 +152,7 @@ export class RemoteFile {
   constructor(protected locations: Array<Uri>, options?: { credentials?: Credentials }) {
     this.info = locations.map(location => {
       return head(location, setCredentials({
-        'want-digest': 'sha-256;q=1, sha-512;q=0.9 ,MD5; q=0.3',
+        'want-digest': 'sha-256;q=1, sha-512;q=0.9',
         'accept-encoding': 'identity;q=0', // we need to know the content length without gzip encoding,
       }, location, options?.credentials)).then(data => {
         if (data.statusCode === 200) {
@@ -220,41 +204,6 @@ export class RemoteFile {
  */
 function decode(data?: string): string | undefined {
   return data ? Buffer.from(data, 'base64').toString('hex').toLowerCase() : undefined;
-}
-
-/**
- * Pulls the MD5 from either the 'Digest' header or 'Content-MD5' header.
- * @param digest
- * @param contentMd5
- */
-function md5(digest: string | Array<string> | undefined, contentMd5: string | Array<string> | undefined, etag: string | Array<string> | undefined): string | undefined {
-  // do we have an md5 digest?
-  for (const each of (digest ? Array.isArray(digest) ? digest : [digest] : [])) {
-    if (each.startsWith('md5=')) {
-      return decode(each.substr(4));
-    }
-  }
-
-  // do we have a content-md5?
-  if (contentMd5?.length ?? 0 > 0) {
-    return decode(contentMd5 ? Array.isArray(contentMd5) ? contentMd5[0] : contentMd5 : undefined);
-  }
-
-  // ok, last ditch effort.
-  //
-  // maybe if they had an etag, it'd be an md5 hash perchance? (V) (°,,,,°) (V)
-  // even if this isn't the md5 hash, it's ok, we only use this to short circut the download process if possible.
-  etag = (etag ? Array.isArray(etag) ? etag : [etag] : [])[0];
-  if (etag) {
-    etag = etag.replace(/\W/g, '').toLowerCase(); // drop quoutes and such, which are common.
-    if (etag.length === 32) {
-      // woop woop woop woop
-      return etag;
-    }
-  }
-
-  // nothing.
-  return undefined;
 }
 
 /**

@@ -1,14 +1,12 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/cella.core';
+import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/vcpkg-ce.core';
 import { strict, throws } from 'assert';
 import { describe, it } from 'mocha';
 import { SuiteLocal } from './SuiteLocal';
 
-function testMalformedChannelParse(chmanContent: string, damage : (chmanObjects: any) => void) {
+function testMalformedChannelParse(chmanContent: string, damage: (chmanObjects: any) => void) {
   const chmanObjects = JSON.parse(chmanContent);
   damage(chmanObjects);
   throws(() => parseVsManFromChannel(JSON.stringify(chmanObjects)));
@@ -51,7 +49,7 @@ describe('Willow', () => {
     const local = new SuiteLocal();
     const chmanUri = local.resourcesFolderUri.join('2020-05-06-VisualStudio.16.Release.chman');
     const chmanContent = local.session.utf8(await chmanUri.readFile());
-    const test = (damage : (chmanObjects: any) => void) => {
+    const test = (damage: (chmanObjects: any) => void) => {
       testMalformedChannelParse(chmanContent, damage);
     };
 
@@ -64,7 +62,7 @@ describe('Willow', () => {
     // too many Microsoft.VisualStudio.Manifests.VisualStudio
     test((chmanObjects) => chmanObjects.channelItems = chmanObjects.channelItems.push(chmanObjects.channelItems[0]));
 
-    const testVsManEntry = (damage : (channelItem: any) => void) => {
+    const testVsManEntry = (damage: (channelItem: any) => void) => {
       testMalformedChannelParse(chmanContent, (chmanObjects) => damage(chmanObjects.channelItems[0]));
     };
 
@@ -90,7 +88,7 @@ describe('Willow', () => {
     await local.after();
   });
 
-  it('Parses VS Manifests', async() => {
+  it('Parses VS Manifests', async () => {
     const local = new SuiteLocal();
     const vsmanUri = local.resourcesFolderUri.join('2021-05-06-VisualStudio.vsman');
     const vsmanContent = local.session.utf8(await vsmanUri.readFile());
@@ -612,31 +610,31 @@ describe('Willow', () => {
     strict.equal(resolveVsManId(
       ['hello.100.world', 'hello.9.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.9.world', 'hello.10.world', 'unrelated', 'hello.100.world'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.9.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.10.world');
+      'hello.100.10.world');
 
     strict.equal(resolveVsManId(
       ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       '$(SxSVersion)'),
-    '$(SxSVersion)');
+      '$(SxSVersion)');
 
     strict.equal(resolveVsManId(
       ['100.10', '100', '10', 'unrelated'],
       '$(SxSVersion)'),
-    '100.10');
+      '100.10');
   });
 });

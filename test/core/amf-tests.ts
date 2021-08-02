@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { isNupkg, parseConfiguration as parse } from '@microsoft/cella.core';
+import { isNupkg, parseConfiguration as parse } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -33,6 +31,23 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
+    console.log(doc.content);
+  });
+
+  it('load/persist environment.yaml', async () => {
+    const content = await (await readFile(join(rootFolder(), 'resources', 'environment.yaml'))).toString('utf-8');
+    const doc = parse('cenvironment.yaml', content);
+
+    console.log(doc.content);
+    for (const each of doc.validationErrors) {
+      console.log(each);
+    }
+
+
+    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isValid, 'better be valid!');
+
+    console.log(doc.content);
 
   });
 
@@ -100,16 +115,17 @@ describe('Amf', () => {
     doc.settings.variables['test'] = [...doc.settings.variables['test'], 'another value'];
     strict.deepEqual(doc.settings.variables['test'], ['abc', 'another value'], 'variables should be an array of two items now');
 
-    doc.settings.paths.bin = [...doc.settings.paths.bin, 'hello/there'];
-    strict.deepEqual(doc.settings.paths.bin.length, 3, 'there should be three paths in bin now.');
+    doc.settings.paths['bin'] = [...doc.settings.paths['bin'], 'hello/there'];
+    strict.deepEqual(doc.settings.paths['bin'].length, 3, 'there should be three paths in bin now');
 
     strict.sequenceEqual(doc.demands, ['windows and arm'], 'should have one conditional demand');
 
-    const install = doc['windows and arm'].install;
-    strict.ok(isNupkg(install[0]), 'the install type should be nupkg');
-    strict.equal(install[0].location, 'floobaloo/1.2.3', 'should have correct location');
+    const install = doc['windows and arm'].install[0];
 
-    // console.log(doc.toString());
+    strict.ok(isNupkg(install), 'the install type should be nupkg');
+    strict.equal((install).location, 'floobaloo/1.2.3', 'should have correct location');
+
+    console.log(doc.toString());
   });
 
   it('read invalid yaml file', async () => {
@@ -131,7 +147,7 @@ describe('Amf', () => {
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
-    strict.equal(doc.validationErrors[0], '`empty.yaml:1:1` SectionMessing, Missing section \'info\'', 'Should have an error about info');
+    strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');
   });
 
   it('validation errors', async () => {
@@ -140,7 +156,7 @@ describe('Amf', () => {
 
     strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
 
-    strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
+    strict.equal(doc.validationErrors.length, 6, `Expecting six errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
 
 
     console.log(doc.validationErrors);

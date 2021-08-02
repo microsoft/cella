@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { FileType, HttpFileSystem } from '@microsoft/cella.core';
+import { FileType, HttpsFileSystem } from '@microsoft/vcpkg-ce.core';
 import { fail, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -12,11 +10,11 @@ describe('HttpFileSystemTests', () => {
   const local = new SuiteLocal();
 
   after(local.after.bind(local));
-  const fs = new HttpFileSystem(local.session);
+  const fs = new HttpsFileSystem(local.session);
 
   it('stat a file', async () => {
 
-    const uri = fs.parse('https://aka.ms/cella.version');
+    const uri = fs.parse('https://aka.ms/vcpkg-ce.version');
     const s = await fs.stat(uri);
     strict.equal(s.type, FileType.File, 'Should be a file');
     strict.ok(s.size < 40, 'should be less than 40 bytes');
@@ -35,7 +33,7 @@ describe('HttpFileSystemTests', () => {
   });
 
   it('read a stream', async () => {
-    const uri = fs.parse('https://aka.ms/cella.version');
+    const uri = fs.parse('https://aka.ms/vcpkg-ce.version');
 
     let text = '';
 

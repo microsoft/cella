@@ -1,16 +1,15 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import { i } from '@microsoft/cella.core';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { i } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
+import { artifactIdentity } from '../format';
 import { Table } from '../markdown-table';
-import { formatName, log } from '../styling';
+import { log } from '../styling';
 import { Repo } from '../switches/repo';
 import { Version } from '../switches/version';
 import { UpdateCommand } from './update';
-
 
 export class FindCommand extends Command {
   readonly command = 'find';
@@ -21,7 +20,7 @@ export class FindCommand extends Command {
   version = new Version(this)
 
   get summary() {
-    return i`Find artifacts in the repository.`;
+    return i`Find artifacts in the repository`;
   }
 
   get description() {
@@ -55,8 +54,10 @@ export class FindCommand extends Command {
 
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
-      const name = formatName(fullName, latest.shortName);
-      table.push(name, latest.info.version, latest.info.summary || '');
+      if (!latest.info.dependencyOnly) {
+        const name = artifactIdentity(fullName, latest.shortName);
+        table.push(name, latest.info.version, latest.info.summary || '');
+      }
     }
     log(table.toString());
     log();

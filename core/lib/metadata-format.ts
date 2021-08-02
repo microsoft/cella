@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { fail } from 'assert';
 import { Range, SemVer } from 'semver';
@@ -19,7 +17,13 @@ export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly cont
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return <Amf>proxyDictionary(<YAMLMap>doc.contents, (m, p) => new DemandNode(getOrCreateMap(m, p), p), () => fail('Fatal Error: this should never get called.'), new Amf(doc, filename, lc));
+  const q = <Amf>proxyDictionary(<YAMLMap>doc.contents,
+    (m, p) => {
+      return new DemandNode(getOrCreateMap(m, p), p);
+    },
+    () => fail('Fatal Error: this should never get called'),
+    new Amf(doc, filename, lc));
+  return q;
 }
 
 /**
@@ -143,7 +147,8 @@ export enum ErrorKind {
   ParseError = 'ParseError',
   DuplicateKey = 'DuplicateKey',
   NoInstallInDemand = 'NoInstallInDemand',
-  HostOnly = 'HostOnly'
+  HostOnly = 'HostOnly',
+  MissingHash = 'MissingHashValue'
 }
 
 export interface Validation {
@@ -163,7 +168,7 @@ export interface Info extends Validation {
    *
    * ie, 'compilers/microsoft/msvc'
    *
-   * FYI: artifacts install to $CELLA_HOME/<id>/<VER> or if from another artifact source: $CELLA_HOME/<source>/<id>/<VER>
+   * FYI: artifacts install to $CE_HOME/<id>/<VER> or if from another artifact source: $CE_HOME/<source>/<id>/<VER>
    */
   id: string;
 
@@ -255,7 +260,7 @@ export interface Paths extends DictionaryImpl<StringOrStrings> {
 /** settings that should be applied to the context */
 export interface Settings extends DictionaryOf<any>, Validation {
   /** a map of path categories to one or more values */
-  paths: Paths;
+  paths: DictionaryOf<Array<string>>;
 
   /** a map of the known tools to actual tool executable name */
   tools: DictionaryOf<string>;
@@ -265,7 +270,7 @@ export interface Settings extends DictionaryOf<any>, Validation {
    *
    * arrays mean that the values should be joined with spaces
    */
-  variables: DictionaryOf<StringOrStrings>;
+  variables: DictionaryOf<Array<string>>;
   // this is where we'd see things like
   // CFLAGS: [...] where you can have a bunch of things that would end up in the CFLAGS variable (or used to set values in a vcxproj/cmake settings file.)
   //
@@ -278,12 +283,11 @@ export interface Settings extends DictionaryOf<any>, Validation {
   defines: DictionaryOf<string>;
 }
 
-/** One of several choices for a CRC/HASH/etc */
+/** One of several choices for a HASH etc */
 export interface Verifiable {
   /** SHA-256 hash */
   sha256?: string;
-  /** MD5 hash */
-  md5?: string; // example, MD5 might not be a good idea
+  sha512?: string;
 }
 
 /**

@@ -1,13 +1,11 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-import { YamlStringSet } from '@microsoft/cella.core';
+import { YamlStringSet } from '@microsoft/vcpkg-ce.core';
 import { strict } from 'assert';
 import { Document, YAMLMap } from 'yaml';
 
-describe ('YamlStringsSet', () => {
+describe('YamlStringsSet', () => {
   it('BehavesLikeASet', () => {
     const doc = new Document(new YAMLMap());
     const rootMap = <YAMLMap>doc.contents;

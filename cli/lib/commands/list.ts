@@ -1,12 +1,12 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import { i } from '@microsoft/cella.core';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { i } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
+import { artifactIdentity } from '../format';
 import { Table } from '../markdown-table';
-import { formatName, log } from '../styling';
+import { log } from '../styling';
 import { Installed } from '../switches/installed';
 
 export class ListCommand extends Command {
@@ -17,7 +17,7 @@ export class ListCommand extends Command {
   installed = new Installed(this);
 
   get summary() {
-    return i`Lists the artifacts.`;
+    return i`Lists the artifacts`;
   }
 
   get description() {
@@ -33,14 +33,14 @@ export class ListCommand extends Command {
 
       for (const { artifact, id, folder } of artifacts) {
         const latest = artifacts[0];
-        const name = formatName(id);
+        const name = artifactIdentity(id);
         table.push(name, artifact.info.version, artifact.info.summary || '');
       }
       log(table.toString());
       log();
     }
     else {
-      log('use --installed for now.');
+      log('use --installed for now');
     }
 
     return true;

@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { Range, SemVer } from 'semver';
 import { Document, YAMLMap, YAMLSeq } from 'yaml';
@@ -29,7 +27,6 @@ export function setVersionRef(map: YAMLMap, property: string, value: string | Ve
 export function getVersionRef(map: YAMLMap, property: string) {
   return (map.has(property)) ? new VRef(map, property) : <VersionReference><unknown>undefined;
 }
-
 
 /** @internal */
 export class VRef implements VersionReference {
@@ -68,7 +65,6 @@ export class VRef implements VersionReference {
           //
         }
       }
-
 
       if (a) {
         // we have at least a range going on here.

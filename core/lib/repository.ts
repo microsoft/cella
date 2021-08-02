@@ -1,7 +1,5 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
@@ -11,6 +9,7 @@ import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
+import { i } from './i18n';
 import { MetadataFile, parseConfiguration } from './metadata-format';
 import { Queue } from './promise';
 import { Session } from './session';
@@ -25,20 +24,22 @@ class RepoIndex extends Index<MetadataFile, RepoIndex> {
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
-export interface Repository {
+export interface IRepository {
   readonly count: number;
   readonly where: RepoIndex;
+  readonly loaded: boolean;
 
   load(): Promise<void>;
   save(): Promise<void>;
   update(): Promise<void>;
   regenerate(): Promise<void>;
+
   openArtifact(manifestPath: string): Promise<Artifact>;
   openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
   readonly baseFolder: Uri;
 }
 
-export class CellaRepository implements Repository {
+export class Repository implements IRepository {
 
   private catalog = new Catalog(RepoIndex);
   private indexYaml: Uri;
@@ -63,7 +64,6 @@ export class CellaRepository implements Repository {
       }
       try {
         const amf = parseConfiguration(uri.fsPath, content);
-
 
         if (!amf.isValidYaml) {
           for (const err of amf.yamlErrors) {
@@ -109,9 +109,22 @@ export class CellaRepository implements Repository {
     this.catalog.doneInsertion();
   }
 
+  #loaded = false;
+
+  get loaded() {
+    return this.#loaded;
+  }
+
   async load(): Promise<void> {
+    if (! await this.indexYaml.exists()) {
+      await this.update();
+    }
+
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
+
+    this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
     this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
+    this.#loaded = true;
   }
 
   async save(): Promise<void> {
@@ -123,21 +136,13 @@ export class CellaRepository implements Repository {
   }
 
   async update() {
-    const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {
-      credentials: {
-        githubToken: this.session.environment['githubAuthToken']
-      }
-    });
+    this.session.channels.message(i`Updating repository data from ${this.remoteLocation.toString()}`);
+
+    const file = await acquireArtifactFile(this.session, [this.remoteLocation], 'repository.zip', {});
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.baseFolder, { strip: 1 });
     }
-  }
-
-  async resolveDependencies(manifests: Array<string>) {
-    // open all the ones that are listed
-    // go thru each one, and add in the dependencies
-    //
   }
 
   private async openManifest(manifestPath: string) {
@@ -157,20 +162,19 @@ export class CellaRepository implements Repository {
     // load them up async, but throttled via a queue
     await manifestPaths.forEachAsync(async (manifest) => metadataFiles.push(await this.openArtifact(manifest))).done;
 
-    // sort the contents by version before grouping.
-    metadataFiles = metadataFiles.sort((a, b) => compare(a.info.version, b.info.version));
+    // sort the contents by version before grouping. (descending version)
+    metadataFiles = metadataFiles.sort((a, b) => compare(b.info.version, a.info.version));
 
     // return a map.
     return metadataFiles.groupByMap(m => m.info.id, artifact => artifact);
   }
 }
 
-export class DefaultRepository extends CellaRepository {
+export class DefaultRepository extends Repository {
   constructor(session: Session) {
-    const remoteUri = session.fileSystem.parse('https://github.com/fearthecowboy/scratch/archive/refs/heads/metadata.zip');
-    //('https://github.com/microsoft/cella-metadata/archive/refs/heads/main.zip');
-    const repositoryFolder = session.environment['repositoryFolder'];
-    const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.cellaHome.join('repo', 'default');
+    const remoteUri = session.fileSystem.parse('https://aka.ms/vcpkg-ce-default');
+    const repositoryFolder = session.settings['repositoryFolder'];
+    const localUri = repositoryFolder ? session.fileSystem.file(repositoryFolder) : session.homeFolder.join('repo', 'default');
     super(session, localUri, remoteUri);
   }
 }

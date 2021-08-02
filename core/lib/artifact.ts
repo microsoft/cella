@@ -1,10 +1,10 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 import { fail } from 'assert';
+import * as micromatch from 'micromatch';
 import { AcquireEvents } from './acquire';
+import { Activation } from './activation';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { i } from './i18n';
@@ -23,21 +23,22 @@ export class SetOfDemands {
     this.#demands.set('', metadata);
 
     for (const query of metadata.demands) {
-      if (parseQuery(query).match(session.environment.context)) {
+      if (parseQuery(query).match(session.context)) {
+        session.channels.debug(`Matching demand query: '${query}'`);
         this.#demands.set(query, metadata[query]);
       }
     }
   }
 
   get installer() {
-    const install = linq.items(this.#demands).where(([query, demand]) => !!demand.install).toArray();
+    const install = linq.items(this.#demands).where(([query, demand]) => demand.install.length > 0).toArray();
 
     if (install.length > 1) {
       // bad. There should only ever be one install block.
       throw new MultipleInstallsMatched(install.map(each => each[0]));
     }
 
-    return install[0]?.[1].install;
+    return install[0]?.[1].install || [];
   }
 
   get errors() {
@@ -65,7 +66,6 @@ export class SetOfDemands {
         result[name] = dict[name];
       }
     }
-    // .toDictionary(([name, ver]) => name, ([name, ver]) => ver);
     return result;
   }
 }
@@ -80,6 +80,8 @@ export function createArtifact(session: Session, metadata: MetadataFile, shortNa
 
 class ArtifactInfo {
   /**@internal */ artifact!: Artifact;
+
+  isPrimary = false;
 
   readonly applicableDemands: SetOfDemands;
   constructor(protected session: Session, protected metadata: MetadataFile, public shortName: string) {
@@ -116,14 +118,14 @@ class ArtifactInfo {
     }
   }
 
-  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }) {
+  async install(options?: { events?: Partial<UnpackEvents & AcquireEvents>, force?: boolean, allLanguages?: boolean, language?: string }): Promise<boolean> {
     if (!options) {
       options = {};
     }
 
     // is it installed?
     if (await this.isInstalled && !options.force) {
-      return;
+      return false;
     }
 
     if (options.force) {
@@ -166,6 +168,8 @@ class ArtifactInfo {
 
     // after we unpack it, write out the installed manifest
     await this.writeManifest();
+
+    return true;
   }
 
   get name() {
@@ -173,7 +177,7 @@ class ArtifactInfo {
   }
 
   #targetLocation: Uri | undefined;
-  get targetLocation() : Uri {
+  get targetLocation(): Uri {
     // tools/contoso/something/x64/1.2.3/
     // slashes to folders, non-word-chars to dot, append version
     return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.artifact.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.artifact.info.version));
@@ -205,4 +209,83 @@ class ArtifactInfo {
     }
     return artifacts;
   }
+
+  async loadActivationSettings(activation: Activation) {
+    // construct paths (bin, lib, include, etc.)
+    // construct tools
+    // compose variables
+    // defines
+
+    const l = this.targetLocation.toString().length + 1;
+    const allPaths = (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
+
+    for (const s of this.applicableDemands.settings) {
+      for (const key of s.defines.keys) {
+        let value = s.defines[key];
+        if (value === 'true') {
+          value = '1';
+        }
+
+        const v = activation.defines.get(key);
+        if (v && v !== value) {
+          // conflict. todo: what do we want to do?
+          this.session.channels.warning(i`Duplicate define ${key} during activation. New value will replace old `);
+        }
+        activation.defines.set(key, value);
+      }
+
+      for (const key of s.paths.keys) {
+        if (!key) {
+          continue;
+        }
+        const pathEnvVariable = key.toUpperCase();
+        const p = activation.paths.getOrDefault(pathEnvVariable, []);
+        const locations = s.paths[key].selectMany(path => {
+          const p = sanitizePath(path);
+          return p ? micromatch(allPaths, p) : [''];
+        }).map(each => this.targetLocation.join(each));
+
+        if (locations.length) {
+          p.push(...locations);
+          this.session.channels.debug(`locations: ${locations.map(l => l.toString())}`);
+        }
+      }
+
+      for (const key of s.tools.keys) {
+        const envVariable = key.toUpperCase();
+        if (activation.tools.has(envVariable)) {
+          this.session.channels.error(i`Duplicate tool declared ${key} during activation. Probably not a good thing?`);
+        }
+
+        const location = sanitizePath(s.tools[key]);
+        const uri = this.targetLocation.join(location);
+
+        if (! await uri.exists()) {
+          this.session.channels.error(i`Tool '${key}' is specified as '${location}' which does not exist in the package`);
+        }
+
+        activation.tools.set(envVariable, uri);
+      }
+
+      for (const key of s.variables.keys) {
+        const value = s.variables[key];
+        const envKey = activation.environment.getOrDefault(key, []);
+        envKey.push(...value);
+      }
+    }
+  }
 }
+
+export function sanitizePath(path: string) {
+  return path.
+    replace(/[\\/]+/g, '/').     // forward slahses please
+    replace(/[?<>:|"]/g, ''). // remove illegal characters.
+    // eslint-disable-next-line no-control-regex
+    replace(/[\x00-\x1f\x80-\x9f]/g, ''). // remove unicode control codes
+    replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i, ''). // no reserved names
+    replace(/^[/.]*\//, ''). // dots and slashes off the front.
+    replace(/[/.]+$/, ''). // dots and slashes off the back.
+    replace(/\/\.+\//g, '/'). // no parts made just of dots.
+    replace(/\/+/g, '/'); // duplicate slashes.
+}
+
