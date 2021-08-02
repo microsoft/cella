@@ -1,11 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See LICENSE in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
 import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/vcpkg-ce.core';
 import { strict, throws } from 'assert';
 import { describe, it } from 'mocha';
@@ -615,31 +610,31 @@ describe('Willow', () => {
     strict.equal(resolveVsManId(
       ['hello.100.world', 'hello.9.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.9.world', 'hello.10.world', 'unrelated', 'hello.100.world'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.9.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.world');
+      'hello.100.world');
 
     strict.equal(resolveVsManId(
       ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       'hello.$(SxSVersion).world'),
-    'hello.100.10.world');
+      'hello.100.10.world');
 
     strict.equal(resolveVsManId(
       ['hello.100.10.world', 'hello.100.world', 'hello.10.world', 'unrelated'],
       '$(SxSVersion)'),
-    '$(SxSVersion)');
+      '$(SxSVersion)');
 
     strict.equal(resolveVsManId(
       ['100.10', '100', '10', 'unrelated'],
       '$(SxSVersion)'),
-    '100.10');
+      '100.10');
   });
 });
