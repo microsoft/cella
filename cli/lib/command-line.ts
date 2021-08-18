@@ -138,8 +138,8 @@ export class CommandLine {
     return this.commands.find(cmd => cmd.command === this.inputs[0] || !!cmd.aliases.find(alias => alias === this.inputs[0]));
   }
 
-  constructor(args: Array<string>) {
-    for (const each of args) {
+  constructor(...args: any[]) {
+    for (const each of args[0]) {
       // --name
       // --name:value
       // --name=value
@@ -152,6 +152,11 @@ export class CommandLine {
 
       this.inputs.push(each);
     }
-    this.context = intersect(new Ctx(this), this.switches);
+    if (args.length == 1) {
+      this.context = intersect(new Ctx(this), this.switches);
+    }
+    else {
+      this.context = intersect(args[1], this.switches);
+    }
   }
 }

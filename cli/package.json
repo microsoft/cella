@@ -56,6 +56,7 @@
     "@microsoft/vcpkg-ce.core": "~0.4.0",
     "marked-terminal": "4.1.0",
     "marked": "2.0.0",
-    "cli-progress": "3.9.0"
+    "cli-progress": "3.9.0",
+    "vscode-jsonrpc": "^6.0.0"
   }
 }
