@@ -24,23 +24,26 @@ describe('Server Tests', () => {
 
   connection.listen();
 
+  let sessionID = 0;
+
   it('Creates a ce server session', async () => {
     const obj = <any>{};
     obj.os = "win32";
     obj.arch = "x64";
 
     const obj1 = <any>{};
-    let result = await connection.sendRequest(createSession, process.cwd(), JSON.stringify(obj), JSON.stringify(obj1), JSON.stringify(process.env));
-    console.error(result);
+    const path = "C:\\Proj\\AzureRTOSGettingStartedFork\\MXChip\\AZ3166"
+    sessionID = await connection.sendRequest(createSession, path, JSON.stringify(obj), JSON.stringify(obj1), JSON.stringify(process.env));
+    console.error(sessionID);
   });
 
   it('Activates a ce session', async () => {
-    let result = await connection.sendRequest(activateSession, "", [""], 1);
-    console.error(result);
+    sessionID = await connection.sendRequest(activateSession, "", [""], sessionID);
+    console.error(sessionID);
   });
 
   it('Deactivates a ce session', async () => {
-    await connection.sendNotification(deactivateSession, 1);
+    connection.sendNotification(deactivateSession, sessionID);
   });
 
 

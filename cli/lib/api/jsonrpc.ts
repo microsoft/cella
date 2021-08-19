@@ -1,6 +1,6 @@
 
 export interface JSONRPC {
   CreateSession(currentDirectory: string, context: string, settings: string, environment: string): Promise<number>;
-  Activate(project: string, commandline: Array<string>, sessionID: number): number;
+  Activate(projectURI: string, commandline: Array<string>, sessionID: number): Promise<number>;
   Deactivate(sessionID: number): void;
 }
