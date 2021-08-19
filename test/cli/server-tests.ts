@@ -6,8 +6,7 @@ import * as rpc from 'vscode-jsonrpc';
 import { StreamMessageReader, StreamMessageWriter } from 'vscode-jsonrpc/lib/node/main';
 
 let connection: rpc.MessageConnection;
-let stopNotification = new rpc.NotificationType('Deactivate');
-
+let stopSession = new rpc.NotificationType('Stop');
 describe('Server Tests', () => {
   let childProcess = cp.spawn(process.argv[0], [resolve(__dirname, '../../../cli'), 'server', '--accept-eula'], { stdio: ["pipe", "pipe", "inherit"] });
   strict.ok(childProcess, "child process did not start");
@@ -19,8 +18,9 @@ describe('Server Tests', () => {
 
   let createSession = new rpc.RequestType4<string, string, string, string, number, void>('CreateSession');
   let activateSession = new rpc.RequestType3<string, string[], number, number, void>('Activate');
+  let updateSession = new rpc.NotificationType<number>('Update');
   let deactivateSession = new rpc.NotificationType<number>('Deactivate');
-  let stopSession = new rpc.RequestType<number, number, void>('Stop');
+
 
   connection.listen();
 
@@ -38,11 +38,15 @@ describe('Server Tests', () => {
   });
 
   it('Activates a ce session', async () => {
-    sessionID = await connection.sendRequest(activateSession, "", [""], sessionID);
+    sessionID = await connection.sendRequest(activateSession, "C:\\Proj\\AzureRTOSGettingStartedFork\\MXChip\\AZ3166", [""], sessionID);
     console.error(sessionID);
   });
 
-  it('Deactivates a ce session', async () => {
+  it('Update a session', async () => {
+    await connection.sendNotification(updateSession, sessionID);
+  })
+
+  it('Deactivates a ce session', () => {
     connection.sendNotification(deactivateSession, sessionID);
   });
 
@@ -50,5 +54,5 @@ describe('Server Tests', () => {
 });
 
 after(async () => {
-  connection.sendNotification(stopNotification);
+  connection.sendNotification(stopSession);
 });
