@@ -6,7 +6,7 @@ import { session } from '../../main';
 import { Command } from '../command';
 import { projectFile } from '../format';
 import { activateProject } from '../project';
-import { debug } from '../styling';
+import { debug, error } from '../styling';
 import { Project } from '../switches/project';
 import { WhatIf } from '../switches/whatIf';
 
@@ -31,6 +31,7 @@ export class ActivateCommand extends Command {
   async run() {
     const project = await this.project.value;
     if (!project) {
+      error(i`Unable to find project manifest file`);
       return false;
     }
 
