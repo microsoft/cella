@@ -22,7 +22,7 @@ pr:
 - main
 
 pool:
-  name: VSEngSS-MicroBuild2019
+  name: VSEngSS-MicroBuild2019-1ES
 
 variables:
   # MicroBuild requires TeamName to be set.
