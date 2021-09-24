@@ -38,11 +38,11 @@ function header() {
 
   if (commandline.debug) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    console.log(`${green.bold(`${product} command line utility`)} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
+    log(`${green.bold(`${product} command line utility`)} [cli: ${white.bold(cliVersion)}; core: ${white.bold(Version)}; node: ${white.bold(process.version)}; max-memory: ${white.bold(Math.round((require('v8').getHeapStatistics().heap_size_limit) / (1024 * 1024)) & 0xffffffff00)} gb]`);
   } else {
-    console.log(`${green.bold(`${product} command line utility`)} [${white.bold(cliVersion)}]`);
+    log(`${green.bold(`${product} command line utility`)} [${white.bold(cliVersion)}]`);
   }
-  console.log('');
+  log('');
 }
 
 export let session: Session;
@@ -75,7 +75,6 @@ async function main() {
 
   debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
   // find a project profile.
-  // console.log((await session.findProjectProfile())?.fsPath);
 
   const help = new HelpCommand(commandline);
 

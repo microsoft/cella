@@ -5,12 +5,13 @@ import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
 import { acquireArtifactFile } from './acquire';
+import { MetadataFile } from './amf/metadata-file';
 import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
 import { FileType } from './filesystem';
 import { i } from './i18n';
-import { MetadataFile, parseConfiguration } from './metadata-format';
+import { parseConfiguration } from './metadata-format';
 import { Queue } from './promise';
 import { Session } from './session';
 import { Uri } from './uri';
@@ -83,7 +84,7 @@ export class Repository implements IRepository {
 
         repo.catalog.insert(amf, repo.baseFolder.relative(uri));
 
-      } catch (e) {
+      } catch (e: any) {
         repo.session.channels.debug(e.toString());
         repo.session.channels.warning(`skipping invalid metadata file ${uri.fsPath}`);
       }
@@ -163,10 +164,10 @@ export class Repository implements IRepository {
     await manifestPaths.forEachAsync(async (manifest) => metadataFiles.push(await this.openArtifact(manifest))).done;
 
     // sort the contents by version before grouping. (descending version)
-    metadataFiles = metadataFiles.sort((a, b) => compare(b.info.version, a.info.version));
+    metadataFiles = metadataFiles.sort((a, b) => compare(b.metadata.info.version, a.metadata.info.version));
 
     // return a map.
-    return metadataFiles.groupByMap(m => m.info.id, artifact => artifact);
+    return metadataFiles.groupByMap(m => m.metadata.info.id, artifact => artifact);
   }
 }
 

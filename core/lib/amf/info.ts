@@ -7,78 +7,75 @@ import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Info, ValidationError } from '../metadata-format';
 import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
-import { YamlStringSet } from '../util/strings';
-import { createNode } from '../util/yaml';
+import { YamlStringSet } from '../yaml/strings';
+import { ParentNode } from '../yaml/yaml-node';
+import { YamlObject } from '../yaml/YamlObject';
 
-/** @internal */
-export class InfoNode implements Info {
-  /** @internal */
-  constructor(protected node: YAMLMap) {
+export class InfoNode extends YamlObject implements Info {
+  constructor(parent: ParentNode) {
+    super(parent, 'info');
   }
-
   get id(): string {
-    return <string>this.node.get('id');
+    return <string>this.getMember('id');
   }
 
   set id(value: string) {
-    this.node.set('id', createNode(value));
+    this.setMember('id', value);
   }
 
   get version(): string {
-    return <string>this.node.get('version');
+    return <string>this.getMember('version');
   }
 
   set version(value: string) {
     const v = parseSemver(value);
-    this.node.set('version', v?.format() || fail(i`Version '${value}' is not a legal semver version`));
+    this.setMember('version', v?.format() || fail(i`Version '${value}' is not a legal semver version`));
   }
 
   get summary(): string | undefined {
-    return <string>this.node.get('summary') || undefined;
+    return <string>this.getMember('summary') || undefined;
   }
 
   set summary(value: string | undefined) {
-    this.node.set('summary', value);
+    this.setMember('summary', value);
   }
 
   get description(): string | undefined {
-    return <string>this.node.get('description') || undefined;
+    return <string>this.selfNode.get('description') || undefined;
   }
   set description(value: string | undefined) {
-    this.node.set('description', value);
+    this.setMember('description', value);
   }
 
   get dependencyOnly(): boolean {
-    return (new YamlStringSet(this.node, 'options').has('dependencyOnly'));
+    return (new YamlStringSet(this.selfNode, 'options').has('dependencyOnly'));
   }
+
   set dependencyOnly(value: boolean) {
     if (value) {
-      new YamlStringSet(this.node, 'options').set('dependencyOnly');
+      new YamlStringSet(this.selfNode, 'options').set('dependencyOnly');
     } else {
-      new YamlStringSet(this.node, 'options').unset('dependencyOnly');
+      new YamlStringSet(this.selfNode, 'options').unset('dependencyOnly');
     }
   }
 
-  protected get range(): [number, number, number] {
-    return <any>this.node.range!;
-  }
-
+  /** @internal */
   *validate(): Iterable<ValidationError> {
-    if (!(this.node instanceof YAMLMap)) {
-      yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this.range, category: ErrorKind.IncorrectType };
+    if (!(this.selfNode instanceof YAMLMap)) {
+      yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this._range, category: ErrorKind.IncorrectType };
       return; // stop processing in this block
     }
 
-    if (!this.node.has('id')) {
-      yield { message: i`Missing identity '${'info.id'}'`, range: this.range, category: ErrorKind.FieldMissing };
+    if (!this.selfNode.has('id')) {
+      yield { message: i`Missing identity '${'info.id'}'`, range: this._range, category: ErrorKind.FieldMissing };
     }
 
-    if (!this.node.has('version')) {
-      yield { message: i`Missing version '${'info.version'}'`, range: this.range, category: ErrorKind.FieldMissing };
+    if (!this.selfNode.has('version')) {
+      yield { message: i`Missing version '${'info.version'}'`, range: this._range, category: ErrorKind.FieldMissing };
     }
 
-    yield* checkOptionalString(this.node, this.range, 'summary');
-    yield* checkOptionalString(this.node, this.range, 'description');
-    yield* checkOptionalArrayOfStrings(this.node, this.range, 'options');
+    yield* checkOptionalString(this.selfNode, this._range, 'summary');
+    yield* checkOptionalString(this.selfNode, this._range, 'description');
+    yield* checkOptionalArrayOfStrings(this.selfNode, this._range, 'options');
   }
 }

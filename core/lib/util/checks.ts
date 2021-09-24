@@ -17,11 +17,16 @@ export function isPrimitive(value: any): value is (string | number | boolean) {
 }
 
 /** @internal */
+export function isNullish(value: any): value is null | undefined {
+  return value === null || value === undefined || value === '';
+}
+
+/** @internal */
 export function isIterable<T>(source: any): source is Iterable<T> {
   return !!source && typeof (source) !== 'string' && !!source[Symbol.iterator];
 }
 
-export function *checkOptionalString(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
+export function* checkOptionalString(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
   switch (typeof parent.get(name)) {
     case 'string':
     case 'undefined':
@@ -31,7 +36,7 @@ export function *checkOptionalString(parent: YAMLMap, range: [number, number, nu
   }
 }
 
-export function *checkOptionalBool(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
+export function* checkOptionalBool(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
   switch (typeof parent.get(name)) {
     case 'boolean':
     case 'undefined':
@@ -56,7 +61,7 @@ function checkOptionalArrayOfStringsImpl(parent: YAMLMap, range: [number, number
   return false;
 }
 
-export function *checkOptionalArrayOfStrings(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
+export function* checkOptionalArrayOfStrings(parent: YAMLMap, range: [number, number, number], name: string): Iterable<ValidationError> {
   if (checkOptionalArrayOfStringsImpl(parent, range, name)) {
     yield { message: i`${name} must be an array of strings, or unset`, range: range, category: ErrorKind.IncorrectType };
   }

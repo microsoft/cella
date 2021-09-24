@@ -43,7 +43,7 @@ export class RemoveCommand extends Command {
     const req = manifest.requires.keys;
     for (const input of this.inputs) {
       if (req.indexOf(input) !== -1) {
-        delete manifest.requires[input];
+        manifest.requires.delete(input);
         log(i`Removing ${input} from project manifest`);
       } else {
         error(i`unable to find artifact ${input} in the project manifest`);

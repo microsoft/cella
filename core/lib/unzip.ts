@@ -705,7 +705,7 @@ function createVerifier(crc: number, size: number) {
       let err;
       try {
         verify.data(data);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       passThru(err, data);

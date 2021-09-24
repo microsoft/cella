@@ -37,12 +37,12 @@
   "readme": "https://github.com/Microsoft/vcpkg-ce/blob/master/readme.md",
   "devDependencies": {
     "@types/node": "14.14.22",
-    "@typescript-eslint/eslint-plugin": "^4.15.2",
-    "@typescript-eslint/parser": "^4.15.2",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
     "eslint-plugin-notice": "0.9.10",
-    "eslint": "^7.20.0",
+    "eslint": "^7.32.0",
     "@types/semver": "~7.3.4",
-    "typescript": "4.3.2",
+    "typescript": "4.4.3",
     "shx": "0.3.3",
     "translate-strings": "1.0.5",
     "@types/marked-terminal": "3.1.1",
@@ -50,7 +50,7 @@
     "@types/cli-progress": "3.9.1"
   },
   "dependencies": {
-    "yaml": "2.0.0-5",
+    "yaml": "2.0.0-8",
     "semver": "~7.3.4",
     "chalk": "4.1.0",
     "@microsoft/vcpkg-ce.core": "~0.4.0",

@@ -1,39 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { YAMLMap } from 'yaml';
-import { DictionaryOf, Settings, ValidationError } from '../metadata-format';
-import { getOrCreateMap, getStrings, setStrings } from '../util/yaml';
-import { DictionaryImpl, proxyDictionary } from './dictionary';
 
-export class SettingsNode extends DictionaryImpl<any> implements Settings {
+import { Settings, ValidationError } from '../metadata-format';
+import { PrimitiveDictionary, StringDictionary } from '../yaml/ImplMapOf';
+import { YamlDictionary } from '../yaml/MapOf';
+import { ParentNode } from '../yaml/yaml-node';
+import { Primitive } from './metadata-file';
+
+
+export class SettingsNode extends YamlDictionary<Primitive | Record<string, unknown>> implements Settings {
+  constructor(parent: ParentNode) {
+    super(parent, 'settings');
+  }
+
+  wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
+    return value;
+  }
+
+  paths: StringDictionary = new StringDictionary(this, 'paths');
+  variables: StringDictionary = new StringDictionary(this, 'variables');
+  tools: YamlDictionary<string> = new PrimitiveDictionary<string>(this, 'tools', (k, v) => v);
+  defines: YamlDictionary<string> = new PrimitiveDictionary<string>(this, 'defines', (k, v) => v);
+
   /** @internal */
-  constructor(node: YAMLMap) {
-    super(node);
-  }
-
-  #paths!: DictionaryOf<Array<string>>;
-  get paths(): DictionaryOf<Array<string>> {
-    return this.#paths || (this.#paths = proxyDictionary<Array<string>>(getOrCreateMap(this.node, 'paths'), (m, p) => getStrings(m, p), setStrings));
-  }
-
-  #tools!: DictionaryOf<string>;
-  get tools(): DictionaryOf<string> {
-    return this.#tools || (this.#tools = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'tools'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
-  }
-
-  #variables!: DictionaryOf<Array<string>>;
-  get variables(): DictionaryOf<Array<string>> {
-    return this.#variables || (this.#variables = proxyDictionary<Array<string>>(getOrCreateMap(this.node, 'variables'), getStrings, setStrings));
-  }
-
-  #defines!: DictionaryOf<string>;
-  get defines(): DictionaryOf<string> {
-    return this.#defines || (this.#defines = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'defines'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
-  }
-
   *validate(): Iterable<ValidationError> {
-    //
+    // todo: what validations do we need?
   }
 
 }

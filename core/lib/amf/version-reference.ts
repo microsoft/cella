@@ -2,40 +2,27 @@
 // Licensed under the MIT License.
 
 import { Range, SemVer } from 'semver';
-import { Document, YAMLMap, YAMLSeq } from 'yaml';
+import { isScalar, Scalar } from 'yaml';
 import { ValidationError, VersionReference } from '../metadata-format';
-import { createNode } from '../util/yaml';
+import { YamlNode } from '../yaml/YamlNode';
 
 // nuget-semver parser doesn't have a ts typings package
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const parseRange: any = require('@snyk/nuget-semver/lib/range-parser');
 
 /** @internal */
-export function setVersionRef(map: YAMLMap, property: string, value: string | VersionReference) {
-  if (!value) {
-    map.set(property, undefined);
+export class VersionReferenceNode extends YamlNode<Scalar> implements VersionReference {
+  protected create() {
+    return new Scalar('');
   }
-  if (typeof value === 'string') {
-    return map.set(property, value);
-  }
-  if (value.range) {
-    map.set(property, createNode(`${value.range.raw || value.range?.toString()} ${value.resolved?.raw || value.resolved?.toString() || ''}`.trim()));
-  }
-}
 
-/** @internal */
-export function getVersionRef(map: YAMLMap, property: string) {
-  return (map.has(property)) ? new VRef(map, property) : <VersionReference><unknown>undefined;
-}
-
-/** @internal */
-export class VRef implements VersionReference {
-  /** @internal */
-  constructor(private node: Document.Parsed | YAMLMap | YAMLSeq, private prop: string) {
+  protected isValidNode(value: any): value is Scalar {
+    return isScalar(value);
   }
+
   private split(): [Range, SemVer | undefined] {
 
-    const v = <string>(<any>this.node).get(this.prop)?.toString().trim();
+    const v = <string>(<any>this.parent).get(this.nodeName)?.toString().trim();
     if (v) {
 
       const [, a, b] = /(.+)\s+([\d\\.]+)/.exec(v) || [];
@@ -86,26 +73,29 @@ export class VRef implements VersionReference {
     return this.split()[0];
   }
   set range(ver: Range) {
-    this.node.set(this.prop, createNode(`${ver.raw} ${this.resolved?.raw || ''}`.trim()));
+    this.parent.set(this.nodeName, `${ver.raw} ${this.resolved?.raw || ''}`.trim());
   }
 
   get resolved() {
     return this.split()[1];
   }
   set resolved(ver: SemVer | undefined) {
-    this.node.set(this.prop, createNode(`${this.range.raw} ${ver?.raw || ''}`.trim()));
+    this.parent.set(this.nodeName, `${this.range.raw} ${ver?.raw || ''}`.trim());
   }
 
   get raw(): string {
-    return <string>this.node.get(this.prop);
+    return <string>this.parent.get(this.nodeName);
   }
 
+  set raw(value: string) {
+    this.parent.set(this.nodeName, value.trim());
+  }
   toString() {
-    return this.node.get(this.prop);
+    return this.parent.get(this.nodeName);
   }
 
-
-  *validate(): Iterable<ValidationError> {
+  /** @internal */
+  * validate(): Iterable<ValidationError> {
     //
   }
 

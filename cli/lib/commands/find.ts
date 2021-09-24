@@ -54,9 +54,9 @@ export class FindCommand extends Command {
 
     for (const [fullName, artifacts] of results) {
       const latest = artifacts[0];
-      if (!latest.info.dependencyOnly) {
+      if (!latest.metadata.info.dependencyOnly) {
         const name = artifactIdentity(fullName, latest.shortName);
-        table.push(name, latest.info.version, latest.info.summary || '');
+        table.push(name, latest.metadata.info.version, latest.metadata.info.summary || '');
       }
     }
     log(table.toString());

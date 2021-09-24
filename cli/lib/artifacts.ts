@@ -15,14 +15,14 @@ export async function showArtifacts(artifacts: Iterable<Artifact>, options?: { f
   const table = new Table(i`Artifact`, i`Version`, i`Status`, i`Dependency`, i`Summary`);
   for (const artifact of artifacts) {
 
-    const name = artifactIdentity(artifact.info.id, artifact.shortName);
-    if (!artifact.isValid) {
+    const name = artifactIdentity(artifact.id, artifact.shortName);
+    if (!artifact.metadata.isValid) {
       failing = true;
-      for (const err of artifact.validationErrors) {
+      for (const err of artifact.metadata.validationErrors) {
         error(err);
       }
     }
-    table.push(name, artifact.info.version, options?.force || await artifact.isInstalled ? 'installed' : 'will install', artifact.isPrimary ? ' ' : '*', artifact.info.summary || '');
+    table.push(name, artifact.version, options?.force || await artifact.isInstalled ? 'installed' : 'will install', artifact.isPrimary ? ' ' : '*', artifact.metadata.info.summary || '');
   }
   log(table.toString());
 
@@ -117,7 +117,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
       });
       // remember what was actually installed
       installed.set(artifact, actuallyInstalled);
-    } catch (e) {
+    } catch (e: any) {
       bar.stop();
       debug(e);
       error(i`Error installing ${artifactIdentity(id)} - ${e} `);

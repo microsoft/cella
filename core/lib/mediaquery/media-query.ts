@@ -42,7 +42,7 @@ class QueryList {
       for (const statement of QueryList.parseQuery(cursor)) {
         result.queries.push(statement);
       }
-    } catch (error) {
+    } catch (error: any) {
       result.error = error;
     }
     return result;

@@ -27,9 +27,9 @@ export * from './lib/unified-filesystem';
 export * from './lib/unzip';
 export * from './lib/uri';
 export * from './lib/util/percentage-scaler';
-export * from './lib/util/strings';
 export * from './lib/util/yaml';
 export * from './lib/version';
+export * from './lib/yaml/strings';
 
 /** This adds the expected declarations to the Array type. */
 declare global {

@@ -1,59 +1,64 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { isMap, isSeq, YAMLMap } from 'yaml';
+import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
-import { getOrCreateMap } from '../util/yaml';
-import { NodeBase } from './base';
+import { ObjectSequence } from '../yaml/ObjectSequence';
+import { StringsSequence } from '../yaml/strings';
+import { NonNavigableYamlObject, ParentNode } from '../yaml/yaml-node';
 
-function createSingleInstallerNode(n: YAMLMap, containingName: string): InstallerNode | undefined {
-  if (n.has('unzip')) {
-    return new UnzipNode(n, containingName);
-  }
-  if (n.has('nupkg')) {
-    return new NupkgNode(n, containingName);
-  }
-  if (n.has('untar')) {
-    return new UnTarNode(n, containingName);
-  }
-  if (n.has('git')) {
-    return new GitCloneNode(n, containingName);
-  }
-
-  return undefined;
-}
-
-/** @internal */
-export function createInstallerNode(containingNode: YAMLMap, keyName: string): Array<Installer> {
-  const candidate = getOrCreateMap(containingNode, keyName);
-
-  if (isSeq(candidate)) {
-    const items = candidate.items;
-    if (items.all(item => isMap(item))) {
-      const maps = <Array<YAMLMap>><unknown>items;
-      const convertedItems = maps.select((item) => createSingleInstallerNode(<YAMLMap>item, keyName));
-      if (convertedItems.all(item => !!item)) {
-        return <Array<Installer>>convertedItems;
-      }
-    }
-  } else if (isMap(candidate)) {
-    const single = createSingleInstallerNode(candidate, keyName);
-    if (single) {
-      return [single];
-    }
-  }
-
-  return [];
-}
-
-
-abstract class InstallerNode extends NodeBase implements Installer {
+abstract class InstallerNode extends NonNavigableYamlObject implements Installer {
   abstract readonly kind: string;
+
+  /** @internal */
   *validate(): Iterable<ValidationError> {
-    yield* super.validate();
-    yield* checkOptionalString(this.node, this.node.range!, 'lang');
+    // yield* super.validate();
+    yield* checkOptionalString(this.selfNode, this.selfNode.range!, 'lang');
+  }
+
+  protected getString(property: string): string | undefined {
+    const v = this.selfNode.get(property);
+    return typeof v === 'string' ? v : undefined;
+  }
+  protected setString(property: string, value: string | undefined) {
+    if (!value) {
+      if (this.selfNode.has(property)) {
+        this.selfNode.delete(property);
+      }
+      return;
+    }
+    this.selfNode.set(property, value);
+  }
+
+  protected getNumber(property: string): number | undefined {
+    const v = this.selfNode.get(property);
+    return typeof v === 'number' ? v : undefined;
+  }
+  protected setNumber(property: string, value: number | undefined) {
+    if (value === undefined) {
+      if (this.selfNode.has(property)) {
+        this.selfNode.delete(property);
+      }
+      return;
+    }
+    this.selfNode.set(property, value);
+  }
+
+  protected getBoolean(property: string): boolean | undefined {
+    const v = this.selfNode.get(property);
+    return typeof v === 'boolean' ? v : undefined;
+  }
+
+  protected setBoolean(property: string, value: boolean | undefined) {
+    if (value === undefined) {
+      if (this.selfNode.has(property)) {
+        this.selfNode.delete(property);
+      }
+      return;
+    }
+    this.selfNode.set(property, value);
   }
 
   get lang() {
@@ -90,14 +95,13 @@ abstract class FileInstallerNode extends InstallerNode {
     this.setNumber('1', value);
   }
 
-  get transform() {
-    return this.getStrings('transform');
-  }
+  readonly transform = new StringsSequence(this, 'transform');
 
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
     if (!this.sha256 && !this.sha512) {
-      yield { message: i`artifacts must specify a hash algorithm ('sha256' or 'sha512') and value`, range: this.node.range!, category: ErrorKind.MissingHash };
+      yield { message: i`artifacts must specify a hash algorithm ('sha256' or 'sha512') and value`, range: this.selfNode.range!, category: ErrorKind.MissingHash };
     }
   }
 }
@@ -106,12 +110,10 @@ class UnzipNode extends FileInstallerNode implements UnZip {
   readonly kind = 'unzip';
 
   get [Symbol.toStringTag]() {
-    return this.node.get('UnzipNode');
+    return this.selfNode.get('UnzipNode');
   }
 
-  get location() {
-    return this.getStrings('unzip');
-  }
+  location = new StringsSequence(this, 'unzip');
 }
 
 class NupkgNode extends FileInstallerNode implements Nupkg {
@@ -125,6 +127,7 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
     this.setString('nupkg', value);
   }
 
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
@@ -133,10 +136,9 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
 class UnTarNode extends FileInstallerNode implements UnTar {
   readonly kind = 'untar';
 
-  get location() {
-    return this.getStrings('untar');
-  }
+  location = new StringsSequence(this, 'untar');
 
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
@@ -145,9 +147,7 @@ class UnTarNode extends FileInstallerNode implements UnTar {
 class GitCloneNode extends InstallerNode implements Git {
   readonly kind = 'git';
 
-  get location() {
-    return this.getStrings('git');
-  }
+  location = new StringsSequence(this, 'git');
 
   get tag() {
     return this.getString('tag');
@@ -173,7 +173,42 @@ class GitCloneNode extends InstallerNode implements Git {
     this.setBoolean('recurse', value);
   }
 
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
+}
+
+export class Installs extends ObjectSequence<Installer> {
+  constructor(parent: ParentNode) {
+    super(parent, 'install');
+  }
+  protected wrapValue(value: any): Installer {
+    const v = <YAMLMap>value;
+    if (v.has('unzip')) {
+      return new UnzipNode(this, v);
+    }
+    if (v.has('nupkg')) {
+      return new NupkgNode(this, v);
+    }
+    if (v.has('untar')) {
+      return new UnTarNode(this, v);
+    }
+    if (v.has('git')) {
+      return new GitCloneNode(this, v);
+    }
+    throw new Error(`Unknown installer kind: ${v.toString()}`);
+  }
+
+  /** @internal */
+  * validate(): Iterable<ValidationError> {
+    yield* super.validate();
+
+    if (this.self) {
+      for (const i of this) {
+        yield* i.validate();
+      }
+    }
+  }
+
 }

@@ -5,33 +5,33 @@ import { fail } from 'assert';
 import * as micromatch from 'micromatch';
 import { AcquireEvents } from './acquire';
 import { Activation } from './activation';
+import { MetadataFile } from './amf/metadata-file';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { i } from './i18n';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
-import { intersect } from './intersect';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, Installer, MetadataFile, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
+import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
 export class SetOfDemands {
-  #demands = new Map<string, Demands>();
+  _demands = new Map<string, Demands>();
 
   constructor(metadata: MetadataFile, session: Session) {
-    this.#demands.set('', metadata);
+    this._demands.set('', metadata);
 
-    for (const query of metadata.demands) {
+    for (const [query, demands] of metadata.entries) {
       if (parseQuery(query).match(session.context)) {
         session.channels.debug(`Matching demand query: '${query}'`);
-        this.#demands.set(query, metadata[query]);
+        this._demands.set(query, demands);
       }
     }
   }
 
   get installer() {
-    const install = linq.items(this.#demands).where(([query, demand]) => demand.install.length > 0).toArray();
+    const install = linq.items(this._demands).where(([query, demand]) => demand.install.length > 0).toArray();
 
     if (install.length > 1) {
       // bad. There should only ever be one install block.
@@ -42,54 +42,58 @@ export class SetOfDemands {
   }
 
   get errors() {
-    return linq.values(this.#demands).selectNonNullable(d => d.error).toArray();
+    return linq.values(this._demands).selectNonNullable(d => d.error).toArray();
   }
   get warnings() {
-    return linq.values(this.#demands).selectNonNullable(d => d.warning).toArray();
+    return linq.values(this._demands).selectNonNullable(d => d.warning).toArray();
   }
   get messages() {
-    return linq.values(this.#demands).selectNonNullable(d => d.message).toArray();
+    return linq.values(this._demands).selectNonNullable(d => d.message).toArray();
   }
   get settings() {
-    return linq.values(this.#demands).selectNonNullable(d => d.settings).toArray();
+    return linq.values(this._demands).selectNonNullable(d => d.settings).toArray();
   }
   get seeAlso() {
-    return linq.values(this.#demands).selectNonNullable(d => d.seeAlso).toArray();
+    return linq.values(this._demands).selectNonNullable(d => d.seeAlso).toArray();
   }
   get requires() {
-    const d = this.#demands;
+    const d = this._demands;
     const rq1 = linq.values(d).selectNonNullable(d => d.requires).toArray();
-    const rq = [...d.values()].map(each => each.requires).filter(each => each);
     const result = new Dictionary<VersionReference>();
+    for (const dict of rq1) {
+      for (const [query, demands] of dict.entries) {
+        result[query] = demands;
+      }
+    }
+    const rq = [...d.values()].map(each => each.requires).filter(each => each);
+
     for (const dict of rq) {
-      for (const name of dict.keys) {
-        result[name] = dict[name];
+      for (const [query, demands] of dict.entries) {
+        result[query] = demands;
       }
     }
     return result;
   }
 }
 
-export type Artifact = ArtifactInfo & MetadataFile;
-
 export function createArtifact(session: Session, metadata: MetadataFile, shortName: string): Artifact {
-  const artifact = intersect(new ArtifactInfo(session, metadata, shortName), metadata);
-  artifact.artifact = artifact;
-  return artifact;
+  return new Artifact(session, metadata, shortName);
 }
 
-class ArtifactInfo {
-  /**@internal */ artifact!: Artifact;
-
+export class Artifact {
   isPrimary = false;
 
   readonly applicableDemands: SetOfDemands;
-  constructor(protected session: Session, protected metadata: MetadataFile, public shortName: string) {
+  constructor(protected session: Session, public readonly metadata: MetadataFile, public shortName: string) {
     this.applicableDemands = new SetOfDemands(this.metadata, this.session);
   }
 
   get id() {
     return this.metadata.info.id;
+  }
+
+  get version() {
+    return this.metadata.info.version;
   }
 
   get isInstalled() {
@@ -173,14 +177,14 @@ class ArtifactInfo {
   }
 
   get name() {
-    return `${this.artifact.info.id.replace(/[^\w]+/g, '.')}-${this.artifact.info.version}`;
+    return `${this.metadata.info.id.replace(/[^\w]+/g, '.')}-${this.metadata.info.version}`;
   }
 
   #targetLocation: Uri | undefined;
   get targetLocation(): Uri {
     // tools/contoso/something/x64/1.2.3/
     // slashes to folders, non-word-chars to dot, append version
-    return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.artifact.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.artifact.info.version));
+    return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.metadata.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.metadata.info.version));
   }
 
   async writeManifest() {
@@ -220,8 +224,8 @@ class ArtifactInfo {
     const allPaths = (await this.targetLocation.readDirectory(undefined, { recursive: true })).select(([name, stat]) => name.toString().substr(l));
 
     for (const s of this.applicableDemands.settings) {
-      for (const key of s.defines.keys) {
-        let value = s.defines[key];
+      // eslint-disable-next-line prefer-const
+      for (let [key, value] of s.defines.entries) {
         if (value === 'true') {
           value = '1';
         }
@@ -240,12 +244,12 @@ class ArtifactInfo {
         }
         const pathEnvVariable = key.toUpperCase();
         const p = activation.paths.getOrDefault(pathEnvVariable, []);
-        const locations = s.paths[key].selectMany(path => {
+        const locations = s.paths.get(key)?.toArray().map(each => each).selectMany(path => {
           const p = sanitizePath(path);
           return p ? micromatch(allPaths, p) : [''];
         }).map(each => this.targetLocation.join(each));
 
-        if (locations.length) {
+        if (locations?.length) {
           p.push(...locations);
           this.session.channels.debug(`locations: ${locations.map(l => l.toString())}`);
         }
@@ -257,7 +261,7 @@ class ArtifactInfo {
           this.session.channels.error(i`Duplicate tool declared ${key} during activation. Probably not a good thing?`);
         }
 
-        const location = sanitizePath(s.tools[key]);
+        const location = sanitizePath(s.tools.get(key) || '');
         const uri = this.targetLocation.join(location);
 
         if (! await uri.exists()) {
@@ -267,8 +271,7 @@ class ArtifactInfo {
         activation.tools.set(envVariable, uri);
       }
 
-      for (const key of s.variables.keys) {
-        const value = s.variables[key];
+      for (const [key, value] of s.variables.entries) {
         const envKey = activation.environment.getOrDefault(key, []);
         envKey.push(...value);
       }

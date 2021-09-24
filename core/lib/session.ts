@@ -5,6 +5,7 @@ import { fail, strict } from 'assert';
 import { delimiter } from 'path';
 import { TextDecoder } from 'util';
 import { Activation } from './activation';
+import { MetadataFile } from './amf/metadata-file';
 import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { undo } from './constants';
@@ -13,7 +14,7 @@ import { HttpsFileSystem } from './http-filesystem';
 import { i } from './i18n';
 import { Dictionary, items } from './linq';
 import { LocalFileSystem } from './local-filesystem';
-import { MetadataFile, parseConfiguration } from './metadata-format';
+import { parseConfiguration } from './metadata-format';
 import { DefaultRepository, IRepository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
@@ -154,7 +155,7 @@ export class Session {
             return undefined;
           case 1:
             // we want the first item, because it's the highest version that matches in what we were asked for
-            return artifacts.entries().next().value[1];
+            return artifacts.entries().next().value[1][0];
         }
         // this should not be happening.
         fail(i`Artifact identity '${idOrShortName}' matched more than one result (${[...artifacts.keys()].join(',')}). This should never happen. or is this multiple version matches?`);
@@ -165,15 +166,15 @@ export class Session {
 
 
   get telemetryEnabled() {
-    return !!this.configuration.globalSettings['send-anonymous-telemetry'];
+    return !!this.configuration.globalSettings.get('send-anonymous-telemetry');
   }
 
   get acceptedEula() {
-    return !!this.configuration.globalSettings['accepted-eula'];
+    return !!this.configuration.globalSettings.get('accepted-eula');
   }
 
   async acceptEula() {
-    this.configuration.globalSettings['accepted-eula'] = <any>true;
+    this.configuration.globalSettings.set('accepted-eula', true);
     await this.saveConfig();
   }
 
@@ -377,7 +378,7 @@ export class Session {
     return result;
   }
 
-  async openManifest(manifestFile: Uri) {
+  async openManifest(manifestFile: Uri): Promise<MetadataFile> {
     return parseConfiguration(manifestFile.fsPath, this.utf8(await manifestFile.readFile()));
   }
 

@@ -2,22 +2,27 @@
 // Licensed under the MIT License.
 
 import { Contact, ValidationError } from '../metadata-format';
-import { Strings } from '../util/strings';
-import { NodeBase } from './base';
+import { StringsSequence } from '../yaml/strings';
+import { YamlObject } from '../yaml/YamlObject';
 
 /** @internal */
-export class ContactNode extends NodeBase implements Contact {
+export class ContactNode extends YamlObject implements Contact {
+
+  get name() {
+    return this.nodeName;
+  }
+
   get email(): string | undefined {
-    return this.getString('email');
+    return <string>this.selfNode.get('email');
   }
 
   set email(address: string | undefined) {
-    this.setString('email', address);
+    this.setMember('email', address);
   }
 
-  get roles(): Strings {
-    return this.strings('role');
-  }
+  readonly roles = new StringsSequence(this, 'role');
+
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }

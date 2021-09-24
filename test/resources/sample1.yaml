@@ -38,6 +38,6 @@ settings:
       - foo/bar/bin/waz
       
 windows and arm:
-  install: 
+- install: 
     nupkg: floobaloo/1.2.3
     sha256: fluffyKittenBunnies

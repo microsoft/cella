@@ -1,29 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail } from 'assert';
 import { Range, SemVer } from 'semver';
-import { LineCounter, parseDocument, YAMLMap } from 'yaml';
-import { DemandNode } from './amf/demands';
-import { DictionaryImpl, proxyDictionary } from './amf/dictionary';
-import { Amf } from './amf/metadata-file';
-import { Strings } from './util/strings';
-import { getOrCreateMap } from './util/yaml';
+import { LineCounter, parseDocument } from 'yaml';
+import { Installs } from './amf/installer';
+import { MetadataFile, Primitive, Requires } from './amf/metadata-file';
+import { YamlDictionary } from './yaml/MapOf';
+import { StringsSequence } from './yaml/strings';
 
 export { Range, SemVer };
-
-export type MetadataFile = ProfileBase & DictionaryOf<Demands> & { readonly content: string };
 
 export function parseConfiguration(filename: string, content: string): MetadataFile {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  const q = <Amf>proxyDictionary(<YAMLMap>doc.contents,
-    (m, p) => {
-      return new DemandNode(getOrCreateMap(m, p), p);
-    },
-    () => fail('Fatal Error: this should never get called'),
-    new Amf(doc, filename, lc));
-  return q;
+  const m = new MetadataFile(doc, filename, lc);
+  return m;
 }
 
 /**
@@ -40,19 +31,16 @@ export interface ProfileBase extends Demands {
   info: Info;
 
   /** any contact information related to this profile/package */
-  contacts: DictionaryOf<Contact>;   // optional
+  contacts: YamlDictionary<Contact>;   // optional
 
   /** artifact sources list the references necessary to install artifacts in this file */
-  sources?: DictionaryOf<ArtifactSource>;
+  catalogs?: YamlDictionary<ArtifactSource>;
 
   /** mark an artifact as supporting insert (either allowed or only) */
   insert?: 'allowed' | 'only';
 
-  /** all the conditional demands */
-  demands: Array<string>;
-
   /** global settings */
-  globalSettings: DictionaryOf<string>;
+  globalSettings: YamlDictionary<Primitive | Record<string, unknown>>;
 
   /** is this document valid */
   readonly isValidYaml: boolean;
@@ -94,19 +82,19 @@ export interface VersionReference extends Validation {
  */
 export interface Demands extends Validation {
   /** set of required artifacts */
-  requires: DictionaryOf<VersionReference>;
+  requires: Requires;
 
   /** An error message that the user should get, and abort the installation */
-  error?: string; // markdown text with ${} replacements
+  error: string | undefined; // markdown text with ${} replacements
 
   /** A warning message that the user should get, does not abort the installation */
-  warning?: string; // markdown text with ${} replacements
+  warning: string | undefined; // markdown text with ${} replacements
 
   /** A text message that the user should get, does not abort the installation */
-  message?: string; // markdown text with ${} replacements
+  message: string | undefined; // markdown text with ${} replacements
 
   /** set of artifacts that the consumer should be aware of */
-  seeAlso: DictionaryOf<VersionReference>;
+  seeAlso: Requires;
 
   /** settings that should be applied to the context when activated */
   settings: Settings;
@@ -120,18 +108,9 @@ export interface Demands extends Validation {
    *       then there would need to be a 'requires' that refers to the additional
    *       package.
    */
-  install: Array<Installer>;
-
-  /**
-   * manually specified settings to use when activating the context
-   *
-   * format/usage TBA.
-  */
-  use?: DictionaryOf<StringOrStrings>;
-
+  install: Installs;
 }
 
-/** @internal */
 export interface ValidationError {
   message: string;
   range?: [number, number, number];
@@ -139,7 +118,6 @@ export interface ValidationError {
   category: ErrorKind;
 }
 
-/** @internal */
 export enum ErrorKind {
   SectionNotFound = 'SectionMessing',
   FieldMissing = 'FieldMissing',
@@ -190,14 +168,14 @@ export interface Contact extends Validation {
   name: string;
   email?: string;
 
-  readonly roles: Strings;
+  readonly roles: StringsSequence;
 }
 
 export type ArtifactSource = NuGetArtifactSource | LocalArtifactSource | GitArtifactSource;
 
 interface ArtifactSourceBase extends Validation {
   /** the uri to the artifact source location */
-  readonly location: Strings;
+  readonly location: StringsSequence;
 }
 
 export interface NuGetArtifactSource extends ArtifactSourceBase {
@@ -223,24 +201,11 @@ export interface GitArtifactSource extends ArtifactSourceBase {
 export type StringOrStrings = string | Array<string>;
 
 /**
- * a mapped dictionary of string:T
- *
- * */
-export type DictionaryOf<T> = {
-  readonly keys: Array<string>;
-  remove(key: string): void;
-  // come back to this if we need an iterator
-  // [Symbol.iterator](): Iterator<{ key: string, value: T }>;
-} & {
-  [key: string]: T;
-};
-
-/**
  * types of paths that we can handle when crafting the context
  *
  * Paths has a well-known list of path types that we handle, but we make it a dictionary anyway.
  */
-export interface Paths extends DictionaryImpl<StringOrStrings> {
+export interface Paths extends YamlDictionary<StringsSequence> {
   /** entries that should be added to the PATH environment variable */
   bin: StringOrStrings;
 
@@ -257,20 +222,21 @@ export interface Paths extends DictionaryImpl<StringOrStrings> {
   object: StringOrStrings;
 }
 
+
 /** settings that should be applied to the context */
-export interface Settings extends DictionaryOf<any>, Validation {
+export interface Settings extends YamlDictionary<Primitive | Record<string, any>>, Validation {
   /** a map of path categories to one or more values */
-  paths: DictionaryOf<Array<string>>;
+  paths: YamlDictionary<StringsSequence>;
 
   /** a map of the known tools to actual tool executable name */
-  tools: DictionaryOf<string>;
+  tools: YamlDictionary<string>;
 
   /**
    * a map of (environment) variables that should be set in the context.
    *
    * arrays mean that the values should be joined with spaces
    */
-  variables: DictionaryOf<Array<string>>;
+  variables: YamlDictionary<StringsSequence>;
   // this is where we'd see things like
   // CFLAGS: [...] where you can have a bunch of things that would end up in the CFLAGS variable (or used to set values in a vcxproj/cmake settings file.)
   //
@@ -280,7 +246,7 @@ export interface Settings extends DictionaryOf<any>, Validation {
    * these would likely also be turned into 'variables', but
    * it's significant enough that we need them separately
    */
-  defines: DictionaryOf<string>;
+  defines: YamlDictionary<string>;
 }
 
 /** One of several choices for a HASH etc */
@@ -312,7 +278,7 @@ export interface UnpackSettings {
   strip?: number;
 
   /** one or more transform strings to apply to the filenames as they are restored (think tar --xform ... ) */
-  transform?: Array<string>;
+  transform: StringsSequence;
 }
 
 /**
@@ -322,7 +288,7 @@ export interface UnpackSettings {
  */
 export interface UnZip extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to unzip */
-  location: Array<string>;
+  location: StringsSequence;
 }
 
 
@@ -333,7 +299,7 @@ export interface UnZip extends Verifiable, UnpackSettings, Installer {
  */
 export interface UnTar extends Verifiable, UnpackSettings, Installer {
   /** the source location of a file to untar */
-  location: Array<string>;
+  location: StringsSequence;
 }
 
 
@@ -360,7 +326,7 @@ export interface Nupkg extends Verifiable, UnpackSettings, Installer {
  */
 export interface Git extends Installer {
   /** the git repository location to be cloned */
-  location: Array<string>;
+  location: StringsSequence;
 
   /** optionally, a tag/branch to be checked out */
   tag?: string;

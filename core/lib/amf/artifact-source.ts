@@ -2,64 +2,64 @@
 // Licensed under the MIT License.
 
 import { fail } from 'assert';
-import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource, ValidationError } from '../metadata-format';
-import { Strings } from '../util/strings';
-import { getOrCreateMap } from '../util/yaml';
-import { NodeBase } from './base';
+import { StringsSequence } from '../yaml/strings';
+import { ParentNode } from '../yaml/yaml-node';
+import { YamlObject } from '../yaml/YamlObject';
 
-export class SourceNode extends NodeBase {
+export class SourceNode extends YamlObject {
   // ArtifactSource nodes are shape-polymorphic.
-  protected constructor(protected readonly node: YAMLMap, name: string, protected readonly kind: string) {
-    super(node, name);
-  }
 
-  get location(): Strings {
-    return this.strings('location');
-  }
+  location = new StringsSequence(this, 'location');
 }
 
 class NugetSourceNode extends SourceNode implements NuGetArtifactSource {
-  constructor(node: YAMLMap, name: string) {
-    super(node, name, 'nuget');
-  }
+
+  location = new StringsSequence(this, 'nuget');
+
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     //
   }
 }
 
 class LocalSourceNode extends SourceNode implements LocalArtifactSource {
-  constructor(node: YAMLMap, name: string) {
-    super(node, name, 'path');
+  constructor(parent: ParentNode, sourceName: string) {
+    super(parent, sourceName);
   }
+  location = new StringsSequence(this, 'path');
+
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     //
   }
-
 }
 
 class GitSourceNode extends SourceNode implements GitArtifactSource {
-  constructor(node: YAMLMap, name: string) {
-    super(node, name, 'git');
+  constructor(parent: ParentNode, sourceName: string) {
+    super(parent, sourceName);
   }
-  *validate(): Iterable<ValidationError> {
-    yield* super.validate();
-  }
+  location = new StringsSequence(this, 'git');
 
+  /** @internal */
+  *validate(): Iterable<ValidationError> {
+    // yield* super.validate();
+  }
 }
 
 /** internal */
-export function createArtifactSourceNode(node: YAMLMap, name: string) {
+export function createArtifactSourceNode(parent: ParentNode, name: string) {
   // detect type by presence of fields
-  if (node.has('path')) {
-    return new LocalSourceNode(getOrCreateMap(node, name), name);
+  if (parent.selfNode.has('path')) {
+    return new LocalSourceNode(parent, name);
   }
-  if (node.has('nupkg')) {
-    return new NugetSourceNode(getOrCreateMap(node, name), name);
+  if (parent.selfNode.has('nupkg')) {
+    return new NugetSourceNode(parent, name);
   }
-  if (node.has('git')) {
-    return new GitSourceNode(getOrCreateMap(node, name), name);
+  if (parent.selfNode.has('git')) {
+    return new GitSourceNode(parent, name);
   }
   fail(i`unknown source node type`);
 }
+

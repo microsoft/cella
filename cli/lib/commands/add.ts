@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import { i } from '@microsoft/vcpkg-ce.core';
+import { MetadataFile } from '../../../core/dist/lib/amf/metadata-file';
 import { session } from '../../main';
 import { selectArtifacts, Selections } from '../artifacts';
 import { Command } from '../command';
@@ -58,9 +59,10 @@ export class AddCommand extends Command {
     }
 
     const manifest = await session.openManifest(project);
+    let m: MetadataFile;
 
     for (const artifact of selectedArtifacts) {
-      manifest.requires[artifact.id] = <any>artifact.info.version;
+      manifest.requires.set(artifact.id, <any>artifact.version.toString());
     }
 
     // write the file out.

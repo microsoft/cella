@@ -1,99 +1,51 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail } from 'assert';
-import { YAMLMap } from 'yaml';
-import { i } from '../i18n';
-import { parseQuery } from '../mediaquery/media-query';
-import { DictionaryOf, ErrorKind, Installer, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
-import { getOrCreateMap } from '../util/yaml';
-import { NodeBase } from './base';
-import { proxyDictionary } from './dictionary';
-import { createInstallerNode } from './installer';
+import { Demands, Settings, ValidationError } from '../metadata-format';
+import { YamlObject } from '../yaml/YamlObject';
+import { Installs } from './installer';
+import { Requires } from './metadata-file';
 import { SettingsNode } from './settings';
-import { getVersionRef, setVersionRef } from './version-reference';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
 
-/** @internal */
-export class DemandNode extends NodeBase {
+export class DemandNode extends YamlObject implements Demands {
 
-  #requires!: DictionaryOf<VersionReference>;
-  get requires(): DictionaryOf<VersionReference> {
-    return this.#requires || (this.#requires = <DictionaryOf<VersionReference>>proxyDictionary(getOrCreateMap(this.node, 'requires'), getVersionRef, setVersionRef));
-  }
+  /* Demands */
+  settings: Settings = new SettingsNode(this);
+  requires = new Requires(this);
+  seeAlso = new Requires(this, 'seeAlso');
+  install = new Installs(this);
 
   get error(): string | undefined {
-    return <string>this.node.get('error');
+    return <string>this.selfNode.get('error');
   }
-
   set error(errorMessage: string | undefined) {
-    this.node.set('error', errorMessage);
+    this.selfNode.set('error', errorMessage);
   }
 
   get warning(): string | undefined {
-    return <string>this.node.get('warning');
+    return <string>this.self?.get('warning');
   }
   set warning(warningMessage: string | undefined) {
-    this.node.set('warning', warningMessage);
+    this.selfNode.set('warning', warningMessage);
   }
 
   get message(): string | undefined {
-    return <string>this.node.get('message');
+    return <string>this.self?.get('message');
   }
   set message(message: string | undefined) {
-    this.node.set('message', message);
+    this.selfNode.set('message', message);
   }
 
-  #seeAlso!: DictionaryOf<VersionReference>;
-  get seeAlso(): DictionaryOf<VersionReference> {
-    return this.#seeAlso || (this.#seeAlso = <DictionaryOf<VersionReference>>proxyDictionary(getOrCreateMap(this.node, 'see-also'), getVersionRef, setVersionRef));
-  }
-
-  #settings!: SettingsNode;
-  get settings(): SettingsNode {
-    return this.#settings || (this.#settings = <SettingsNode>proxyDictionary<any>(getOrCreateMap(this.node, 'settings'), getOrCreateMap, () => { fail('no.'); }, new SettingsNode(getOrCreateMap(this.node, 'settings'))));
-  }
-
-  #install?: Array<Installer>;
-  get install(): Array<Installer> {
-    return this.#install || (this.#install = createInstallerNode(this.node, 'install'));
-  }
-  get use(): DictionaryOf<StringOrStrings> | undefined {
-    throw new Error('not implemented');
-  }
-
+  /** @internal */
   *validate(): Iterable<ValidationError> {
     yield* super.validate();
-    if (this.node instanceof YAMLMap) {
-
-      if (this.node.has('settings')) {
-        yield* this.settings.validate();
-      }
-
-      if (this.node.has('install') && this.install.length !== 0) {
-        // check to see if this has anything more than host and arch in the demand name
-        for (const feature of parseQuery(this.name).features) {
-          if (!hostFeatures.has(feature)) {
-            yield { message: i`A demand with an 'install' block must only use Host features (ie, host OS, host arch)`, range: this.node.range!, category: ErrorKind.HostOnly };
-          }
-        }
-
-        for (const ins of this.install) {
-          yield* ins.validate();
-        }
-      }
-
-      if (this.node.has('requires')) {
-        for (const each of this.requires.keys) {
-          yield* this.requires[each].validate();
-        }
-      }
-      if (this.node.has('see-also')) {
-        for (const each of this.#seeAlso.keys) {
-          yield* this.#seeAlso[each].validate();
-        }
-      }
+    if (this.self) {
+      yield* this.settings.validate();
+      yield* this.requires.validate();
+      yield* this.seeAlso.validate();
+      yield* this.install.validate();
     }
   }
 }

@@ -1,31 +1,165 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail } from 'assert';
-import { Document, isMap, LineCounter, YAMLMap } from 'yaml';
+import { Document, isMap, isSeq, LineCounter, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { i } from '../i18n';
 import { parseQuery } from '../mediaquery/media-query';
-import { ArtifactSource, Contact, Demands, DictionaryOf, ErrorKind, Info, Installer, MetadataFile, ProfileBase, Settings, StringOrStrings, ValidationError, VersionReference } from '../metadata-format';
-import { getOrCreateMap, getPair } from '../util/yaml';
+import { ArtifactSource, Contact, Demands, ErrorKind, ValidationError, VersionReference } from '../metadata-format';
+import { isNullish } from '../util/checks';
+import { ObjectDictionary } from '../yaml/ImplMapOf';
+import { YamlDictionary } from '../yaml/MapOf';
+import { ParentNode } from '../yaml/yaml-node';
 import { createArtifactSourceNode } from './artifact-source';
 import { ContactNode } from './contact';
-import { DictionaryImpl, proxyDictionary } from './dictionary';
+import { DemandNode } from './demands';
 import { InfoNode } from './info';
-import { createInstallerNode } from './installer';
+import { Installs } from './installer';
 import { SettingsNode } from './settings';
-import { getVersionRef, setVersionRef } from './version-reference';
+import { VersionReferenceNode } from './version-reference';
 
-/** @internal */
-export class Amf extends DictionaryImpl<Demands> implements ProfileBase, DictionaryOf<Demands> {
+export type KindofNode = YAMLMap | YAMLSeq | Scalar;
+export type Primitive = string | number | boolean;
+
+export class Requires extends YamlDictionary<VersionReference> {
+  constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
+    super(parent, kind);
+  }
+  protected wrapMember(key: string, value: any): VersionReference {
+    return new VersionReferenceNode(this, key);
+  }
+
+  set(key: string, value: string | VersionReference): void {
+    if (typeof value === 'string') {
+      const v = new VersionReferenceNode(this, key);
+      v.raw = value;
+    } else {
+      const v = new VersionReferenceNode(this, key);
+      if (value.resolved) {
+        v.raw = `${value.range} ${value.resolved}`;
+      } else {
+        v.raw = `${value.range}`;
+      }
+    }
+  }
+}
+
+export class Contacts extends YamlDictionary<Contact> {
+  constructor(parent: ParentNode) {
+    super(parent, 'contacts');
+  }
+  protected wrapMember(key: string, value: any): Contact {
+    return new ContactNode(this, key);
+  }
+  add(name: string) {
+    return this.getOrCreate(name);
+  }
+}
+
+export class GlobalSettingsNode extends YamlDictionary<Primitive | Record<string, unknown>>  {
+  constructor(parent: ParentNode) {
+    super(parent, 'global');
+  }
+
+  wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
+    return isNullish(value?.value) ? value : value.value;
+  }
+
+  set(key: string, value: Primitive | Record<string, unknown>): void {
+    if (value === undefined || value === null || value === '') {
+      this.selfNode.delete(key);
+      return;
+    }
+    this.selfNode.set(key, value);
+  }
+}
+
+export class Catalogs extends YamlDictionary<ArtifactSource> {
+  constructor(parent: ParentNode) {
+    super(parent, 'catalogs');
+  }
+
+  wrapMember(key: string, value: any): ArtifactSource {
+    return createArtifactSourceNode(this, key);
+  }
+}
+
+export class ConditionalDemands extends ObjectDictionary<Demands> {
+  constructor(parent: ParentNode, nodeName: string) {
+    super(parent, nodeName, (k, v) => new DemandNode(this, k));
+  }
+
+  /** @internal */
+  *validate(): Iterable<ValidationError> {
+    for (const each of this.members) {
+      const n = <YAMLSeq | YAMLMap | Scalar>each.key;
+      if (!isMap(each.value) && !isSeq(each.value)) {
+
+        yield {
+          message: `Conditional Demand ${each.key} is not an object`,
+          range: n.range || [0, 0, 0],
+          category: ErrorKind.IncorrectType
+        };
+      }
+    }
+
+    for (const demand of this.values) {
+
+      yield* demand.validate();
+    }
+  }
+
+}
+
+
+export class MetadataFile extends ConditionalDemands {
+
+  static reservedWords = ['info', 'contacts', 'catalogs', 'registries', 'settings', 'requires', 'seeAlso', 'install']
+
+  get isCreated(): boolean {
+    return !!(<any>this.document.contents)?.items;
+  }
+
+  get members() {
+    return super.members.filter(each => MetadataFile.reservedWords.indexOf((<any>(each.key)).value) === -1);
+  }
+
+  /* Demands */
+  settings = new SettingsNode(this);
+  requires = new Requires(this);
+  seeAlso = new Requires(this, 'seeAlso');
+  install = new Installs(this);
+
+  get error(): string | undefined {
+    return <string>this.selfNode.get('error');
+  }
+
+  set error(errorMessage: string | undefined) {
+    this.selfNode.set('error', errorMessage);
+  }
+
+  get warning(): string | undefined {
+    return <string>this.selfNode.get('warning');
+  }
+  set warning(warningMessage: string | undefined) {
+    this.selfNode.set('warning', warningMessage);
+  }
+
+  get message(): string | undefined {
+    return <string>this.selfNode.get('message');
+  }
+  set message(message: string | undefined) {
+    this.selfNode.set('message', message);
+  }
+
+
   /** @internal */
   constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
-    super(<YAMLMap>document.contents);
-  }
-  setProxy(proxy: MetadataFile) {
-    this.#proxy = proxy;
+    super({ selfNode: <YAMLMap>document.contents }, '');
   }
 
-  #proxy!: MetadataFile;
+  get selfNode(): YAMLMap {
+    return <YAMLMap<string, any>>(<any>this.document.contents);
+  }
 
   toString(): string {
     return this.content;
@@ -34,82 +168,17 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
   get content() {
     return this.document.toString();
   }
+
   /* Profile */
-  #info!: Info;
-  get info(): Info {
-    return this.#info || (this.#info = new InfoNode(getOrCreateMap(this.document, 'info')));
-  }
+  info = new InfoNode(this);
+  contacts = new Contacts(this)
+  sources = new Catalogs(this);
 
-  #contacts!: DictionaryOf<Contact>
-  get contacts(): DictionaryOf<Contact> {
-    return this.#contacts || (this.#contacts = proxyDictionary(getOrCreateMap(this.document, 'contacts'), (m, p) => new ContactNode(getOrCreateMap(m, p), p), () => { fail('Can not set entries directly'); }));
-  }
+  globalSettings = new GlobalSettingsNode(this);
 
-  #sources!: DictionaryOf<ArtifactSource>;
-  get sources(): DictionaryOf<ArtifactSource> {
-    return this.#sources || (this.#sources = proxyDictionary(getOrCreateMap(this.document, 'sources'), createArtifactSourceNode, () => { fail('Can not set entries directly'); }));
-  }
 
-  get insert(): 'allowed' | 'only' | undefined {
-    throw new Error('not implemented');
-  }
-
-  /* Demands */
-  #requires!: DictionaryOf<VersionReference>
-  get requires(): DictionaryOf<VersionReference> {
-    return this.#requires || (this.#requires = proxyDictionary(getOrCreateMap(<YAMLMap>this.document.contents, 'requires'), getVersionRef, setVersionRef));
-  }
-
-  get error(): string | undefined {
-    return <string>this.document.get('error');
-  }
-
-  set error(errorMessage: string | undefined) {
-    this.document.set('error', errorMessage);
-  }
-
-  get warning(): string | undefined {
-    return <string>this.document.get('warning');
-  }
-  set warning(warningMessage: string | undefined) {
-    this.document.set('warning', warningMessage);
-  }
-
-  get message(): string | undefined {
-    return <string>this.document.get('message');
-  }
-  set message(message: string | undefined) {
-    this.document.set('message', message);
-  }
-
-  #seeAlso!: DictionaryOf<VersionReference>
-  get seeAlso(): DictionaryOf<VersionReference> {
-    return this.#seeAlso || (this.#seeAlso = proxyDictionary(getOrCreateMap(<YAMLMap>this.document.contents, 'see-also'), getVersionRef, setVersionRef));
-  }
-
-  #settings!: Settings;
-  get settings(): Settings {
-    return this.#settings || (this.#settings = <Settings>proxyDictionary<any>(getOrCreateMap(<YAMLMap>this.document.contents, 'settings'), getOrCreateMap, () => { fail('no.'); }, new SettingsNode(getOrCreateMap(this.document, 'settings'))));
-  }
-
-  #install?: Array<Installer>;
-  get install(): Array<Installer> {
-    return this.#install || (this.#install = createInstallerNode(<YAMLMap>this.document.contents, 'install'));
-  }
-  get use(): DictionaryOf<StringOrStrings> | undefined {
-    throw new Error('not implemented');
-  }
-  get demands(): Array<string> {
-    return this.keys;
-  }
   get isValidYaml(): boolean {
     return this.document.errors.length === 0;
-  }
-
-
-  #globalSettings!: DictionaryOf<string>;
-  get globalSettings(): DictionaryOf<string> {
-    return this.#globalSettings || (this.#globalSettings = <DictionaryOf<string>>proxyDictionary(getOrCreateMap(this.node, 'global'), (m, p) => m.get(p), (m, p, v) => m.set(p, v)));
   }
 
   #errors!: Array<string>;
@@ -132,91 +201,78 @@ export class Amf extends DictionaryImpl<Demands> implements ProfileBase, Diction
       return this.#validationErrors;
     }
 
-    this.#validationErrors = new Array<string>();
+    const errs = new Set<string>();
     for (const { message, range, rangeOffset, category } of this.validate()) {
       const { line, column } = this.positionAt(range, rangeOffset);
       if (line) {
-        this.#validationErrors.push(`${this.filename}:${line}:${column} ${category}, ${message}`);
+        errs.add(`${this.filename}:${line}:${column} ${category}, ${message}`);
       } else {
-        this.#validationErrors.push(`${this.filename}: ${category}, ${message}`);
+        errs.add(`${this.filename}: ${category}, ${message}`);
       }
     }
+    this.#validationErrors = [...errs];
     return this.#validationErrors;
   }
 
   private positionAt(range?: [number, number, number?], offset?: { line: number, column: number }) {
     const { line, col } = this.lineCounter.linePos(range?.[0] || 0);
-    return {
+
+    return offset ? {
       // adds the offset values (which can come from the mediaquery parser) to the line & column. If MQ doesn't have a position, it's zero.
-      line: line + (offset?.line || 0),
-      column: col + (offset?.column || 0),
-    };
+      line: line + (offset.line - 1),
+      column: col + (offset.column - 1),
+    } :
+      {
+        line, column: col
+      };
   }
 
+  /** @internal */
   *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+
     // verify that we have info
     if (!this.document.has('info')) {
-      yield { message: i`Missing section '${'info'}'`, range: [0, 0, 0], category: ErrorKind.SectionNotFound };
+      yield { message: i`Missing section '${'info'}'`, range: this._range, category: ErrorKind.SectionNotFound };
     } else {
       yield* this.info.validate();
     }
 
-    if (this.document.has('install')) {
-      for (const ins of this.install) {
-        yield* ins.validate();
-      }
-    }
+    this.install.validate();
 
-    if (this.document.has('settings')) {
-      yield* this.settings.validate();
-    }
-
-    if (this.document.has('requires')) {
-      for (const each of this.requires.keys) {
-        yield* this.requires[each].validate();
-      }
-    }
     if (this.document.has('sources')) {
-      for (const each of this.sources.keys) {
-        yield* this.sources[each].validate();
+      for (const each of this.sources.values) {
+        yield* each.validate();
       }
     }
 
     if (this.document.has('contacts')) {
-      for (const each of this.contacts.keys) {
-        yield* this.contacts[each].validate();
+      for (const each of this.contacts.values) {
+        yield* each.validate();
       }
     }
-    if (this.document.has('see-also')) {
-      for (const each of this.#seeAlso.keys) {
-        yield* this.#seeAlso[each].validate();
-      }
-    }
+
 
     const set = new Set<string>();
-    for (const each of this.demands) {
-      // first, validate that the query is a valid query
-      const pair = getPair(this.node, each);
-      if (pair) {
-        const { key, value } = pair;
-        if (set.has(each)) {
-          yield { message: i`Duplicate Keys detected in manifest: '${each}'`, range: key.range!, category: ErrorKind.DuplicateKey };
-        }
-        set.add(each);
 
-        if (!isMap(value)) {
-          yield { message: i`Conditional demand '${each}' is not an object`, range: key.range!, category: ErrorKind.IncorrectType };
-          continue;
-        }
+    for (const [mediaQuery, demandBlock] of this.entries) {
 
-        const query = parseQuery(each);
-        if (!query.isValid) {
-          yield { message: i`Error parsing conditional demand '${each}'- ${query.error?.message}`, range: key.range!, rangeOffset: query.error, category: ErrorKind.ParseError };
-          continue;
-        }
-
-        yield* this.#proxy[each].validate();
+      if (set.has(mediaQuery)) {
+        yield { message: i`Duplicate Keys detected in manifest: '${mediaQuery}'`, range: (<DemandNode>demandBlock)._range, category: ErrorKind.DuplicateKey };
       }
+      set.add(mediaQuery);
+      const query = parseQuery(mediaQuery);
+      if (!query.isValid) {
+        yield { message: i`Error parsing conditional demand '${mediaQuery}'- ${query.error?.message}`, range: this.positionOf(mediaQuery)/* mediaQuery.range! */, rangeOffset: query.error, category: ErrorKind.ParseError };
+        continue;
+      }
+      //if (!isMap(demandBlock)) {
+      //  yield { message: i`Conditional demand '${mediaQuery}' is not an object`, range: [0, 0, 0] /* mediaQuery.range! */, category: ErrorKind.IncorrectType };
+      //  continue;
+      // }
+
+
+      yield* demandBlock.validate();
     }
   }
 }
