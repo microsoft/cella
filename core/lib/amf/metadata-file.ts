@@ -21,7 +21,7 @@ export type KindofNode = YAMLMap | YAMLSeq | Scalar;
 export type Primitive = string | number | boolean;
 
 export class Requires extends YamlDictionary<VersionReference> {
-  constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
+  constructor(parent: ParentNode, kind: 'require' | 'seeAlso' = 'require') {
     super(parent, kind);
   }
   protected wrapMember(key: string, value: any): VersionReference {

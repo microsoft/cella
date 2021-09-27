@@ -27,6 +27,12 @@ export abstract class Switch implements Help {
     return v[0];
   }
 
+  get requiredValue() : string {
+    const v = this.values;
+    strict.ok(v.length == 1 && v[0], i`Expected a single value for '--${this.switch}'.`);
+    return v[0];
+  }
+
   get active(): boolean {
     const v = this.values;
     return !!v && v.length > 0 && v[0] !== 'false';

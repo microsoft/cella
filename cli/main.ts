@@ -11,6 +11,7 @@ import { CommandLine } from './lib/command-line';
 import { AcquireCommand } from './lib/commands/acquire';
 import { ActivateCommand } from './lib/commands/activate';
 import { AddCommand } from './lib/commands/add';
+import { ApplyVsManCommand } from './lib/commands/apply-vsman';
 import { CacheCommand } from './lib/commands/cache';
 import { CleanCommand } from './lib/commands/clean';
 import { DeactivateCommand } from './lib/commands/deactivate';
@@ -76,6 +77,7 @@ async function main() {
   debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
   // find a project profile.
 
+  const zApplyVsMan = new ApplyVsManCommand(commandline);
   const help = new HelpCommand(commandline);
 
   const find = new FindCommand(commandline);
