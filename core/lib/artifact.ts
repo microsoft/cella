@@ -3,11 +3,11 @@
 
 import { fail } from 'assert';
 import * as micromatch from 'micromatch';
-import { AcquireEvents } from './acquire';
 import { Activation } from './activation';
 import { MetadataFile } from './amf/metadata-file';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
+import { AcquireEvents } from './fs/acquire';
 import { i } from './i18n';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { Dictionary, linq } from './linq';

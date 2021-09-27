@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './acquire';
 import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from './archive';
+import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './fs/acquire';
 import { Installer, Nupkg, UnpackSettings, UnTar, UnZip, Verifiable } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';

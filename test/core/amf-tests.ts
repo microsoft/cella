@@ -89,8 +89,8 @@ describe('Amf', () => {
     doc.contacts.remove('James Brown'); // this is ok.
 
     // version can be coerced to be a string (via tostring)
-    console.log(<any>doc.requires.get('foo/bar/bin')?.raw);
-    strict.equal(<any>doc.requires.get('foo/bar/bin')?.raw == '~2.0.0', true, 'Version must match');
+    console.log(doc.requires.get('foo/bar/bin')?.raw);
+    strict.equal(doc.requires.get('foo/bar/bin')?.raw == '~2.0.0', true, 'Version must match');
 
     // can we get the normalized range?
     strict.equal(doc.requires.get('foo/bar/bin')!.range.range, '>=2.0.0 <2.1.0-0', 'The canonical ranges should match');

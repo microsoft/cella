@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { Session } from '../session';
+import { Uri } from '../uri';
 import { LocalFileSystem } from './local-filesystem';
-import { Session } from './session';
-import { Uri } from './uri';
 
 export class VsixLocalFilesystem extends LocalFileSystem {
   private readonly vsixBaseUri: Uri | undefined;

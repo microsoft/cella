@@ -3,7 +3,7 @@
 
 import { strict } from 'assert';
 import { Readable, Writable } from 'stream';
-import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './fs/filesystem';
 import { i } from './i18n';
 import { Dictionary } from './linq';
 import { Uri } from './uri';

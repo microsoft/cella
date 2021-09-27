@@ -9,16 +9,16 @@ import { MetadataFile } from './amf/metadata-file';
 import { Artifact, createArtifact } from './artifact';
 import { Channels, Stopwatch } from './channels';
 import { undo } from './constants';
-import { FileSystem } from './filesystem';
-import { HttpsFileSystem } from './http-filesystem';
+import { FileSystem } from './fs/filesystem';
+import { HttpsFileSystem } from './fs/http-filesystem';
+import { LocalFileSystem } from './fs/local-filesystem';
+import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
 import { Dictionary, items } from './linq';
-import { LocalFileSystem } from './local-filesystem';
 import { parseConfiguration } from './metadata-format';
 import { DefaultRepository, IRepository } from './repository';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { Uri } from './uri';
-import { VsixLocalFilesystem } from './vsix-local-filesystem';
 
 const defaultConfig =
   `# Global configuration

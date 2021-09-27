@@ -5,8 +5,8 @@
 
 import { EventEmitter } from 'ee-ts';
 import { Readable, Writable } from 'stream';
-import { Session } from './session';
-import { Uri } from './uri';
+import { Session } from '../session';
+import { Uri } from '../uri';
 
 const size64K = 1 << 16;
 const size32K = 1 << 15;

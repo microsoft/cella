@@ -7,12 +7,12 @@ import { close, createReadStream, createWriteStream, futimes, NoParamCallback, o
 import { copyFile, FileHandle, mkdir, open, readdir, readFile, rename, rm, stat, symlink, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import { Readable, Writable } from 'stream';
-import { delay } from './events';
-import { TargetFileCollision } from './exceptions';
+import { delay } from '../events';
+import { TargetFileCollision } from '../exceptions';
+import { i } from '../i18n';
+import { Queue } from '../promise';
+import { Uri } from '../uri';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
-import { i } from './i18n';
-import { Queue } from './promise';
-import { Uri } from './uri';
 
 function getFileType(stats: Stats) {
   return FileType.Unknown |

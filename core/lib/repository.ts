@@ -4,18 +4,18 @@
 import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
-import { acquireArtifactFile } from './acquire';
 import { MetadataFile } from './amf/metadata-file';
 import { ZipUnpacker } from './archive';
 import { Artifact, createArtifact } from './artifact';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
-import { FileType } from './filesystem';
+import { acquireArtifactFile } from './fs/acquire';
+import { FileType } from './fs/filesystem';
 import { i } from './i18n';
 import { parseConfiguration } from './metadata-format';
 import { Queue } from './promise';
 import { Session } from './session';
 import { Uri } from './uri';
-import { isYAML, serialize } from './util/yaml';
+import { isYAML, serialize } from './yaml/yaml';
 
 class RepoIndex extends Index<MetadataFile, RepoIndex> {
   id = new IdentityKey(this, (i) => i.info.id)

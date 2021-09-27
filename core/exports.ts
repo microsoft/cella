@@ -4,7 +4,6 @@
 import { ManyMap } from './lib/linq';
 import { Queue } from './lib/promise';
 
-export * from './lib/acquire';
 export * from './lib/activation';
 export * from './lib/archive';
 export * from './lib/artifact';
@@ -12,13 +11,14 @@ export * from './lib/catalog';
 export * from './lib/channels';
 export * from './lib/events';
 export * from './lib/exceptions';
-export * from './lib/filesystem';
+export * from './lib/fs/acquire';
+export * from './lib/fs/filesystem';
+export * from './lib/fs/http-filesystem';
+export * from './lib/fs/local-filesystem';
 export * from './lib/hash';
-export * from './lib/http-filesystem';
 export * from './lib/i18n';
 export * from './lib/intersect';
 export * from './lib/linq';
-export * from './lib/local-filesystem';
 export * from './lib/mediaquery/media-query';
 export * from './lib/metadata-format';
 export * from './lib/repository';
@@ -28,10 +28,10 @@ export * from './lib/unified-filesystem';
 export * from './lib/unzip';
 export * from './lib/uri';
 export * from './lib/util/percentage-scaler';
-export * from './lib/util/yaml';
 export * from './lib/version';
-export * from './lib/yaml/strings';
 export * from './lib/willow';
+export * from './lib/yaml/strings';
+export * from './lib/yaml/yaml';
 
 
 /** This adds the expected declarations to the Array type. */
