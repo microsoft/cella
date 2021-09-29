@@ -37,7 +37,7 @@ export class Project extends Switch {
     return session.findProjectProfile();
   }
 
-  get value(): Promise<Uri | undefined> {
+  override get value(): Promise<Uri | undefined> {
     return this.getProjectFolder();
   }
 }

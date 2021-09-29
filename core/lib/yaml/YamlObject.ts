@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { isMap, YAMLMap } from 'yaml';
-import { ValidationError } from '../metadata-format';
+import { ValidationError } from '../amf/metadata-format';
 import { isNullish } from '../util/checks';
 import { YamlNode } from './YamlNode';
 
@@ -12,7 +12,7 @@ export class YamlObject extends YamlNode<YAMLMap> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
   }
 
   protected isValidNode(value: any): value is YAMLMap {

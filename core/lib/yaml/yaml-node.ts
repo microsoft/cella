@@ -9,11 +9,11 @@ export interface ParentNode {
 }
 
 export class NonNavigableYamlObject extends YamlObject {
-  get self(): YAMLMap {
+  override get self(): YAMLMap {
     return this.instance;
   }
 
-  get selfNode(): YAMLMap {
+  override get selfNode(): YAMLMap {
     return this.instance;
   }
 

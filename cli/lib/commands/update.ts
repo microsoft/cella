@@ -27,7 +27,7 @@ export class UpdateCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
 
     const repository = session.getRepository('default');
     if (!repository) {

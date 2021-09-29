@@ -29,7 +29,7 @@ export class FindCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const repository = session.getRepository('default');
     try {
       await repository.load();

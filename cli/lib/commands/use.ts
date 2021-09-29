@@ -30,7 +30,7 @@ export class UseCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     if (this.inputs.length === 0) {
       error(i`No artifacts specified`);
       return false;

@@ -19,11 +19,11 @@ export abstract class Sequence<TElement, TNode extends YAMLMap | Scalar | YAMLSe
     return [...this];
   }
 
-  toString(): string {
+  override toString(): string {
     return [...this].toString();
   }
 
-  toLocaleString(): string {
+  override toLocaleString(): string {
     return [...this].toLocaleString();
   }
 

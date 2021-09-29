@@ -58,7 +58,7 @@ export class VersionCommand extends Command {
     return semver;
   }
 
-  async run() {
+  override async run() {
     if (this.update.active) {
       // check for a new version, and update if necessary
       debug(i`checking to see if there is a new version of the ${cli}, and updating if there is`);

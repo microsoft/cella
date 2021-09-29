@@ -395,7 +395,7 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
   protected identities = new BTree<string, Set<number>>(undefined, this.compare);
   protected idShortName = new Map<string, string>();
 
-  doneInsertion() {
+  override doneInsertion() {
     // go thru each of the values, find short name for each.
     const ids = new ManyMap<string, [string, Set<number>]>();
 
@@ -423,7 +423,7 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
   }
 
   /** @internal */
-  cloneKey(from: this) {
+  override cloneKey(from: this) {
     super.cloneKey(from);
     this.identities = from.identities.greedyClone();
     this.idShortName = new Map(from.idShortName);
@@ -447,7 +447,7 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
   }
 
   /** deserializes an object graph back into this key */
-  deserialize(content: any) {
+  override deserialize(content: any) {
     super.deserialize(content);
     this.doneInsertion();
   }
@@ -464,7 +464,7 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
     }
     return value;
   }
-  protected addWord(each: SemVer, n: number) {
+  protected override  addWord(each: SemVer, n: number) {
     // no parts
   }
 
@@ -493,7 +493,7 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
     return this.index;
   }
 
-  serialize() {
+  override serialize() {
     const result = super.serialize();
     result.words = undefined;
 

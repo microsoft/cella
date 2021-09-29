@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Contact, ValidationError } from '../metadata-format';
 import { StringsSequence } from '../yaml/strings';
 import { YamlObject } from '../yaml/YamlObject';
+import { Contact, ValidationError } from './metadata-format';
 
 /** @internal */
 export class ContactNode extends YamlObject implements Contact {
@@ -23,7 +23,7 @@ export class ContactNode extends YamlObject implements Contact {
   readonly roles = new StringsSequence(this, 'role');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
 

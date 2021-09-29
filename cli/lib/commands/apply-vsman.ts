@@ -109,7 +109,7 @@ export class ApplyVsManCommand extends Command {
     return 0;
   }
 
-  async run() {
+  override async run() {
     const channelUriStr = this.channelUri.requiredValue;
     const repoRoot = session.fileSystem.file(this.repoRoot.requiredValue);
     log(i`Downloading channel manifest from ${channelUriStr}`);

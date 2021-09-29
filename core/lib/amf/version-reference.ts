@@ -3,8 +3,8 @@
 
 import { Range, SemVer } from 'semver';
 import { isScalar, Scalar } from 'yaml';
-import { ValidationError, VersionReference } from '../metadata-format';
 import { YamlNode } from '../yaml/YamlNode';
+import { ValidationError, VersionReference } from './metadata-format';
 
 // nuget-semver parser doesn't have a ts typings package
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -90,12 +90,12 @@ export class VersionReferenceNode extends YamlNode<Scalar> implements VersionRef
   set raw(value: string) {
     this.parent.set(this.nodeName, value.trim());
   }
-  toString() {
+  override toString() {
     return this.parent.get(this.nodeName);
   }
 
   /** @internal */
-  * validate(): Iterable<ValidationError> {
+  override * validate(): Iterable<ValidationError> {
     //
   }
 

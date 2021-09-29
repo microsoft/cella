@@ -6,7 +6,7 @@ import { isNullish, isPrimitive } from '../util/checks';
 import { PrimitiveSequence } from './PrimitiveSequence';
 
 export class StringsSequence extends PrimitiveSequence<string> {
-  wrapValue(value: any): string {
+  override wrapValue(value: any): string {
     if (value === null || value === undefined || value === '') {
       return '';
     }

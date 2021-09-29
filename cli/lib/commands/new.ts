@@ -25,7 +25,7 @@ export class NewCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     if (await session.currentDirectory.exists(project)) {
       log(i`The folder at ${session.currentDirectory.fsPath} already contains a project file '${project}'`);
       return false;

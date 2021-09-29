@@ -62,7 +62,7 @@ export class UnifiedFileSystem extends FileSystem {
   *
   * @param uri A string which represents an URI (see `URI#toString`).
   */
-  parse(uri: string, _strict?: boolean): Uri {
+  override parse(uri: string, _strict?: boolean): Uri {
     return this.filesystem(uri).parse(uri);
   }
 

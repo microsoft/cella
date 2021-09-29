@@ -25,7 +25,7 @@ export class DeleteCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const artifacts = await session.getInstalledArtifacts();
     for (const input of this.inputs) {
       for (const { artifact, id, folder } of artifacts) {

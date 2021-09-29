@@ -27,7 +27,7 @@ export class DeactivateCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const project = await this.project.value;
     if (!project) {
       return false;

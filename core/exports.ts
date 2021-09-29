@@ -5,6 +5,7 @@ import { ManyMap } from './lib/linq';
 import { Queue } from './lib/promise';
 
 export * from './lib/activation';
+export * from './lib/amf/metadata-format';
 export * from './lib/archive';
 export * from './lib/artifact';
 export * from './lib/catalog';
@@ -20,7 +21,6 @@ export * from './lib/i18n';
 export * from './lib/intersect';
 export * from './lib/linq';
 export * from './lib/mediaquery/media-query';
-export * from './lib/metadata-format';
 export * from './lib/repository';
 export * from './lib/session';
 export * from './lib/template-amf';

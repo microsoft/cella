@@ -2,11 +2,11 @@
 // Licensed under the MIT License.
 
 
-import { Settings, ValidationError } from '../metadata-format';
 import { PrimitiveDictionary, StringDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';
 import { ParentNode } from '../yaml/yaml-node';
 import { Primitive } from './metadata-file';
+import { Settings, ValidationError } from './metadata-format';
 
 
 export class SettingsNode extends YamlDictionary<Primitive | Record<string, unknown>> implements Settings {
@@ -24,7 +24,7 @@ export class SettingsNode extends YamlDictionary<Primitive | Record<string, unkn
   defines: YamlDictionary<string> = new PrimitiveDictionary<string>(this, 'defines', (k, v) => v);
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     // todo: what validations do we need?
   }
 

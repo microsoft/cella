@@ -4,7 +4,6 @@
 import { Document, isMap, isSeq, LineCounter, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { i } from '../i18n';
 import { parseQuery } from '../mediaquery/media-query';
-import { ArtifactSource, Contact, Demands, ErrorKind, ValidationError, VersionReference } from '../metadata-format';
 import { isNullish } from '../util/checks';
 import { ObjectDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';
@@ -14,6 +13,7 @@ import { ContactNode } from './contact';
 import { DemandNode } from './demands';
 import { InfoNode } from './info';
 import { Installs } from './installer';
+import { ArtifactSource, Contact, Demands, ErrorKind, ValidationError, VersionReference } from './metadata-format';
 import { SettingsNode } from './settings';
 import { VersionReferenceNode } from './version-reference';
 
@@ -89,7 +89,7 @@ export class ConditionalDemands extends ObjectDictionary<Demands> {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     for (const each of this.members) {
       const n = <YAMLSeq | YAMLMap | Scalar>each.key;
       if (!isMap(each.value) && !isSeq(each.value)) {
@@ -115,11 +115,11 @@ export class MetadataFile extends ConditionalDemands {
 
   static reservedWords = ['info', 'contacts', 'catalogs', 'registries', 'settings', 'requires', 'seeAlso', 'install']
 
-  get isCreated(): boolean {
+  override get isCreated(): boolean {
     return !!(<any>this.document.contents)?.items;
   }
 
-  get members() {
+  override get members() {
     return super.members.filter(each => MetadataFile.reservedWords.indexOf((<any>(each.key)).value) === -1);
   }
 
@@ -157,11 +157,11 @@ export class MetadataFile extends ConditionalDemands {
     super({ selfNode: <YAMLMap>document.contents }, '');
   }
 
-  get selfNode(): YAMLMap {
+  override get selfNode(): YAMLMap {
     return <YAMLMap<string, any>>(<any>this.document.contents);
   }
 
-  toString(): string {
+  override toString(): string {
     return this.content;
   }
 
@@ -228,7 +228,7 @@ export class MetadataFile extends ConditionalDemands {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override  *validate(): Iterable<ValidationError> {
     yield* super.validate();
 
     // verify that we have info

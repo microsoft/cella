@@ -26,7 +26,7 @@ export class RemoveCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const project = await session.findProjectProfile(session.currentDirectory);
     if (!project) {
       error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);

@@ -3,10 +3,10 @@
 
 import { fail } from 'assert';
 import { i } from '../i18n';
-import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource, ValidationError } from '../metadata-format';
 import { StringsSequence } from '../yaml/strings';
 import { ParentNode } from '../yaml/yaml-node';
 import { YamlObject } from '../yaml/YamlObject';
+import { GitArtifactSource, LocalArtifactSource, NuGetArtifactSource, ValidationError } from './metadata-format';
 
 export class SourceNode extends YamlObject {
   // ArtifactSource nodes are shape-polymorphic.
@@ -16,10 +16,10 @@ export class SourceNode extends YamlObject {
 
 class NugetSourceNode extends SourceNode implements NuGetArtifactSource {
 
-  location = new StringsSequence(this, 'nuget');
+  override location = new StringsSequence(this, 'nuget');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     //
   }
 }
@@ -28,10 +28,10 @@ class LocalSourceNode extends SourceNode implements LocalArtifactSource {
   constructor(parent: ParentNode, sourceName: string) {
     super(parent, sourceName);
   }
-  location = new StringsSequence(this, 'path');
+  override location = new StringsSequence(this, 'path');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     //
   }
 }
@@ -40,10 +40,10 @@ class GitSourceNode extends SourceNode implements GitArtifactSource {
   constructor(parent: ParentNode, sourceName: string) {
     super(parent, sourceName);
   }
-  location = new StringsSequence(this, 'git');
+  override location = new StringsSequence(this, 'git');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     // yield* super.validate();
   }
 }

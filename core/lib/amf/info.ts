@@ -5,11 +5,11 @@ import { fail } from 'assert';
 import { parse as parseSemver } from 'semver';
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
-import { ErrorKind, Info, ValidationError } from '../metadata-format';
 import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
 import { YamlStringSet } from '../yaml/strings';
 import { ParentNode } from '../yaml/yaml-node';
 import { YamlObject } from '../yaml/YamlObject';
+import { ErrorKind, Info, ValidationError } from './metadata-format';
 
 export class InfoNode extends YamlObject implements Info {
   constructor(parent: ParentNode) {
@@ -60,7 +60,7 @@ export class InfoNode extends YamlObject implements Info {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     if (!(this.selfNode instanceof YAMLMap)) {
       yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this._range, category: ErrorKind.IncorrectType };
       return; // stop processing in this block

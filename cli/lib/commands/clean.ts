@@ -55,7 +55,7 @@ export class CleanCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
 
     if (this.all.active || this.artifacts.active) {
       // if we're removing artifacts

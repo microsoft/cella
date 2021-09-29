@@ -25,7 +25,7 @@ export class ProgressTrackingStream extends Transform implements ProgressTrackin
     this.currentPosition = start;
   }
 
-  _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
+  override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
     if (<string>encoding !== 'buffer') {
       return callback(new Error('unexpected chunk type'));
     }

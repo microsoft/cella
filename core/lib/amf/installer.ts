@@ -3,17 +3,17 @@
 
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
-import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from '../metadata-format';
 import { checkOptionalString } from '../util/checks';
 import { ObjectSequence } from '../yaml/ObjectSequence';
 import { StringsSequence } from '../yaml/strings';
 import { NonNavigableYamlObject, ParentNode } from '../yaml/yaml-node';
+import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from './metadata-format';
 
 abstract class InstallerNode extends NonNavigableYamlObject implements Installer {
   abstract readonly kind: string;
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     // yield* super.validate();
     yield* checkOptionalString(this.selfNode, this.selfNode.range!, 'lang');
   }
@@ -98,7 +98,7 @@ abstract class FileInstallerNode extends InstallerNode {
   readonly transform = new StringsSequence(this, 'transform');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
     if (!this.sha256 && !this.sha512) {
       yield { message: i`artifacts must specify a hash algorithm ('sha256' or 'sha512') and value`, range: this.selfNode.range!, category: ErrorKind.MissingHash };
@@ -128,7 +128,7 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
 }
@@ -139,7 +139,7 @@ class UnTarNode extends FileInstallerNode implements UnTar {
   location = new StringsSequence(this, 'untar');
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
 }
@@ -174,7 +174,7 @@ class GitCloneNode extends InstallerNode implements Git {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
 }
@@ -201,7 +201,7 @@ export class Installs extends ObjectSequence<Installer> {
   }
 
   /** @internal */
-  * validate(): Iterable<ValidationError> {
+  override * validate(): Iterable<ValidationError> {
     yield* super.validate();
 
     if (this.self) {

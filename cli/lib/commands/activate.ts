@@ -28,7 +28,7 @@ export class ActivateCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const project = await this.project.value;
     if (!project) {
       error(i`Unable to find project manifest file`);

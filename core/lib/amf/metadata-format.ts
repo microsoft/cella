@@ -3,10 +3,10 @@
 
 import { Range, SemVer } from 'semver';
 import { LineCounter, parseDocument } from 'yaml';
-import { Installs } from './amf/installer';
-import { MetadataFile, Primitive, Requires } from './amf/metadata-file';
-import { YamlDictionary } from './yaml/MapOf';
-import { StringsSequence } from './yaml/strings';
+import { YamlDictionary } from '../yaml/MapOf';
+import { StringsSequence } from '../yaml/strings';
+import { Installs } from './installer';
+import { MetadataFile, Primitive, Requires } from './metadata-file';
 
 export { Range, SemVer };
 

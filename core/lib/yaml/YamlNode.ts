@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Scalar, YAMLMap, YAMLSeq } from 'yaml';
-import { ValidationError } from '../metadata-format';
+import { ValidationError } from '../amf/metadata-format';
 import { ParentNode } from './yaml-node';
 
 

@@ -26,7 +26,7 @@ export class ListCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     if (this.installed.active) {
       const artifacts = await session.getInstalledArtifacts();
       const table = new Table('Artifact', 'Version', 'Summary');

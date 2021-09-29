@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Demands, Settings, ValidationError } from '../metadata-format';
 import { YamlObject } from '../yaml/YamlObject';
 import { Installs } from './installer';
 import { Requires } from './metadata-file';
+import { Demands, Settings, ValidationError } from './metadata-format';
 import { SettingsNode } from './settings';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
@@ -39,7 +39,7 @@ export class DemandNode extends YamlObject implements Demands {
   }
 
   /** @internal */
-  *validate(): Iterable<ValidationError> {
+  override *validate(): Iterable<ValidationError> {
     yield* super.validate();
     if (this.self) {
       yield* this.settings.validate();

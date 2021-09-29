@@ -26,7 +26,7 @@ export class RegenerateCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     const repository = session.getRepository('default');
 
     log(i`Regenerating index.yaml file for the repository at ${repository.baseFolder.fsPath}`);

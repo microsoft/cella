@@ -28,7 +28,7 @@ export class CacheCommand extends Command {
     ];
   }
 
-  async run() {
+  override async run() {
     if (this.clear.active) {
       await session.cache.delete({ recursive: true });
       await session.cache.createDirectory();

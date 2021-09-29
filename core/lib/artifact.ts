@@ -5,6 +5,7 @@ import { fail } from 'assert';
 import * as micromatch from 'micromatch';
 import { Activation } from './activation';
 import { MetadataFile } from './amf/metadata-file';
+import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from './amf/metadata-format';
 import { UnpackEvents } from './archive';
 import { MultipleInstallsMatched } from './exceptions';
 import { AcquireEvents } from './fs/acquire';
@@ -12,7 +13,6 @@ import { i } from './i18n';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { Dictionary, linq } from './linq';
 import { parseQuery } from './mediaquery/media-query';
-import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from './metadata-format';
 import { Session } from './session';
 import { Uri } from './uri';
 
