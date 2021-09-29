@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 import { Readable, Writable } from 'stream';
-import { get, getStream, head } from '../https';
-import { Uri } from '../uri';
+import { Uri } from '../util/uri';
 import { FileStat, FileSystem, FileType, ReadHandle } from './filesystem';
+import { get, getStream, head } from './https';
 
 /**
  * HTTPS Filesystem

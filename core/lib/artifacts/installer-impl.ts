@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Installer, Nupkg, UnpackSettings, UnTar, UnZip, Verifiable } from './amf/metadata-format';
-import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from './archive';
-import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from './fs/acquire';
-import { Session } from './session';
-import { Uri } from './uri';
+import { Installer, Nupkg, UnpackSettings, UnTar, UnZip, Verifiable } from '../amf/metadata-format';
+import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from '../fs/acquire';
+import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from '../fs/archive';
+import { Session } from '../session';
+import { Uri } from '../util/uri';
 
 export interface InstallArtifactInfo {
   readonly name: string;

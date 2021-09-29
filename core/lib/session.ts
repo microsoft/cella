@@ -4,21 +4,21 @@
 import { fail, strict } from 'assert';
 import { delimiter } from 'path';
 import { TextDecoder } from 'util';
-import { Activation } from './activation';
 import { MetadataFile } from './amf/metadata-file';
 import { parseConfiguration } from './amf/metadata-format';
-import { Artifact, createArtifact } from './artifact';
-import { Channels, Stopwatch } from './channels';
+import { Activation } from './artifacts/activation';
+import { Artifact, createArtifact } from './artifacts/artifact';
+import { DefaultRepository, IRepository } from './artifacts/repository';
 import { undo } from './constants';
 import { FileSystem } from './fs/filesystem';
 import { HttpsFileSystem } from './fs/http-filesystem';
 import { LocalFileSystem } from './fs/local-filesystem';
+import { UnifiedFileSystem } from './fs/unified-filesystem';
 import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
-import { Dictionary, items } from './linq';
-import { DefaultRepository, IRepository } from './repository';
-import { UnifiedFileSystem } from './unified-filesystem';
-import { Uri } from './uri';
+import { Channels, Stopwatch } from './util/channels';
+import { Dictionary, items } from './util/linq';
+import { Uri } from './util/uri';
 
 const defaultConfig =
   `# Global configuration

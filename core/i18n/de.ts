@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Dictionary } from '../lib/linq';
+import { Dictionary } from '../lib/util/linq';
 
 export const map: Dictionary<(...args: Array<any>) => string> = {
   'stats may not be undefined': () => {

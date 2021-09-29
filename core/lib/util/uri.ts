@@ -7,7 +7,7 @@ import { Readable, Writable } from 'stream';
 import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
-import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './fs/filesystem';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from '../fs/filesystem';
 import { Algorithm, Hash, hash } from './hash';
 
 /**

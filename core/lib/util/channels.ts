@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { EventEmitter } from 'ee-ts';
-import { Session } from './session';
+import { Session } from '../session';
 
 /** Event defintions for channel events */
 export interface ChannelEvents {

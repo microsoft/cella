@@ -4,15 +4,15 @@
 import { strict } from 'assert';
 import { pipeline as origPipeline } from 'stream';
 import { promisify } from 'util';
-import { Credentials } from '../credentials';
-import { ExtendedEmitter } from '../events';
-import { RemoteFileUnavailable } from '../exceptions';
-import { Algorithm, Hash } from '../hash';
-import { get, getStream, RemoteFile, resolveRedirect } from '../https';
 import { i } from '../i18n';
 import { Session } from '../session';
-import { Progress, ProgressTrackingStream } from '../streams';
-import { Uri } from '../uri';
+import { Credentials } from '../util/credentials';
+import { ExtendedEmitter } from '../util/events';
+import { RemoteFileUnavailable } from '../util/exceptions';
+import { Algorithm, Hash } from '../util/hash';
+import { Uri } from '../util/uri';
+import { get, getStream, RemoteFile, resolveRedirect } from './https';
+import { Progress, ProgressTrackingStream } from './streams';
 
 const pipeline = promisify(origPipeline);
 

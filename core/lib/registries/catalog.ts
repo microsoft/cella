@@ -4,9 +4,9 @@
 import { strict } from 'assert';
 import { Range, SemVer } from 'semver';
 import BTree from 'sorted-btree';
-import { intersect } from './intersect';
-import { Dictionary, items, keys, ManyMap } from './linq';
-import { isIterable } from './util/checks';
+import { isIterable } from '../util/checks';
+import { intersect } from '../util/intersect';
+import { Dictionary, items, keys, ManyMap } from '../util/linq';
 
 /* eslint-disable @typescript-eslint/ban-types */
 

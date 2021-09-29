@@ -1,35 +1,35 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { ManyMap } from './lib/linq';
-import { Queue } from './lib/promise';
+import { ManyMap } from './lib/util/linq';
+import { Queue } from './lib/util/promise';
 
-export * from './lib/activation';
 export * from './lib/amf/metadata-format';
-export * from './lib/archive';
-export * from './lib/artifact';
-export * from './lib/catalog';
-export * from './lib/channels';
-export * from './lib/events';
-export * from './lib/exceptions';
+export * from './lib/artifacts/activation';
+export * from './lib/artifacts/artifact';
+export * from './lib/artifacts/repository';
 export * from './lib/fs/acquire';
+export * from './lib/fs/archive';
 export * from './lib/fs/filesystem';
 export * from './lib/fs/http-filesystem';
 export * from './lib/fs/local-filesystem';
-export * from './lib/hash';
+export * from './lib/fs/unified-filesystem';
+export * from './lib/fs/unzip';
 export * from './lib/i18n';
-export * from './lib/intersect';
-export * from './lib/linq';
 export * from './lib/mediaquery/media-query';
-export * from './lib/repository';
+export * from './lib/registries/catalog';
 export * from './lib/session';
-export * from './lib/template-amf';
-export * from './lib/unified-filesystem';
-export * from './lib/unzip';
-export * from './lib/uri';
+export * from './lib/util/channels';
+export * from './lib/util/events';
+export * from './lib/util/exceptions';
+export * from './lib/util/hash';
+export * from './lib/util/intersect';
+export * from './lib/util/linq';
 export * from './lib/util/percentage-scaler';
+export * from './lib/util/uri';
 export * from './lib/version';
-export * from './lib/willow';
+export * from './lib/willow/template-amf';
+export * from './lib/willow/willow';
 export * from './lib/yaml/strings';
 export * from './lib/yaml/yaml';
 

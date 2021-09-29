@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from './i18n';
+import { i } from '../i18n';
 import { Uri } from './uri';
 
 export class Failed extends Error {

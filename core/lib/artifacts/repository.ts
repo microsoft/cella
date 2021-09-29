@@ -4,18 +4,18 @@
 import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
-import { MetadataFile } from './amf/metadata-file';
-import { parseConfiguration } from './amf/metadata-format';
-import { ZipUnpacker } from './archive';
+import { MetadataFile } from '../amf/metadata-file';
+import { parseConfiguration } from '../amf/metadata-format';
+import { acquireArtifactFile } from '../fs/acquire';
+import { ZipUnpacker } from '../fs/archive';
+import { FileType } from '../fs/filesystem';
+import { i } from '../i18n';
+import { Catalog, IdentityKey, Index, SemverKey, StringKey } from '../registries/catalog';
+import { Session } from '../session';
+import { Queue } from '../util/promise';
+import { Uri } from '../util/uri';
+import { isYAML, serialize } from '../yaml/yaml';
 import { Artifact, createArtifact } from './artifact';
-import { Catalog, IdentityKey, Index, SemverKey, StringKey } from './catalog';
-import { acquireArtifactFile } from './fs/acquire';
-import { FileType } from './fs/filesystem';
-import { i } from './i18n';
-import { Queue } from './promise';
-import { Session } from './session';
-import { Uri } from './uri';
-import { isYAML, serialize } from './yaml/yaml';
 
 class RepoIndex extends Index<MetadataFile, RepoIndex> {
   id = new IdentityKey(this, (i) => i.info.id)

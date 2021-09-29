@@ -7,15 +7,15 @@ import { pipeline as origPipeline, Readable, Transform } from 'stream';
 import { extract as tarExtract, Headers } from 'tar-stream';
 import { promisify } from 'util';
 import { createGunzip } from 'zlib';
-import { ExtendedEmitter } from './events';
-import { i } from './i18n';
-import { Queue } from './promise';
-import { Session } from './session';
+import { i } from '../i18n';
+import { Session } from '../session';
+import { ExtendedEmitter } from '../util/events';
+import { PercentageScaler } from '../util/percentage-scaler';
+import { Queue } from '../util/promise';
+import { Uri } from '../util/uri';
 import { ProgressTrackingStream } from './streams';
 import { UnifiedFileSystem } from './unified-filesystem';
 import { ZipEntry, ZipFile } from './unzip';
-import { Uri } from './uri';
-import { PercentageScaler } from './util/percentage-scaler';
 
 const pipeline = promisify(origPipeline);
 

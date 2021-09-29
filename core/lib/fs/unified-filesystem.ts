@@ -3,10 +3,10 @@
 
 import { strict } from 'assert';
 import { Readable, Writable } from 'stream';
-import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './fs/filesystem';
-import { i } from './i18n';
-import { Dictionary } from './linq';
-import { Uri } from './uri';
+import { i } from '../i18n';
+import { Dictionary } from '../util/linq';
+import { Uri } from '../util/uri';
+import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from './filesystem';
 
 /**
  * gets the scheme off the front of an uri.

@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 import { delimiter } from 'path';
-import { linq } from './linq';
-import { Uri } from './uri';
+import { linq } from '../util/linq';
+import { Uri } from '../util/uri';
 
 export class Activation {
   defines = new Map<string, string>();

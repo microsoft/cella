@@ -3,8 +3,8 @@
 
 import { assert } from 'console';
 import { isMap, isPair, isScalar, isSeq, LineCounter, Pair, parseDocument, YAMLMap, YAMLSeq } from 'yaml';
-import { i } from './i18n';
-import { Session } from './session';
+import { i } from '../i18n';
+import { Session } from '../session';
 import { FlatVsManPayload, VsManDatabase } from './willow';
 
 function lookupVsixVersion(session: Session, vsManLookup: VsManDatabase, id: string): string | undefined {

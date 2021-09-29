@@ -3,8 +3,8 @@
 
 import EventEmitter = require('events');
 import { Transform, TransformCallback } from 'stream';
-import { Stopwatch } from './channels';
-import { PercentageScaler } from './util/percentage-scaler';
+import { Stopwatch } from '../util/channels';
+import { PercentageScaler } from '../util/percentage-scaler';
 
 export interface Progress {
   progress(percent: number, bytes: number, msec: number): void;

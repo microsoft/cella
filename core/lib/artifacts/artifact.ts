@@ -3,18 +3,18 @@
 
 import { fail } from 'assert';
 import * as micromatch from 'micromatch';
+import { MetadataFile } from '../amf/metadata-file';
+import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from '../amf/metadata-format';
+import { AcquireEvents } from '../fs/acquire';
+import { UnpackEvents } from '../fs/archive';
+import { i } from '../i18n';
+import { parseQuery } from '../mediaquery/media-query';
+import { Session } from '../session';
+import { MultipleInstallsMatched } from '../util/exceptions';
+import { Dictionary, linq } from '../util/linq';
+import { Uri } from '../util/uri';
 import { Activation } from './activation';
-import { MetadataFile } from './amf/metadata-file';
-import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from './amf/metadata-format';
-import { UnpackEvents } from './archive';
-import { MultipleInstallsMatched } from './exceptions';
-import { AcquireEvents } from './fs/acquire';
-import { i } from './i18n';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
-import { Dictionary, linq } from './linq';
-import { parseQuery } from './mediaquery/media-query';
-import { Session } from './session';
-import { Uri } from './uri';
 
 export class SetOfDemands {
   _demands = new Map<string, Demands>();

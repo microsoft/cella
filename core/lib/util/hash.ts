@@ -4,7 +4,7 @@
 import { fail } from 'assert';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { ProgressTrackingStream } from './streams';
+import { ProgressTrackingStream } from '../fs/streams';
 import { Uri } from './uri';
 
 // sha256, sha512, sha384

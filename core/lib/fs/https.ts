@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 import { default as got, Headers, HTTPError, Response } from 'got';
-import { Credentials } from './credentials';
-import { anyWhere } from './promise';
-import { Uri } from './uri';
+import { Credentials } from '../util/credentials';
+import { anyWhere } from '../util/promise';
+import { Uri } from '../util/uri';
 
 /**
  * Resolves an HTTPS GET redirect by doing the GET, grabbing the redirects and then cancelling the rest of the request

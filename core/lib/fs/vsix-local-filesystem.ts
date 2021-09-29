@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Session } from '../session';
-import { Uri } from '../uri';
+import { Uri } from '../util/uri';
 import { LocalFileSystem } from './local-filesystem';
 
 export class VsixLocalFilesystem extends LocalFileSystem {
