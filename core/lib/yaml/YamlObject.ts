@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { isMap, YAMLMap } from 'yaml';
-import { ValidationError } from '../amf/metadata-format';
+import { ValidationError } from '../interfaces/validation-error';
 import { isNullish } from '../util/checks';
 import { YamlNode } from './YamlNode';
 

@@ -66,7 +66,7 @@ export class AddCommand extends Command {
     }
 
     // write the file out.
-    await project.writeFile(Buffer.from(manifest.content));
+    await manifest.save(project);
 
     debug(i`Deactivating project ${projectFile(project)}`);
     await session.deactivate();

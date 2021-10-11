@@ -4,77 +4,19 @@
 import { fail } from 'assert';
 import * as micromatch from 'micromatch';
 import { MetadataFile } from '../amf/metadata-file';
-import { Demands, Installer, Nupkg, UnTar, UnZip, VersionReference } from '../amf/metadata-format';
 import { AcquireEvents } from '../fs/acquire';
 import { UnpackEvents } from '../fs/archive';
 import { i } from '../i18n';
-import { parseQuery } from '../mediaquery/media-query';
+import { Installer } from '../interfaces/Installer';
+import { NupkgInstaller } from '../interfaces/nupkg-installer';
+import { UnTarInstaller } from '../interfaces/untar-installer';
+import { UnZipInstaller } from '../interfaces/unzip-installer';
 import { Session } from '../session';
-import { MultipleInstallsMatched } from '../util/exceptions';
-import { Dictionary, linq } from '../util/linq';
+import { linq } from '../util/linq';
 import { Uri } from '../util/uri';
 import { Activation } from './activation';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
-
-export class SetOfDemands {
-  _demands = new Map<string, Demands>();
-
-  constructor(metadata: MetadataFile, session: Session) {
-    this._demands.set('', metadata);
-
-    for (const [query, demands] of metadata.entries) {
-      if (parseQuery(query).match(session.context)) {
-        session.channels.debug(`Matching demand query: '${query}'`);
-        this._demands.set(query, demands);
-      }
-    }
-  }
-
-  get installer() {
-    const install = linq.items(this._demands).where(([query, demand]) => demand.install.length > 0).toArray();
-
-    if (install.length > 1) {
-      // bad. There should only ever be one install block.
-      throw new MultipleInstallsMatched(install.map(each => each[0]));
-    }
-
-    return install[0]?.[1].install || [];
-  }
-
-  get errors() {
-    return linq.values(this._demands).selectNonNullable(d => d.error).toArray();
-  }
-  get warnings() {
-    return linq.values(this._demands).selectNonNullable(d => d.warning).toArray();
-  }
-  get messages() {
-    return linq.values(this._demands).selectNonNullable(d => d.message).toArray();
-  }
-  get settings() {
-    return linq.values(this._demands).selectNonNullable(d => d.settings).toArray();
-  }
-  get seeAlso() {
-    return linq.values(this._demands).selectNonNullable(d => d.seeAlso).toArray();
-  }
-  get requires() {
-    const d = this._demands;
-    const rq1 = linq.values(d).selectNonNullable(d => d.requires).toArray();
-    const result = new Dictionary<VersionReference>();
-    for (const dict of rq1) {
-      for (const [query, demands] of dict.entries) {
-        result[query] = demands;
-      }
-    }
-    const rq = [...d.values()].map(each => each.requires).filter(each => each);
-
-    for (const dict of rq) {
-      for (const [query, demands] of dict.entries) {
-        result[query] = demands;
-      }
-    }
-    return result;
-  }
-}
+import { SetOfDemands } from './SetOfDemands';
 
 export function createArtifact(session: Session, metadata: MetadataFile, shortName: string): Artifact {
   return new Artifact(session, metadata, shortName);
@@ -107,13 +49,13 @@ export class Artifact {
 
     switch (installInfo.kind) {
       case 'nupkg':
-        await installNuGet(this.session, this, <Nupkg>installInfo, options);
+        await installNuGet(this.session, this, <NupkgInstaller>installInfo, options);
         break;
       case 'unzip':
-        await installUnZip(this.session, this, <UnZip>installInfo, options);
+        await installUnZip(this.session, this, <UnZipInstaller>installInfo, options);
         break;
       case 'untar':
-        await installUnTar(this.session, this, <UnTar>installInfo, options);
+        await installUnTar(this.session, this, <UnTarInstaller>installInfo, options);
         break;
       case 'git':
         throw new Error('not implemented');
@@ -188,9 +130,8 @@ export class Artifact {
   }
 
   async writeManifest() {
-    const content = this.metadata.content;
     await this.targetLocation.createDirectory();
-    await this.targetLocation.join('artifact.yaml').writeFile(Buffer.from(content));
+    await this.metadata.save(this.targetLocation.join('artifact.yaml'));
   }
 
   async uninstall() {

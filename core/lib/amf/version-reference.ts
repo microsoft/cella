@@ -3,8 +3,9 @@
 
 import { Range, SemVer } from 'semver';
 import { isScalar, Scalar } from 'yaml';
+import { ValidationError } from '../interfaces/validation-error';
+import { VersionReference } from '../interfaces/version-reference';
 import { YamlNode } from '../yaml/YamlNode';
-import { ValidationError, VersionReference } from './metadata-format';
 
 // nuget-semver parser doesn't have a ts typings package
 // eslint-disable-next-line @typescript-eslint/no-var-requires

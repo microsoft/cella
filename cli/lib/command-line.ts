@@ -81,14 +81,18 @@ export class CommandLine {
   #home?: string;
   get homeFolder() {
     // home folder is determined by
-    // command line (--ce-home, --ce_home)
-    // environment (CE_HOME)
-    // default 1 $HOME/.ce
-    // default 2 <tmpdir>/.ce
+    // command line (--vcpkg_root, --vcpkg-root )
+    // environment (VCPKG_ROOT)
+    // default 1 $HOME/.vcpkg
+    // default 2 <tmpdir>/.vcpkg
 
     // note, this does not create the folder, that would happen when the session is initialized.
 
-    return this.#home || (this.#home = resolvePath(this.switches['ce-home']?.[0] || this.switches['ce_home']?.[0] || process.env['CE_HOME'] || join(process.env['HOME'] || tmpdir(), '.ce')));
+    return this.#home || (this.#home = resolvePath(
+      this.switches['vcpkg-root']?.[0] ||
+      this.switches['vcpkg_root']?.[0] ||
+      process.env['VCPKG_ROOT'] ||
+      join(process.env['HOME'] || tmpdir(), '.vcpkg')));
   }
 
   get repositoryFolder() {

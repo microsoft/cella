@@ -3,11 +3,17 @@
 
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
+import { ErrorKind } from '../interfaces/error-kind';
+import { GitInstaller } from '../interfaces/git-installer';
+import { Installer } from '../interfaces/Installer';
+import { NupkgInstaller } from '../interfaces/nupkg-installer';
+import { UnTarInstaller } from '../interfaces/untar-installer';
+import { UnZipInstaller } from '../interfaces/unzip-installer';
+import { ValidationError } from '../interfaces/validation-error';
 import { checkOptionalString } from '../util/checks';
 import { ObjectSequence } from '../yaml/ObjectSequence';
 import { StringsSequence } from '../yaml/strings';
 import { NonNavigableYamlObject, ParentNode } from '../yaml/yaml-node';
-import { ErrorKind, Git, Installer, Nupkg, UnTar, UnZip, ValidationError } from './metadata-format';
 
 abstract class InstallerNode extends NonNavigableYamlObject implements Installer {
   abstract readonly kind: string;
@@ -106,7 +112,7 @@ abstract class FileInstallerNode extends InstallerNode {
   }
 }
 
-class UnzipNode extends FileInstallerNode implements UnZip {
+class UnzipNode extends FileInstallerNode implements UnZipInstaller {
   readonly kind = 'unzip';
 
   get [Symbol.toStringTag]() {
@@ -116,7 +122,7 @@ class UnzipNode extends FileInstallerNode implements UnZip {
   location = new StringsSequence(this, 'unzip');
 }
 
-class NupkgNode extends FileInstallerNode implements Nupkg {
+class NupkgNode extends FileInstallerNode implements NupkgInstaller {
   readonly kind = 'nupkg';
 
   get location() {
@@ -133,7 +139,7 @@ class NupkgNode extends FileInstallerNode implements Nupkg {
   }
 }
 
-class UnTarNode extends FileInstallerNode implements UnTar {
+class UnTarNode extends FileInstallerNode implements UnTarInstaller {
   readonly kind = 'untar';
 
   location = new StringsSequence(this, 'untar');
@@ -144,7 +150,7 @@ class UnTarNode extends FileInstallerNode implements UnTar {
   }
 }
 
-class GitCloneNode extends InstallerNode implements Git {
+class GitCloneNode extends InstallerNode implements GitInstaller {
   readonly kind = 'git';
 
   location = new StringsSequence(this, 'git');

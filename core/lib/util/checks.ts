@@ -2,8 +2,9 @@
 // Licensed under the MIT License.
 
 import { isScalar, isSeq, YAMLMap } from 'yaml';
-import { ErrorKind, ValidationError } from '../amf/metadata-format';
 import { i } from '../i18n';
+import { ErrorKind } from '../interfaces/error-kind';
+import { ValidationError } from '../interfaces/validation-error';
 
 /** @internal */
 export function isPrimitive(value: any): value is (string | number | boolean) {

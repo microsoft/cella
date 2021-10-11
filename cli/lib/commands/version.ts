@@ -51,7 +51,7 @@ export class VersionCommand extends Command {
   }
 
   private async getRemoteVersion() {
-    const version = session.utf8(await session.fileSystem.readFile(this.versionUrl));
+    const version = await this.versionUrl.readUTF8();
     const semver = parse(version.trim());
     strict.ok(semver, i`Unable to parse version ${version}`);
 

@@ -52,7 +52,7 @@ export class ApplyVsManCommand extends Command {
   static async processFile(session: Session, inputUri: Uri, repoRoot: Uri, vsManLookup: VsManDatabase) {
     const inputPath = inputUri.fsPath;
     session.channels.debug(i`Processing ${inputPath}...`);
-    const inputContent = session.utf8(await inputUri.readFile());
+    const inputContent = await inputUri.readUTF8();
     const outputContent = templateAmfApplyVsManifestInformation(session, inputPath, inputContent, vsManLookup);
     if (!outputContent) {
       session.channels.warning(i`Skipped processing ${inputPath}`);
@@ -73,7 +73,7 @@ export class ApplyVsManCommand extends Command {
     const outputFullPath = repoRoot.join(outputRelativePath);
     let doWrite = true;
     try {
-      const outputExistingContent = session.utf8(await outputFullPath.readFile());
+      const outputExistingContent = await outputFullPath.readUTF8();
       if (outputExistingContent === outputContent) {
         doWrite = false;
       } else {
@@ -84,7 +84,7 @@ export class ApplyVsManCommand extends Command {
     }
 
     if (doWrite) {
-      await outputFullPath.writeFile(Buffer.from(outputContent, 'utf-8'));
+      await outputFullPath.writeUTF8(outputContent);
     }
 
     session.channels.debug(i`-> ${outputFullPath.toString()}`);
@@ -115,10 +115,10 @@ export class ApplyVsManCommand extends Command {
     log(i`Downloading channel manifest from ${channelUriStr}`);
     const channelUriUri = session.fileSystem.parse(channelUriStr);
     const channelFile = await acquireArtifactFile(session, [channelUriUri], 'channel.chman');
-    const vsManPayload = parseVsManFromChannel(session.utf8(await channelFile.readFile()));
+    const vsManPayload = parseVsManFromChannel(await channelFile.readUTF8());
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
     const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
-    const vsManLookup = new VsManDatabase(session.utf8(await vsManUri.readFile()));
+    const vsManLookup = new VsManDatabase(await vsManUri.readUTF8());
     let totalProcessed = 0;
     for (const inputPath of this.inputs) {
       const inputUri = session.fileSystem.file(inputPath);

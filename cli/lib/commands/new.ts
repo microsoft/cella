@@ -31,13 +31,13 @@ export class NewCommand extends Command {
       return false;
     }
 
-    await session.currentDirectory.join(project).writeFile(Buffer.from(`# Environment configuration
+    await session.currentDirectory.join(project).writeUTF8(`# Environment configuration
 info:
   name: NAME
   version: 1.0.0
   summary: My Project
 
-`));
+`);
     return true;
   }
 }

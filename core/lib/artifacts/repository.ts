@@ -5,19 +5,21 @@ import { strict } from 'assert';
 import { compare, SemVer } from 'semver';
 import { parse } from 'yaml';
 import { MetadataFile } from '../amf/metadata-file';
-import { parseConfiguration } from '../amf/metadata-format';
 import { acquireArtifactFile } from '../fs/acquire';
 import { ZipUnpacker } from '../fs/archive';
 import { FileType } from '../fs/filesystem';
 import { i } from '../i18n';
+import { parseConfiguration } from '../interfaces/metadata-format';
 import { Catalog, IdentityKey, Index, SemverKey, StringKey } from '../registries/catalog';
 import { Session } from '../session';
 import { Queue } from '../util/promise';
+import { decode } from '../util/text';
 import { Uri } from '../util/uri';
 import { isYAML, serialize } from '../yaml/yaml';
 import { Artifact, createArtifact } from './artifact';
+import { Registry } from './registry';
 
-class RepoIndex extends Index<MetadataFile, RepoIndex> {
+export class RepoIndex extends Index<MetadataFile, RepoIndex> {
   id = new IdentityKey(this, (i) => i.info.id)
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
   summary = new StringKey(this, (i) => i.info.summary);
@@ -25,22 +27,7 @@ class RepoIndex extends Index<MetadataFile, RepoIndex> {
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
-export interface IRepository {
-  readonly count: number;
-  readonly where: RepoIndex;
-  readonly loaded: boolean;
-
-  load(): Promise<void>;
-  save(): Promise<void>;
-  update(): Promise<void>;
-  regenerate(): Promise<void>;
-
-  openArtifact(manifestPath: string): Promise<Artifact>;
-  openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
-  readonly baseFolder: Uri;
-}
-
-export class Repository implements IRepository {
+export class Repository implements Registry {
 
   private catalog = new Catalog(RepoIndex);
   private indexYaml: Uri;
@@ -58,7 +45,7 @@ export class Repository implements IRepository {
     const q = new Queue();
     async function processFile(uri: Uri) {
 
-      const content = repo.session.utf8(await uri.readFile());
+      const content = decode(await uri.readFile());
       // if you see this, it's an index, and we can skip even trying.
       if (content.startsWith(THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING)) {
         return;
@@ -124,7 +111,7 @@ export class Repository implements IRepository {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
 
     this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
-    this.catalog.deserialize(parse(this.session.utf8(await this.indexYaml.readFile())));
+    this.catalog.deserialize(parse(decode(await this.indexYaml.readFile())));
     this.#loaded = true;
   }
 
@@ -148,7 +135,7 @@ export class Repository implements IRepository {
 
   private async openManifest(manifestPath: string) {
     const manifestUri = this.baseFolder.join(manifestPath);
-    const content = this.session.utf8(await manifestUri.readFile());
+    const content = decode(await manifestUri.readFile());
     return parseConfiguration(manifestUri.fsPath, content);
   }
 
@@ -171,7 +158,7 @@ export class Repository implements IRepository {
   }
 }
 
-export class DefaultRepository extends Repository {
+export class DefaultRegistry extends Repository {
   constructor(session: Session) {
     const remoteUri = session.fileSystem.parse('https://aka.ms/vcpkg-ce-default');
     const repositoryFolder = session.settings['repositoryFolder'];

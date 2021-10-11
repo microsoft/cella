@@ -96,7 +96,7 @@ export abstract class YamlDictionary<T extends Object> extends YamlObject {
 }
 
 
-export abstract class MapOfPrimitive<T extends string | boolean | number> extends YamlObject {
+export abstract class PrimitiveDictionary<T extends string | boolean | number> extends YamlObject {
   protected abstract wrapMember(key: string, value: any): T;
 
   /** Returns an iterable of entries in the map. */
@@ -124,7 +124,7 @@ export abstract class MapOfPrimitive<T extends string | boolean | number> extend
     return this.isCreated ? this.selfNode.delete(key) : false;
   }
 
-  forEach(callbackfn: (value: T, key: string, map: MapOfPrimitive<T>) => void, thisArg?: any): void {
+  forEach(callbackfn: (value: T, key: string, map: PrimitiveDictionary<T>) => void, thisArg?: any): void {
     if (this.isCreated) {
       for (const { key, value } of this.members) {
         callbackfn(<any>value, <any>key, this);

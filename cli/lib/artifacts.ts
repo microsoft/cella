@@ -129,8 +129,8 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
 }
 
 // more options in the future...
-export async function getRepository() {
-  const repository = session.getRepository('default');
+export async function getRegistry() {
+  const repository = session.getRegistry('default');
   try {
     await repository.load();
   } catch (e) {

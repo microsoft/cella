@@ -52,7 +52,7 @@ export class RemoveCommand extends Command {
     }
 
     // write the file out.
-    await project.writeFile(Buffer.from(manifest.content));
+    await manifest.save(project);
 
     debug(`Deactivating project ${projectFile(project)}`);
     await session.deactivate();

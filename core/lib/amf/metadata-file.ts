@@ -1,19 +1,27 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { extname } from 'path';
 import { Document, isMap, isSeq, LineCounter, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { i } from '../i18n';
+import { ErrorKind } from '../interfaces/error-kind';
+import { ArtifactSource } from '../interfaces/metadata-format';
+import { Contact } from '../interfaces/metadata/contact';
+import { Demands } from '../interfaces/metadata/demands';
+import { ValidationError } from '../interfaces/validation-error';
+import { VersionReference } from '../interfaces/version-reference';
 import { parseQuery } from '../mediaquery/media-query';
 import { isNullish } from '../util/checks';
+import { Uri } from '../util/uri';
 import { ObjectDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';
+import { toYAML } from '../yaml/yaml';
 import { ParentNode } from '../yaml/yaml-node';
-import { createArtifactSourceNode } from './artifact-source';
+import { createRegistryNode } from './artifact-source';
 import { ContactNode } from './contact';
 import { DemandNode } from './demands';
 import { InfoNode } from './info';
 import { Installs } from './installer';
-import { ArtifactSource, Contact, Demands, ErrorKind, ValidationError, VersionReference } from './metadata-format';
 import { SettingsNode } from './settings';
 import { VersionReferenceNode } from './version-reference';
 
@@ -24,7 +32,7 @@ export class Requires extends YamlDictionary<VersionReference> {
   constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
     super(parent, kind);
   }
-  protected wrapMember(key: string, value: any): VersionReference {
+  protected override  wrapMember(key: string, value: any): VersionReference {
     return new VersionReferenceNode(this, key);
   }
 
@@ -47,7 +55,7 @@ export class Contacts extends YamlDictionary<Contact> {
   constructor(parent: ParentNode) {
     super(parent, 'contacts');
   }
-  protected wrapMember(key: string, value: any): Contact {
+  protected override  wrapMember(key: string, value: any): Contact {
     return new ContactNode(this, key);
   }
   add(name: string) {
@@ -60,7 +68,7 @@ export class GlobalSettingsNode extends YamlDictionary<Primitive | Record<string
     super(parent, 'global');
   }
 
-  wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
+  override wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
     return isNullish(value?.value) ? value : value.value;
   }
 
@@ -78,8 +86,8 @@ export class Catalogs extends YamlDictionary<ArtifactSource> {
     super(parent, 'catalogs');
   }
 
-  wrapMember(key: string, value: any): ArtifactSource {
-    return createArtifactSourceNode(this, key);
+  override wrapMember(key: string, value: any): ArtifactSource {
+    return createRegistryNode(this, key);
   }
 }
 
@@ -167,6 +175,26 @@ export class MetadataFile extends ConditionalDemands {
 
   get content() {
     return this.document.toString();
+  }
+
+  async save(uri: Uri) {
+    // check the filename, and select the format.
+    let content = '';
+
+    switch (extname(uri.path).toLowerCase()) {
+      case '.yaml':
+      case '.yml':
+        // format as yaml
+        content = toYAML(this.document.toString());
+        break;
+      case '':
+      case '.json':
+        content = JSON.stringify(this.document.toJSON(), null, 2);
+        break;
+      default:
+        throw new Error(`Unsupported file type ${extname(uri.path)}`);
+    }
+    await uri.writeUTF8(content);
   }
 
   /* Profile */

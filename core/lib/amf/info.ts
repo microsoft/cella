@@ -5,16 +5,19 @@ import { fail } from 'assert';
 import { parse as parseSemver } from 'semver';
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
+import { ErrorKind } from '../interfaces/error-kind';
+import { Info } from '../interfaces/info';
+import { ValidationError } from '../interfaces/validation-error';
 import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
 import { YamlStringSet } from '../yaml/strings';
 import { ParentNode } from '../yaml/yaml-node';
 import { YamlObject } from '../yaml/YamlObject';
-import { ErrorKind, Info, ValidationError } from './metadata-format';
 
 export class InfoNode extends YamlObject implements Info {
   constructor(parent: ParentNode) {
     super(parent, 'info');
   }
+
   get id(): string {
     return <string>this.getMember('id');
   }
@@ -43,6 +46,7 @@ export class InfoNode extends YamlObject implements Info {
   get description(): string | undefined {
     return <string>this.selfNode.get('description') || undefined;
   }
+
   set description(value: string | undefined) {
     this.setMember('description', value);
   }

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Document, Node, Pair, parseDocument, Scalar, visit, YAMLMap, YAMLSeq } from 'yaml';
-import { StringOrStrings } from '../amf/metadata-format';
+import { Document, Node, Pair, parseDocument, Scalar, stringify, visit, YAMLMap, YAMLSeq } from 'yaml';
+import { StringOrStrings } from '../interfaces/metadata-format';
 
 /** @internal */
 export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false }).createNode(v, {});
@@ -62,4 +62,17 @@ export function serialize(value: any) {
 export function isYAML(path: string) {
   path = path.toLowerCase();
   return path.endsWith('.yml') || path.endsWith('.yaml') || path.endsWith('.json');
+}
+
+export function toYAML(content: string) {
+  if (content.charAt(0) === '{') {
+    // the content is in JSON format.
+    // let's force it to YAML
+    try {
+      return stringify(JSON.parse(content)).toString();
+    } catch (e: any) {
+      // no worries.
+    }
+  }
+  return content;
 }

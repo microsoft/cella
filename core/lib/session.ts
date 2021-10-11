@@ -3,12 +3,11 @@
 
 import { fail, strict } from 'assert';
 import { delimiter } from 'path';
-import { TextDecoder } from 'util';
 import { MetadataFile } from './amf/metadata-file';
-import { parseConfiguration } from './amf/metadata-format';
 import { Activation } from './artifacts/activation';
 import { Artifact, createArtifact } from './artifacts/artifact';
-import { DefaultRepository, IRepository } from './artifacts/repository';
+import { Registry } from './artifacts/registry';
+import { DefaultRegistry } from './artifacts/repository';
 import { undo } from './constants';
 import { FileSystem } from './fs/filesystem';
 import { HttpsFileSystem } from './fs/http-filesystem';
@@ -16,8 +15,10 @@ import { LocalFileSystem } from './fs/local-filesystem';
 import { UnifiedFileSystem } from './fs/unified-filesystem';
 import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
+import { parseConfiguration } from './interfaces/metadata-format';
 import { Channels, Stopwatch } from './util/channels';
 import { Dictionary, items } from './util/linq';
+import { decode } from './util/text';
 import { Uri } from './util/uri';
 
 const defaultConfig =
@@ -28,7 +29,7 @@ global:
   accepted-eula: false
 `;
 
-const profileName = ['environment.yaml', 'environment.yml', 'environment.json'];
+const profileName = ['vcpkg-configuration.json', 'vcpkg-configuration.yaml', 'environment.yaml', 'environment.yml', 'environment.json'];
 export type Context = { [key: string]: Array<string> | undefined; } & {
   readonly os: string;
   readonly arch: string;
@@ -46,6 +47,7 @@ interface BackupFile {
   environment: Dictionary<string>;
   activation: Activation;
 }
+
 /**
  * The Session class is used to hold a reference to the
  * message channels,
@@ -67,10 +69,7 @@ export class Session {
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
-  #decoder = new TextDecoder('utf-8');
-  readonly utf8 = (input?: NodeJS.ArrayBufferView | ArrayBuffer | null | undefined) => this.#decoder.decode(input);
-
-  private readonly sources: Map<string, IRepository>;
+  private readonly registries: Map<string, Registry>;
 
   constructor(currentDirectory: string, public readonly context: Context, public readonly settings: Dictionary<string>, public readonly environment: NodeJS.ProcessEnv) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -92,23 +91,23 @@ export class Session {
 
     this.currentDirectory = this.fileSystem.file(currentDirectory);
 
-    // built in repository
+    // built in registry
 
-    this.sources = new Map<string, IRepository>([
-      ['default', new DefaultRepository(this)]
+    this.registries = new Map<string, Registry>([
+      ['default', new DefaultRegistry(this)]
     ]);
   }
 
   get sourceNames() {
-    return this.sources.keys();
+    return this.registries.keys();
   }
 
-  /** returns a repository given the name */
-  getRepository(source = 'default') {
-    const result = this.sources.get(source);
+  /** returns a registry given the name */
+  getRegistry(source = 'default') {
+    const result = this.registries.get(source);
 
     if (!result) {
-      throw new Error(i`Unknown repository '${source}'`);
+      throw new Error(i`Unknown registry '${source}'`);
     }
     return result;
   }
@@ -125,12 +124,12 @@ export class Session {
    */
   async getArtifact(idOrShortName: string, version: string | undefined): Promise<Artifact | undefined> {
     const [source, name] = this.parseName(idOrShortName);
-    const repository = this.getRepository(source);
-    if (!repository.loaded) {
-      await repository.load();
+    const registry = this.getRegistry(source);
+    if (!registry.loaded) {
+      await registry.load();
     }
 
-    const query = repository.where.id.nameOrShortNameIs(name);
+    const query = registry.where.id.nameOrShortNameIs(name);
     if (version) {
       query.version.rangeMatch(version);
     }
@@ -143,12 +142,12 @@ export class Session {
 
       case 1: {
         // found the artifact. awesome.
-        return await repository.openArtifact(matches[0]);
+        return await registry.openArtifact(matches[0]);
       }
 
       default: {
         // multiple matches.
-        const artifacts = await repository.openArtifacts(matches);
+        const artifacts = await registry.openArtifacts(matches);
         // there should be a single id matched.
         switch (artifacts.size) {
           case 0:
@@ -179,12 +178,12 @@ export class Session {
   }
 
   async saveConfig() {
-    await this.fileSystem.writeFile(this.globalConfig, Buffer.from(this.configuration.content, 'utf-8'));
+    await this.configuration.save(this.globalConfig);
   }
 
   #postscriptFile?: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.environment['CE_POSTSCRIPT'] ? this.fileSystem.file(this.environment['CE_POSTSCRIPT']) : undefined);
+    return this.#postscriptFile || (this.#postscriptFile = this.environment['VCPKG_POSTSCRIPT'] ? this.fileSystem.file(this.environment['VCPKG_POSTSCRIPT']) : undefined);
   }
 
   async init() {
@@ -203,7 +202,7 @@ export class Session {
 
     if (!await this.fileSystem.isFile(this.globalConfig)) {
       try {
-        await this.fileSystem.writeFile(this.globalConfig, Buffer.from(defaultConfig, 'utf-8'));
+        await this.globalConfig.writeUTF8(defaultConfig);
       } catch {
         // if this throws, let it
       }
@@ -249,7 +248,7 @@ export class Session {
     if (lastEnv) {
       const fileUri = this.fileSystem.parse(lastEnv);
       if (await fileUri.exists()) {
-        const contents = this.utf8(await fileUri.readFile());
+        const contents = decode(await fileUri.readFile());
         await fileUri.delete();
 
         if (contents) {
@@ -314,7 +313,7 @@ export class Session {
       // create the environment backup file
       const backupFile = this.tmpFolder.join(`previous-environment-${Date.now().toFixed()}.json`);
 
-      await backupFile.writeFile(Buffer.from(JSON.stringify(contents, (k, v) => this.serializer(k, v), 2)));
+      await backupFile.writeUTF8(JSON.stringify(contents, (k, v) => this.serializer(k, v), 2));
       this.addPostscript(undo, backupFile.toString());
     }
   }
@@ -342,7 +341,7 @@ export class Session {
       }
 
       if (content) {
-        await this.fileSystem.writeFile(psf, Buffer.from(content));
+        await psf.writeUTF8(content);
       }
     }
   }
@@ -364,7 +363,7 @@ export class Session {
     for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
 
-        const content = this.utf8(await folder.readFile('artifact.yaml'));
+        const content = decode(await folder.readFile('artifact.yaml'));
         const metadata = parseConfiguration(folder.fsPath, content);
         result.push({
           folder,
@@ -379,7 +378,7 @@ export class Session {
   }
 
   async openManifest(manifestFile: Uri): Promise<MetadataFile> {
-    return parseConfiguration(manifestFile.fsPath, this.utf8(await manifestFile.readFile()));
+    return parseConfiguration(manifestFile.fsPath, decode(await manifestFile.readFile()));
   }
 
   serializer(key: any, value: any) {

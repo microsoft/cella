@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, IRepository, RemoteFileUnavailable } from '@microsoft/vcpkg-ce.core';
+import { i, Registry, RemoteFileUnavailable } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
 import { Command } from '../command';
 import { CommandLine } from '../command-line';
@@ -29,7 +29,7 @@ export class UpdateCommand extends Command {
 
   override async run() {
 
-    const repository = session.getRepository('default');
+    const repository = session.getRegistry('default');
     if (!repository) {
       throw new Error('Repository is not accessible');
     }
@@ -49,7 +49,7 @@ export class UpdateCommand extends Command {
     return true;
   }
 
-  static async update(repository: IRepository) {
+  static async update(registry: Registry) {
     log(i`Artifact repository data is not loaded`);
     log(i`Attempting to update artifact repository`);
     const update = new UpdateCommand(new CommandLine([]));
@@ -66,7 +66,7 @@ export class UpdateCommand extends Command {
       return false;
     }
     try {
-      await repository.load();
+      await registry.load();
     } catch (e) {
       writeException(e);
       // it just doesn't want to load.

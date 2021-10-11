@@ -12,7 +12,7 @@ contacts:
     role: 
       - fallguy 
       - otherguy # cool, right?
-    
+  
 requires:
   foo/bar/bin: ~2.0.0
   bar/bin:baz: '* 1.2.3'

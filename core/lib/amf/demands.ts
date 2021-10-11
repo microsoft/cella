@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { Demands } from '../interfaces/metadata/demands';
+import { Settings } from '../interfaces/Settings';
+import { ValidationError } from '../interfaces/validation-error';
 import { YamlObject } from '../yaml/YamlObject';
 import { Installs } from './installer';
 import { Requires } from './metadata-file';
-import { Demands, Settings, ValidationError } from './metadata-format';
 import { SettingsNode } from './settings';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);

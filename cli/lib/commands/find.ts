@@ -30,7 +30,7 @@ export class FindCommand extends Command {
   }
 
   override async run() {
-    const repository = session.getRepository('default');
+    const repository = session.getRegistry('default');
     try {
       await repository.load();
     } catch (e) {

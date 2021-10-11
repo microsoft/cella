@@ -2,11 +2,12 @@
 // Licensed under the MIT License.
 
 
+import { Settings } from '../interfaces/Settings';
+import { ValidationError } from '../interfaces/validation-error';
 import { PrimitiveDictionary, StringDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';
 import { ParentNode } from '../yaml/yaml-node';
 import { Primitive } from './metadata-file';
-import { Settings, ValidationError } from './metadata-format';
 
 
 export class SettingsNode extends YamlDictionary<Primitive | Record<string, unknown>> implements Settings {
@@ -14,7 +15,7 @@ export class SettingsNode extends YamlDictionary<Primitive | Record<string, unkn
     super(parent, 'settings');
   }
 
-  wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
+  override wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
     return value;
   }
 

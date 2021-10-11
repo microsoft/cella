@@ -9,6 +9,7 @@ import { URI } from 'vscode-uri';
 import { UriComponents } from 'vscode-uri/lib/umd/uri';
 import { FileStat, FileSystem, FileType, ReadHandle, WriteStreamOptions } from '../fs/filesystem';
 import { Algorithm, Hash, hash } from './hash';
+import { decode, encode } from './text';
 
 /**
  * This class is intended to be a drop-in replacement for the vscode uri
@@ -231,6 +232,10 @@ bad.fragment === '/project1';
     return uri.fileSystem.readFile(uri);
   }
 
+  async readUTF8(uri?: Uri | string): Promise<string> {
+    return decode(await this.readFile(uri));
+  }
+
   openFile(uri?: Uri | string): Promise<ReadHandle> {
     uri = this.resolve(uri);
     return uri.fileSystem.openFile(uri);
@@ -253,6 +258,10 @@ bad.fragment === '/project1';
   async writeFile(content: Uint8Array): Promise<Uri> {
     await this.fileSystem.writeFile(this, content);
     return this;
+  }
+
+  writeUTF8(content: string): Promise<Uri> {
+    return this.writeFile(encode(content));
   }
 
   writeStream(options?: WriteStreamOptions): Promise<Writable> {

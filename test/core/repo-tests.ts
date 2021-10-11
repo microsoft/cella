@@ -97,7 +97,7 @@ describe('Repository Tests', () => {
   });
 
   it('can save and load the index', async () => {
-    const repository = local.session.getRepository('default');
+    const repository = local.session.getRegistry('default');
     await repository.regenerate();
     await repository.save();
 
@@ -107,7 +107,7 @@ describe('Repository Tests', () => {
   });
 
   it('Loads a bunch items', async () => {
-    const repository = local.session.getRepository('default');
+    const repository = local.session.getRegistry('default');
     await repository.regenerate();
 
     const all = await repository.openArtifacts(repository.where.items);
@@ -119,7 +119,7 @@ describe('Repository Tests', () => {
   it('Create index from some data', async () => {
     const start = process.uptime() * 1000;
 
-    const repository = local.session.getRepository('default');
+    const repository = local.session.getRegistry('default');
     local.session.channels.on('debug', (d, x, m) => console.log(`${m}msec : ${d}`));
     await repository.regenerate();
     await repository.save();

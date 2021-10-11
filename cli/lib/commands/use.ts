@@ -3,7 +3,7 @@
 
 import { i } from '@microsoft/vcpkg-ce.core';
 import { session } from '../../main';
-import { activateArtifacts as getArtifactActivation, getRepository, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
+import { activateArtifacts as getArtifactActivation, getRegistry, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { cmdSwitch } from '../format';
 import { error, log, warning } from '../styling';
@@ -42,7 +42,7 @@ export class UseCommand extends Command {
       return false;
     }
 
-    const repository = await getRepository();
+    const repository = await getRegistry();
     if (!repository) {
       // the repository isn't functional
       return false;

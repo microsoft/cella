@@ -4,9 +4,9 @@
 import { ManyMap } from './lib/util/linq';
 import { Queue } from './lib/util/promise';
 
-export * from './lib/amf/metadata-format';
 export * from './lib/artifacts/activation';
 export * from './lib/artifacts/artifact';
+export * from './lib/artifacts/registry';
 export * from './lib/artifacts/repository';
 export * from './lib/fs/acquire';
 export * from './lib/fs/archive';
@@ -16,6 +16,7 @@ export * from './lib/fs/local-filesystem';
 export * from './lib/fs/unified-filesystem';
 export * from './lib/fs/unzip';
 export * from './lib/i18n';
+export * from './lib/interfaces/metadata-format';
 export * from './lib/mediaquery/media-query';
 export * from './lib/registries/catalog';
 export * from './lib/session';

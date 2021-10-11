@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { Contact } from '../interfaces/metadata/contact';
+import { ValidationError } from '../interfaces/validation-error';
 import { StringsSequence } from '../yaml/strings';
 import { YamlObject } from '../yaml/YamlObject';
-import { Contact, ValidationError } from './metadata-format';
 
 /** @internal */
 export class ContactNode extends YamlObject implements Contact {
