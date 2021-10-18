@@ -89,7 +89,7 @@ export class VersionReferenceNode extends YamlNode<Scalar> implements VersionRef
   }
 
   set raw(value: string) {
-    this.parent.set(this.nodeName, value.trim());
+    this.parent.set(this.nodeName, new Scalar(value.trim()));
   }
   override toString() {
     return this.parent.get(this.nodeName);

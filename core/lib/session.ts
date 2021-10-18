@@ -84,7 +84,7 @@ export class Session {
 
     this.homeFolder = this.fileSystem.file(settings['homeFolder']!);
     this.cache = this.homeFolder.join('cache');
-    this.globalConfig = this.homeFolder.join('ce.config.yaml');
+    this.globalConfig = this.homeFolder.join('vcpkg-configuration.global.json');
 
     this.tmpFolder = this.homeFolder.join('tmp');
     this.installFolder = this.homeFolder.join('artifacts');

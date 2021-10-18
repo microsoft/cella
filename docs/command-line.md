@@ -17,7 +17,7 @@ General Switches:
   --debug         : enable debugging 
   --force         : do the requested action without confirmation
   --language=<LL> : use the given localization language code when running the application (ie, en, de, ... etc)
-  --home=<folder> : use the given folder as the $CE_HOME folder 
+  --home=<folder> : use the given folder as the $VCPKG_ROOT folder 
   --what-if       : explain what would happen without doing the command
 
   
@@ -25,11 +25,11 @@ General Switches:
     
 Notes: 
 
-  $CE_HOME folder is determined by:
-    - command line (--ce-home, --ce_home)
-    - environment (CE_HOME)
-    - default 1 $HOME/.ce
-    - default 2 <tmpdir>/.ce
+  $VCPKG_ROOT folder is determined by:
+    - command line (--ce-home, --VCPKG_ROOT)
+    - environment (VCPKG_ROOT)
+    - default 1 $HOME/.vcpkg
+    - default 2 <tmpdir>/.vcpkg
 ```
 
 
@@ -166,7 +166,7 @@ These commands modify a project allowing the user to use artifacts and store the
 
 
 'Adding' an artifact means to 
- - ensure that it is installed to the local `$CE_HOME`
+ - ensure that it is installed to the local `$VCPKG_ROOT`
  - add a `requires` entry to the current project 
  - activate the settings immediately (update cmake,env,etc )
 
@@ -225,7 +225,7 @@ __options__
 Removing an artifact from a project removes the `requires:`  reference to the target
 and performs an activation on the project again (which should remove references to the target)
 
-This does not delete the artifact from the `$CE_HOME` folder.
+This does not delete the artifact from the `$VCPKG_ROOT` folder.
 This can not be used to remove artifacts that have been 'inserted' into the project (since there is no reference)
 
 ``` powershell
@@ -243,7 +243,7 @@ Removed from 'ce.yaml':
 Insertion differs from 'add' in that instead of registering the artifact into the project and referencing it,
 the whole artifact is copied to the project folder.
 
-This does not delete the artifact from the `$CE_HOME` folder.
+This does not delete the artifact from the `$VCPKG_ROOT` folder.
 
 Activation is not done for 'inserted' artifacts, since the project intends to use them in a very particular way.
 

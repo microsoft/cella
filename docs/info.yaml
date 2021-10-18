@@ -4,13 +4,14 @@
 
 info: # see INFO
 contacts:
-sources:
+catalogs:
 
 # And a set of 'demands' that are applicable to all consumers regardless of host/context settings
 # the set 
 requires:
 see-also:
 settings:
+contents: 
 error:
 warning:
 message: 
@@ -30,6 +31,7 @@ info:                 # REQUIRED
   version: 1.2.3      # REQUIRED a semver version 
   summary: text       # REQUIRED a one-line short string with a small description
   description: text   # a longer description text (may be multiple lines)
+  options: [insertable,template] # dependencyOnly, etc
 
 ## CONTACTS BLOCK
 # you can have zero or more contacts associated with the metadata file
@@ -46,10 +48,10 @@ contacts:
       - author                  # for a single contact
       - all-around-awesome-guy  # 
 
-## SOURCES BLOCK
-# sources list any metadata sources that you are pulling from 
+## CATALOGS BLOCK
+# catalog list any metadata sources that you are pulling from 
 # (other than the default, which is built-in, and not-removeable)
-sources: 
+catalogs: 
   myget:                                # REQUIRED nodes in the sources block are the cosmetic name of the source
     nuget: https://myget.org/api/v3/    # the key is the type (one of 'nuget', 'git', 'path') -- the future could have things like 'rpm', 'dpkg', 'npm' ... etc
                                         # the value is the Location (may be a single string or an array of strings for mirrors)
@@ -73,7 +75,7 @@ see-also:                               # you can think of 'see-also' as a set o
 
 settings:                               # settigns are the things that describe the configuration environment
   paths:                                # folders that get added as paths in the environment (may be a string or an array of strings)
-    bin: tools/bin                      # adds to the PATH
+    path: tools/bin                      # adds to the PATH
     lib: libraries                      # adds to the LIBPATH
     include:
       - some/headers/include            # adds to the INCLUDE path 
@@ -88,6 +90,9 @@ settings:                               # settigns are the things that describe 
     CXXFLAGS: 
       - fno-rtti                        # values can be a string or strings
       - fno-exceptions
+      - mcpu=arm7
+
+    DEBUG_MODE: true
 
   defines:                              # very c/c++ specific -- #defines that should be used
     MYINT: long long
@@ -98,6 +103,27 @@ settings:                               # settigns are the things that describe 
                                         # which warns the user of something, or a message, which is just to note
                                         # some information (could be 'use of this package indicates acceptacnce of the EULA... etc')
 
+apply: # used when we want to insert/copy contents from the artifact into the target project when they aren't there.
+  c: 
+    src/board.c: project_template/board.c
+    src/board.cpp: project_template/board.cpp
+
+  header: 
+    src/include/board.h: project_template/board.h
+  
+  assembler: 
+    src/asm/startup.s: Device/ARM/ARMCM3/Source/IAR/startup_ARMCM3.s
+
+  linker: 
+    src/linker/gcc_arm.ld: Device/ARM/ARMCM3/Source/GCC/gcc_arm.ld
+
+  project:
+    project.cmake: project_template/project.cmake
+
+  documentation: # lists places docs can be launched from. https:// required if not in the pack.
+    Cortex-M3 Device Generic Users Guide: CMSIS/Documentation/NN/html/index.html
+  
+        
 error: -|  # multiline error string
   You must specify a target architecture 
   or this won't work                                   

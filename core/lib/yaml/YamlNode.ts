@@ -5,7 +5,6 @@ import { Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { ValidationError } from '../interfaces/validation-error';
 import { ParentNode } from './yaml-node';
 
-
 export abstract class YamlNode<TNode extends YAMLMap | Scalar | YAMLSeq> {
   constructor(parent: ParentNode, protected readonly nodeName: string) {
     this.#parent = parent;
@@ -28,7 +27,12 @@ export abstract class YamlNode<TNode extends YAMLMap | Scalar | YAMLSeq> {
   }
 
   public get selfNode(): TNode {
-    return this.self || this.create();
+    if (this.self) {
+      return this.self;
+    }
+    const s = this.create();
+    this.parent.set(this.nodeName, s);
+    return s;
   }
 
   get _range(): [number, number, number] {
