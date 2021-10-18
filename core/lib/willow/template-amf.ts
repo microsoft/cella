@@ -216,7 +216,7 @@ function templateAmfApplyVsixRequireVersion(session: Session, inputPath: string,
       replacements.set(targetName, adoptedVersion);
     }
 
-    parentItems[idx] = new Pair('require', replacements);
+    parentItems[idx] = new Pair('requires', replacements);
   }
 
   return false;

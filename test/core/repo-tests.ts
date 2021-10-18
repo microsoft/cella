@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Repository, serialize } from '@microsoft/vcpkg-ce.core';
+import { StandardRegistry } from '@microsoft/vcpkg-ce.core/dist/lib/registries/standard-registry';
+import { serialize } from '@microsoft/vcpkg-ce.core/dist/lib/yaml/yaml';
 import { strict } from 'assert';
 import { createHash } from 'crypto';
 import { describe, it } from 'mocha';
@@ -69,7 +70,7 @@ class Template {
   }
 }
 
-describe('Repository Tests', () => {
+describe('StandardRegistry Tests', () => {
 
   const local = new SuiteLocal();
 
@@ -101,7 +102,7 @@ describe('Repository Tests', () => {
     await repository.regenerate();
     await repository.save();
 
-    const anotherRepository = new Repository(local.session, local.session.homeFolder.join('repo', 'default'), local.tempFolderUri);
+    const anotherRepository = new StandardRegistry(local.session, local.session.homeFolder.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one');
   });
@@ -136,7 +137,7 @@ describe('Repository Tests', () => {
     strict.ok(versions, 'should have some versions');
     strict.equal(versions.length, 3, 'should have three versions of the package');
 
-    const anotherRepository = new Repository(local.session, local.session.homeFolder.join('repo', 'default'), local.tempFolderUri);
+    const anotherRepository = new StandardRegistry(local.session, local.session.homeFolder.join('repo', 'default'), local.tempFolderUri);
     await anotherRepository.load();
     const anotherArm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(anotherArm.length, 3, 'should be 3 results');

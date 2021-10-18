@@ -7,7 +7,6 @@ import { MetadataFile } from './amf/metadata-file';
 import { Activation } from './artifacts/activation';
 import { Artifact, createArtifact } from './artifacts/artifact';
 import { Registry } from './artifacts/registry';
-import { DefaultRegistry } from './artifacts/repository';
 import { undo } from './constants';
 import { FileSystem } from './fs/filesystem';
 import { HttpsFileSystem } from './fs/http-filesystem';
@@ -16,9 +15,9 @@ import { UnifiedFileSystem } from './fs/unified-filesystem';
 import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
 import { parseConfiguration } from './interfaces/metadata-format';
+import { DefaultRegistry } from './registries/standard-registry';
 import { Channels, Stopwatch } from './util/channels';
 import { Dictionary, items } from './util/linq';
-import { decode } from './util/text';
 import { Uri } from './util/uri';
 
 const defaultConfig =
@@ -94,7 +93,8 @@ export class Session {
     // built in registry
 
     this.registries = new Map<string, Registry>([
-      ['default', new DefaultRegistry(this)]
+      ['default', new DefaultRegistry(this)],
+      ['microsoft', new DefaultRegistry(this)]
     ]);
   }
 
@@ -248,7 +248,7 @@ export class Session {
     if (lastEnv) {
       const fileUri = this.fileSystem.parse(lastEnv);
       if (await fileUri.exists()) {
-        const contents = decode(await fileUri.readFile());
+        const contents = await fileUri.readUTF8();
         await fileUri.delete();
 
         if (contents) {
@@ -363,7 +363,7 @@ export class Session {
     for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
 
-        const content = decode(await folder.readFile('artifact.yaml'));
+        const content = await folder.readUTF8('artifact.yaml');
         const metadata = parseConfiguration(folder.fsPath, content);
         result.push({
           folder,
@@ -378,7 +378,7 @@ export class Session {
   }
 
   async openManifest(manifestFile: Uri): Promise<MetadataFile> {
-    return parseConfiguration(manifestFile.fsPath, decode(await manifestFile.readFile()));
+    return parseConfiguration(manifestFile.fsPath, await manifestFile.readUTF8());
   }
 
   serializer(key: any, value: any) {

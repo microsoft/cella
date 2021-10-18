@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { RegistryIndex } from '../registries/registry-index';
 import { Uri } from '../util/uri';
 import { Artifact } from './artifact';
-import { RepoIndex } from './repository';
 
 
 export interface Registry {
   readonly count: number;
-  readonly where: RepoIndex;
+  readonly where: RegistryIndex;
   readonly loaded: boolean;
 
   load(): Promise<void>;

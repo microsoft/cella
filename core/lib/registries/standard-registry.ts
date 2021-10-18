@@ -2,34 +2,27 @@
 // Licensed under the MIT License.
 
 import { strict } from 'assert';
-import { compare, SemVer } from 'semver';
+import { compare } from 'semver';
 import { parse } from 'yaml';
-import { MetadataFile } from '../amf/metadata-file';
+import { Artifact, createArtifact } from '../artifacts/artifact';
+import { Registry } from '../artifacts/registry';
 import { acquireArtifactFile } from '../fs/acquire';
 import { ZipUnpacker } from '../fs/archive';
 import { FileType } from '../fs/filesystem';
 import { i } from '../i18n';
 import { parseConfiguration } from '../interfaces/metadata-format';
-import { Catalog, IdentityKey, Index, SemverKey, StringKey } from '../registries/catalog';
 import { Session } from '../session';
 import { Queue } from '../util/promise';
-import { decode } from '../util/text';
 import { Uri } from '../util/uri';
 import { isYAML, serialize } from '../yaml/yaml';
-import { Artifact, createArtifact } from './artifact';
-import { Registry } from './registry';
-
-export class RepoIndex extends Index<MetadataFile, RepoIndex> {
-  id = new IdentityKey(this, (i) => i.info.id)
-  version = new SemverKey(this, (i) => new SemVer(i.info.version));
-  summary = new StringKey(this, (i) => i.info.summary);
-}
+import { Catalog } from './catalog';
+import { RegistryIndex } from './registry-index';
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
-export class Repository implements Registry {
+export class StandardRegistry implements Registry {
 
-  private catalog = new Catalog(RepoIndex);
+  private catalog = new Catalog(RegistryIndex);
   private indexYaml: Uri;
 
   constructor(private session: Session, readonly baseFolder: Uri, readonly remoteLocation: Uri) {
@@ -45,7 +38,7 @@ export class Repository implements Registry {
     const q = new Queue();
     async function processFile(uri: Uri) {
 
-      const content = decode(await uri.readFile());
+      const content = await uri.readUTF8();
       // if you see this, it's an index, and we can skip even trying.
       if (content.startsWith(THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING)) {
         return;
@@ -111,7 +104,7 @@ export class Repository implements Registry {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
 
     this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
-    this.catalog.deserialize(parse(decode(await this.indexYaml.readFile())));
+    this.catalog.deserialize(parse(await this.indexYaml.readUTF8()));
     this.#loaded = true;
   }
 
@@ -119,7 +112,7 @@ export class Repository implements Registry {
     await this.indexYaml.writeFile(Buffer.from(`${THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
   }
 
-  get where(): RepoIndex {
+  get where(): RegistryIndex {
     return this.catalog.where;
   }
 
@@ -135,7 +128,7 @@ export class Repository implements Registry {
 
   private async openManifest(manifestPath: string) {
     const manifestUri = this.baseFolder.join(manifestPath);
-    const content = decode(await manifestUri.readFile());
+    const content = await manifestUri.readUTF8();
     return parseConfiguration(manifestUri.fsPath, content);
   }
 
@@ -158,7 +151,7 @@ export class Repository implements Registry {
   }
 }
 
-export class DefaultRegistry extends Repository {
+export class DefaultRegistry extends StandardRegistry {
   constructor(session: Session) {
     const remoteUri = session.fileSystem.parse('https://aka.ms/vcpkg-ce-default');
     const repositoryFolder = session.settings['repositoryFolder'];

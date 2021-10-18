@@ -16,7 +16,7 @@ interface HasToString {
 }
 
 /**
- * A Catalog is a index of Indexes.
+ * A Catalog is a index of Indexes. (This is the means to search a registry)
  *
  * @param TGraph The type of object to create an index for
  * @param TIndex the custom index type.
