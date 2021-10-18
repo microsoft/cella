@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Catalog, Dictionary, Index, keys, SemverKey, StringKey } from '@microsoft/vcpkg-ce.core';
+
+import { Catalog, Index, SemverKey, StringKey } from '@microsoft/vcpkg-ce/dist/lib/registries/catalog';
+import { Dictionary, keys } from '@microsoft/vcpkg-ce/dist/lib/util/linq';
 import { describe, it } from 'mocha';
 import { SemVer } from 'semver';
 

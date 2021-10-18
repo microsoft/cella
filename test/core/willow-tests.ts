@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/vcpkg-ce.core';
+import { parseVsManFromChannel, resolveVsManId, VsManDatabase } from '@microsoft/vcpkg-ce/dist/lib/willow/willow';
 import { strict, throws } from 'assert';
 import { describe, it } from 'mocha';
 import { SuiteLocal } from './SuiteLocal';

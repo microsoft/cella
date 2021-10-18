@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { StandardRegistry } from '@microsoft/vcpkg-ce.core/dist/lib/registries/standard-registry';
-import { serialize } from '@microsoft/vcpkg-ce.core/dist/lib/yaml/yaml';
+import { StandardRegistry } from '@microsoft/vcpkg-ce/dist/lib/registries/standard-registry';
+import { serialize } from '@microsoft/vcpkg-ce/dist/lib/yaml/yaml';
 import { strict } from 'assert';
 import { createHash } from 'crypto';
 import { describe, it } from 'mocha';

@@ -47,7 +47,7 @@
     "shx": "0.3.3"
   },
   "dependencies": {
-    "@microsoft/vcpkg-ce.core": "~0.4.0",
+    "@microsoft/vcpkg-ce": "~0.4.0",
     "yaml": "2.0.0-8",
     "semver": "~7.3.4",
     "txtgen": "2.2.8"

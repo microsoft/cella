@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseConfiguration as parse } from '@microsoft/vcpkg-ce.core';
+import { parseConfiguration as parse } from '@microsoft/vcpkg-ce/dist/lib/interfaces/metadata-format';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';

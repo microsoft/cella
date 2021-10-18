@@ -61,7 +61,7 @@
   "eslint.workingDirectories": [
     {
       "changeProcessCWD": true,
-      "directory": "./core",
+      "directory": "./ce",
     },
     {
       "changeProcessCWD": true,
@@ -82,7 +82,7 @@
   "mochaExplorer.ignore": [
     "./test/**/*.d.ts",
     "**/node_modules/**",
-    "./core/**",
+    "./ce/**",
     "./cli/**",
     "./common/**/*.ts",
     "./common/**/*.js"
