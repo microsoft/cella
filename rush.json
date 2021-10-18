@@ -51,12 +51,6 @@
       "shouldPublish": false
     },
     {
-      "packageName": "vcpkg-ce.cli",
-      "projectFolder": "./cli",
-      "reviewCategory": "production",
-      "shouldPublish": false
-    },
-    {
       "packageName": "vcpkg-ce.test",
       "projectFolder": "./test",
       "reviewCategory": "production",

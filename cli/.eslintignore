@@ -1,4 +1,0 @@
-**/*.d.ts
-test/scenarios/**
-yarn/*.js
-dist/**

@@ -1,8 +1,8 @@
 {
   "name": "@microsoft/vcpkg-ce.core",
   "version": "0.4.0",
-  "description": "vcpkg-ce.core library",
-  "main": "dist/exports.js",
+  "description": "vcpkg-ce",
+  "main": "dist/main.js",
   "typings": "dist/exports.d.ts",
   "directories": {
     "doc": "docs"
@@ -48,7 +48,11 @@
     "typescript": "4.4.3",
     "shx": "0.3.3",
     "chalk": "4.1.0",
-    "translate-strings": "1.0.5"
+    "translate-strings": "1.0.5",
+    "@types/marked-terminal": "3.1.1",
+    "@types/marked": "1.2.2",
+    "@types/cli-progress": "3.9.1"
+
   },
   "dependencies": {
     "@snyk/nuget-semver": "1.3.0",
@@ -61,6 +65,10 @@
     "sorted-btree": "1.4.0",
     "sed-lite": "~0.8.2",
     "unbzip2-stream": "~1.4.3",
-    "micromatch": "4.0.4"
+    "micromatch": "4.0.4",
+    "chalk": "4.1.0",
+    "marked-terminal": "4.1.0",
+    "marked": "2.0.0",
+    "cli-progress": "3.9.0"
   }
 }
