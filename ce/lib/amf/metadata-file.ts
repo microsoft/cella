@@ -38,7 +38,6 @@ export class Requires extends YamlDictionary<VersionReference> {
 
   set(key: string, value: string | VersionReference): void {
     if (typeof value === 'string') {
-      console.log(value);
       const v = new VersionReferenceNode(this, key);
       v.raw = value;
     } else {
