@@ -25,7 +25,7 @@ if( $ENV:VCPKG_ROOT ) {
 # Generate 31 bits of randomness, to avoid clashing with concurrent executions.
 $env:VCPKG_POSTSCRIPT = resolve "${VCPKG_ROOT}/VCPKG_tmp_$(Get-Random -SetSeed $PID).ps1"
 
-node $PSScriptRoot/cli @args  --accept-eula
+node $PSScriptRoot/ce @args  --accept-eula
 
 # dot-source the postscript file to modify the environment
 if ($env:VCPKG_POSTSCRIPT -and (Test-Path $env:VCPKG_POSTSCRIPT)) {

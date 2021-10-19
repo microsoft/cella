@@ -65,10 +65,6 @@
     },
     {
       "changeProcessCWD": true,
-      "directory": "./cli",
-    },
-    {
-      "changeProcessCWD": true,
       "directory": "./test",
     }
   ],
@@ -83,7 +79,6 @@
     "./test/**/*.d.ts",
     "**/node_modules/**",
     "./ce/**",
-    "./cli/**",
     "./common/**/*.ts",
     "./common/**/*.js"
   ],

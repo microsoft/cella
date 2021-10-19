@@ -48,6 +48,7 @@ function header() {
 }
 
 export let session: Session;
+require('./exports');
 
 async function main() {
   // create our session for this process.
