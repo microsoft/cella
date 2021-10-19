@@ -78,7 +78,7 @@ steps:
   # Collect all dependencies. Output will be placed in the ./common/deploy directory.
   - script: |
       rush set-versions
-      node -e "const c = require('./cli/package.json'); p = require('./assets/package.json') ; p.version = c.version; require('fs').writeFileSync('./assets/package.json', JSON.stringify(p,undefined,2)); console.log(``set asset version to `${p.version}``);"
+      node -e "const c = require('./ce/package.json'); p = require('./assets/package.json') ; p.version = c.version; require('fs').writeFileSync('./assets/package.json', JSON.stringify(p,undefined,2)); console.log(``set asset version to `${p.version}``);"
     displayName: Set package versions
   - script: rush deploy
     displayName: Collect dependencies

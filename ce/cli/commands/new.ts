@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import { i } from '../../lib/i18n';
+import { parseConfiguration } from '../../lib/interfaces/metadata-format';
 import { session } from '../../main';
 import { Command } from '../command';
 import { project } from '../constants';
@@ -31,13 +32,14 @@ export class NewCommand extends Command {
       return false;
     }
 
-    await session.currentDirectory.join(project).writeUTF8(`# Environment configuration
+    await parseConfiguration(project, `# Environment configuration
 info:
   name: NAME
   version: 1.0.0
   summary: My Project
 
-`);
+`).save(session.currentDirectory.join(project));
+
     return true;
   }
 }
