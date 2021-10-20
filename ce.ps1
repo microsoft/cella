@@ -13,29 +13,29 @@ function resolve {
 }
 
 
-if( $ENV:CE_HOME ) { 
-  $SCRIPT:CE_HOME=(resolve $ENV:CE_HOME)
-  $ENV:CE_HOME=$CE_HOME
+if( $ENV:VCPKG_ROOT ) { 
+  $SCRIPT:VCPKG_ROOT=(resolve $ENV:VCPKG_ROOT)
+  $ENV:VCPKG_ROOT=$VCPKG_ROOT
 } else {
-  $SCRIPT:CE_HOME=(resolve "$HOME/.ce")
-  $ENV:CE_HOME=$CE_HOME
+  $SCRIPT:VCPKG_ROOT=(resolve "$HOME/.vcpkg")
+  $ENV:VCPKG_ROOT=$VCPKG_ROOT
 }
 
 # setup the postscript file
 # Generate 31 bits of randomness, to avoid clashing with concurrent executions.
-$env:CE_POSTSCRIPT = resolve "${CE_HOME}/ce_tmp_$(Get-Random -SetSeed $PID).ps1"
+$env:VCPKG_POSTSCRIPT = resolve "${VCPKG_ROOT}/VCPKG_tmp_$(Get-Random -SetSeed $PID).ps1"
 
-node $PSScriptRoot/cli @args  
+node $PSScriptRoot/ce @args  --accept-eula
 
 # dot-source the postscript file to modify the environment
-if ($env:CE_POSTSCRIPT -and (Test-Path $env:CE_POSTSCRIPT)) {
-  # write-host (get-content -raw $env:CE_POSTSCRIPT)
-  $content = get-content -raw $env:CE_POSTSCRIPT
+if ($env:VCPKG_POSTSCRIPT -and (Test-Path $env:VCPKG_POSTSCRIPT)) {
+  # write-host (get-content -raw $env:VCPKG_POSTSCRIPT)
+  $content = get-content -raw $env:VCPKG_POSTSCRIPT
   
   if( $content ) {
     iex $content 
   }
-  Remove-Item -Force $env:CE_POSTSCRIPT
-  remove-item -ea 0 -force env:CE_POSTSCRIPT
+  Remove-Item -Force $env:VCPKG_POSTSCRIPT
+  remove-item -ea 0 -force env:VCPKG_POSTSCRIPT
 }
 

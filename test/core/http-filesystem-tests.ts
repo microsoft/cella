@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType, HttpsFileSystem } from '@microsoft/vcpkg-ce.core';
+import { FileType } from '@microsoft/vcpkg-ce/dist/lib/fs/filesystem';
+import { HttpsFileSystem } from '@microsoft/vcpkg-ce/dist/lib/fs/http-filesystem';
 import { fail, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 

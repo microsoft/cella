@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { YamlStringSet } from '@microsoft/vcpkg-ce.core';
+import { YamlStringSet } from '@microsoft/vcpkg-ce/dist/lib/yaml/strings';
 import { strict } from 'assert';
 import { Document, YAMLMap } from 'yaml';
 

@@ -45,14 +45,8 @@
   "telemetryEnabled": false,
   "projects": [
     {
-      "packageName": "@microsoft/vcpkg-ce.core",
-      "projectFolder": "./core",
-      "reviewCategory": "production",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "vcpkg-ce.cli",
-      "projectFolder": "./cli",
+      "packageName": "@microsoft/vcpkg-ce",
+      "projectFolder": "./ce",
       "reviewCategory": "production",
       "shouldPublish": false
     },

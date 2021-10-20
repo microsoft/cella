@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { PercentageScaler } from '@microsoft/vcpkg-ce.core';
+import { PercentageScaler } from '@microsoft/vcpkg-ce/dist/lib/util/percentage-scaler';
 import { strict, throws } from 'assert';
 
 describe('PercentageScaler', () => {
