@@ -61,9 +61,9 @@ steps:
 
   # Build and test the project.
   - task: UseNode@1
-    displayName: Use Node 14.17 or later
+    displayName: Use Node 16 or later
     inputs:
-      version: ">=14.17.0"
+      version: "16.x"
   - script: npm install -g @microsoft/rush
     displayName: Install Rush
   - script: rush update
