@@ -13,8 +13,8 @@ async function findScriptFolder() {
 
     // did we find a folder where the script is in the folder (windows style)
     if (exists(s) && (await stat(s)).isDirectory() && (
-      exists(join(s, 'VCPKG_.ps1')) ||
-      exists(join(s, 'VCPKG_.cmd')) ||
+      exists(join(s, 'ce_.ps1')) ||
+      exists(join(s, 'ce_.cmd')) ||
       exists(join(s, 'ce.ps1')) ||
       exists(join(s, 'ce.cmd')))
     ) {
@@ -25,10 +25,10 @@ async function findScriptFolder() {
     for (const f of ['.bin', 'bin']) {
       const b1 = join(s, f);
       if (exists(b1) && (await stat(b1)).isDirectory() && (
-        exists(join(b1, 'VCPKG_')) ||
+        exists(join(b1, 'ce_')) ||
         exists(join(b1, 'ce')) ||
         exists(join(b1, 'ce.ps1')) ||
-        exists(join(b1, 'VCPKG_.ps1')))
+        exists(join(b1, 'ce_.ps1')))
       ) {
         return b1;
       }
@@ -61,7 +61,7 @@ async function create() {
     }
   }
 
-  for (const file of ['VCPKG_', 'VCPKG_.ps1', 'VCPKG_.cmd']) {
+  for (const file of ['ce_', 'ce_.ps1', 'ce_.cmd']) {
     // remove the normally created scripts 
     const target = join(folder, file);
     if (exists(target)) {
