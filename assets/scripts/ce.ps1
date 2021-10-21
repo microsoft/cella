@@ -18,7 +18,7 @@ if ($hash.count -gt 0) {
 $args=[System.Collections.ArrayList][System.Array]$args
 
 # GLOBALS
-$VCPKG_NODE_LATEST='14.17.0'
+$VCPKG_NODE_LATEST='16.12.0'
 $VCPKG_NODE_REMOTE='https://nodejs.org/dist/'
 $VCPKG_PWD=$pwd
 
@@ -89,7 +89,7 @@ function verify-node() {
 
   if( $NODE ) {
     if( get-command -ea 0 $NODE ) {
-      if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>14 || major == 14 & minor >= 17)") -gt 0 ) {
+      if( (& $NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( major>16 || major == 16 & minor >= 12)") -gt 0 ) {
         # good version of node
         # set the variables 
 
@@ -222,7 +222,6 @@ function bootstrap-vcpkg-ce {
     } else {
       & $VCPKG_NODE $VCPKG_NPM install --force --no-save --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz  2>&1 >> $VCPKG_ROOT/log.txt
     }
-    
   } else {
     & $VCPKG_NODE $VCPKG_NPM install --force --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz 2>&1 >> $VCPKG_ROOT/log.txt
   }

@@ -103,7 +103,8 @@
       //    */
       "dependenciesToExclude": [
         "@types/*",
-        "typescript"
+        "typescript",
+        "translate-strings"
       ]
     }
   ]

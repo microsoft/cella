@@ -33,7 +33,7 @@ fi
 
 
 # GLOBALS
-VCPKG_NODE_LATEST=14.17.0
+VCPKG_NODE_LATEST=16.12.0
 VCPKG_NODE_REMOTE=https://nodejs.org/dist/
 VCPKG_PWD=`pwd`
 
@@ -192,7 +192,7 @@ VCPKG_bootstrap_node() {
   local N=`which $NODE_EXE`
   if [ ! -z "$N" ]; then
     if [ -f $N ]; then
-      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17) )"` = "true" ]; then
+      if [ `$N -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>16 || major == 16 & minor >= 12) )"` = "true" ]; then
         VCPKG_NODE=$N
         VCPKG_NPM=`which npm`
         VCPKG_debug using node in path
@@ -209,7 +209,7 @@ VCPKG_bootstrap_node() {
   VCPKG_NODE=${VCPKG_ROOT}/cache/bin/node
   
   if [ -f $VCPKG_NODE ]; then 
-    if [ `$VCPKG_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>14 || major == 14 & minor >= 17))"` = "true" ]; then
+    if [ `$VCPKG_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>16 || major == 16 & minor >= 12))"` = "true" ]; then
       # looks good, lets grab NPM in case we need it, and get out.
       VCPKG_NPM=`which ${VCPKG_ROOT}/cache/bin/npm`
       VCPKG_debug using node from ce cache
@@ -267,8 +267,8 @@ VCPKG_bootstrap_node() {
       echo "You appear to be running FreeBSD; You will need to install NodeJS manually"
       echo ""
       echo "run (as root): "
-      echo "   pkg install -y node14"
-      echo "   pkg install -y npm-node14" 
+      echo "   pkg install -y node16"
+      echo "   pkg install -y npm-node16" 
     fi
     return 1;
   fi
