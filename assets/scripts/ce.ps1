@@ -111,7 +111,7 @@ if( $ENV:VCPKG_ROOT ) {
 $CE = "${VCPKG_ROOT}/ce"
 $MODULES= "$CE/node_modules"
 $SCRIPT:VCPKG_SCRIPT=(resolve $MODULES/.bin/ce.ps1)
-$SCRIPT:CE_MODULE=(resolve $MODULES/@microsoft/vcpkg-ce )
+$SCRIPT:CE_MODULE=(resolve $MODULES/vcpkg-ce )
 
 $reset = $args.IndexOf('--reset-ce') -gt -1 
 $remove = $args.IndexOf('--remove-ce') -gt -1 
@@ -124,7 +124,7 @@ if( $reset -or -$remove ) {
     write-host "Resetting vcpkg-ce"
   }
 
-  remove-item -recurse -force -ea 0 "$MODULES/.bin","$MODULES/@microsoft"
+  remove-item -recurse -force -ea 0 "$MODULES/.bin","$MODULES"
   remove-item -force -ea 0 "${VCPKG_ROOT}/ce.ps1","${VCPKG_ROOT}/ce.cmd","${VCPKG_ROOT}/ce","${VCPKG_ROOT}/NOTICE.txt","${VCPKG_ROOT}/LICENSE.txt"
   $error.clear();
 
@@ -236,7 +236,7 @@ function bootstrap-vcpkg-ce {
   }
 
   ## if we're running from an installed module location, we'll keep that. 
-  $MODULE=(resolve ${PSScriptRoot}/ce/node_modules/@microsoft/vcpkg-ce )
+  $MODULE=(resolve ${PSScriptRoot}/ce/node_modules/vcpkg-ce )
 
   if( test-path $MODULE ) {
     $SCRIPT:CE_MODULE=$MODULE
@@ -365,15 +365,15 @@ if exist $null erase $null
 
 IF "%VCPKG_ROOT%"=="" SET VCPKG_ROOT=%USERPROFILE%\.ce
 
-if exist %~dp0ce\@microsoft\vcpkg-ce\package.json ( 
+if exist %~dp0ce\vcpkg-ce\package.json ( 
   :: we're running the wrapper script for a module-installed vcpkg-ce
   set VCPKG_CMD=%~dpf0
-  set VCPKG_SCRIPT=%~dp0ce\@microsoft\vcpkg-ce
+  set VCPKG_SCRIPT=%~dp0ce\vcpkg-ce
   goto INVOKE
 )
 
 :: we're running vcpkg-ce from the ce home folder
-set VCPKG_CMD=%VCPKG_ROOT%\ce\@microsoft\vcpkg-ce\ce.cmd
+set VCPKG_CMD=%VCPKG_ROOT%\ce\vcpkg-ce\ce.cmd
 
 :: if we're being asked to reset the install, call bootstrap
 if "%1" EQU "--reset-ce" goto BOOTSTRAP
@@ -388,7 +388,7 @@ if "%1" EQU "--remove-ce" (
 :: do we even have it installed?
 if NOT exist "%VCPKG_CMD%" goto BOOTSTRAP
 
-set VCPKG_SCRIPT="%VCPKG_ROOT%\ce\@microsoft\vcpkg-ce"
+set VCPKG_SCRIPT="%VCPKG_ROOT%\ce\vcpkg-ce"
 
 :: if this is the actual installed vcpkg-ce, let's get to the invocation
 if "%~dfp0" == "%VCPKG_CMD%" goto INVOKE

@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/vcpkg-ce",
+  "name": "vcpkg-ce",
   "version": "0.4.101",
   "description": "vcpkg-ce CLI",
   "main": "ce/dist/main.js",
