@@ -1,10 +1,10 @@
 {
-  "name": "@microsoft/vcpkg-ce",
+  "name": "vcpkg-ce",
   "version": "0.4.0",
   "description": "vcpkg-ce CLI",
-  "main": "cli/dist/main.js",
+  "main": "ce/dist/main.js",
   "bin": {
-    "ce_": "./cli/dist/main.js"
+    "ce_": "./ce/dist/main.js"
   },
   "directories": {
     "doc": "docs"
@@ -15,7 +15,7 @@
   "scripts": {
     "postinstall": "node ./create-links create && node ./wrapper-scripts create",
     "uninstall": "node ./create-links remove && node ./wrapper-scripts remove",
-    "prepack": "npx rimraf ./common/temp/node_modules/.pnpm/typescript*"
+    "prepack": "npx rimraf ./common/temp/node_modules/.pnpm/typescript* ./common/temp/node_modules/.pnpm/translate-strings*  ./common/temp/node_modules/.pnpm/ts-morph*  ./common/temp/node_modules/.pnpm/@types*"
   },
   "repository": {
     "type": "git",

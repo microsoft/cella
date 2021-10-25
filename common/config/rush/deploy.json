@@ -17,7 +17,7 @@
    * and then specify those projects in the "additionalProjectsToInclude" list.
    */
   "deploymentProjectNames": [
-    "vcpkg-ce.cli"
+    "@microsoft/vcpkg-ce"
   ],
   /**
    * When deploying a local Rush project, the package.json "devDependencies" are normally excluded.
@@ -66,7 +66,7 @@
       //   /**
       //    * The full package name of the project, which must be declared in rush.json.
       //    */
-      "projectName": "vcpkg-ce.cli",
+      "projectName": "@microsoft/vcpkg-ce",
       //
       //   /**
       //    * A list of additional local Rush projects to be deployed with this project (beyond the package.json
@@ -103,7 +103,8 @@
       //    */
       "dependenciesToExclude": [
         "@types/*",
-        "typescript"
+        "typescript",
+        "translate-strings"
       ]
     }
   ]
