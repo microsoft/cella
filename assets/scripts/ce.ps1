@@ -20,8 +20,6 @@ $args=[System.Collections.ArrayList][System.Array]$args
 # GLOBALS
 $VCPKG_NODE_LATEST='16.12.0'
 $VCPKG_NODE_REMOTE='https://nodejs.org/dist/'
-$VCPKG_PWD=$pwd
-
 $VCPKG_START_TIME=get-date
 
 function eval($item) {
@@ -52,19 +50,14 @@ function Invoke-Assignment {
 # alias the function to the equals sign (which doesn't impede the normal use of = )
 set-alias = Invoke-Assignment 
 
-function resolve { 
-  param ( [string] $name )
+function resolve([string]$name) { 
   $name = Resolve-Path $name -ErrorAction 0 -ErrorVariable _err
   if (-not($name)) { return $_err[0].TargetObject }
   $Error.clear()
   return $name
 }
 
-$SCRIPT:DEBUG=$false
-
-if( $args.indexOf('--debug') -gt -1 ) {
-  $SCRIPT:DEBUG=$true
-}
+$SCRIPT:DEBUG=( $args.indexOf('--debug') -gt -1 ) 
 
 function ce-debug() {
   $t = [int32]((get-date).Subtract(($VCPKG_START_TIME)).ticks/10000)
@@ -108,7 +101,7 @@ if( $ENV:VCPKG_ROOT ) {
   $ENV:VCPKG_ROOT=$VCPKG_ROOT
 }
 
-$CE = "${VCPKG_ROOT}/ce"
+$CE = "${VCPKG_ROOT}/CE"
 $MODULES= "$CE/node_modules"
 $SCRIPT:VCPKG_SCRIPT=(resolve $MODULES/.bin/ce.ps1)
 $SCRIPT:CE_MODULE=(resolve $MODULES/vcpkg-ce )
@@ -134,27 +127,15 @@ if( $reset -or -$remove ) {
   }
 }
 
-function verify-node() {
-  param( $NODE ) 
-
-  if( $NODE ) {
-    if( get-command -ea 0 $NODE ) {
-      if( (& $NODE -p "/(^\d*\.\d*)/g.exec( process.versions.node)[0]") -ge 16.12 ) {
-        # good version of node
-        # set the variables 
-
-        $SCRIPT:VCPKG_NODE=$NODE
-        $error.clear();
-        return $TRUE;  
-      }
-    }
+function verify-node($NODE) {
+  if( $NODE -and (get-command -ea 0 $NODE) -and ( (& $NODE -p "/(^\d*\.\d*)/g.exec( process.versions.node)[0]") -ge 16.12 ) ) {
+    # it's a good version of node, let's set the variables 
+    $SCRIPT:VCPKG_NODE=$NODE
+    $error.clear();
+    return $TRUE;  
   }
   $error.clear();
   return $FALSE
-}
-
-function isWindows {
-  return (($PSVersionTable.OS -match "windows") -or ($PSVersionTable.PSEdition -match 'desktop') );
 }
 
 function bootstrap-node {
@@ -171,8 +152,7 @@ function bootstrap-node {
   }
 
   # not there, or not good enough
-
-  if( isWindows ) { 
+  if((($PSVersionTable.OS -match "windows") -or ($PSVersionTable.PSEdition -match 'desktop') ) ) {   # windows 
     $NODE_OS='win' 
     switch($ENV:PROCESSOR_ARCHITECTURE) {
       'AMD64' { $NODE_ARCH='x64' }
@@ -189,9 +169,7 @@ function bootstrap-node {
 
   $NODE_FULLNAME="node-v${VCPKG_NODE_LATEST}-${NODE_OS}-${NODE_ARCH}"
   $NODE_URI="${VCPKG_NODE_REMOTE}v${VCPKG_NODE_LATEST}/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
-  $NODE_ARCHIVE= resolve "$CE/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
-
-  $shh = new-item -type directory  "${VCPKG_ROOT}/ce" -ea 0
+  $NODE_ARCHIVE= resolve "$CE/files/${NODE_FULLNAME}${NODE_ARCHIVE_EXT}"
   
   $ProgressPreference = 'SilentlyContinue'
   ce-debug "Downloading Node: ${NODE_URI}"
@@ -200,20 +178,20 @@ function bootstrap-node {
   switch($NODE_OS){
     'win' { 
       if( get-command -ea 0 tar.exe ) {
-        tar "-xvf" "${NODE_ARCHIVE}" -C "${VCPKG_ROOT}/ce"  2>&1  > $null
+        tar "-xvf" "${NODE_ARCHIVE}" -C "${CE}"  2>&1  > $null
       } else {
-        $shh= expand-archive -path $NODE_ARCHIVE -destinationpath "${VCPKG_ROOT}/ce" 
+        $shh= expand-archive -path $NODE_ARCHIVE -destinationpath "${CE}" 
       }
       move-item "$CE/${NODE_FULLNAME}" "$CE/bin" 
     }
     'aix' { 
-      $shh = gunzip "${NODE_ARCHIVE}" | tar -xvC "${VCPKG_ROOT}/ce" "${NODE_FULLNAME}/bin/${NODE_EXE}" 
+      $shh = gunzip "${NODE_ARCHIVE}" | tar -xvC "${CE}" "${NODE_FULLNAME}/bin/${NODE_EXE}" 
       move-item "$CE/${NODE_FULLNAME}/bin" "$CE/" 
       move-item "$CE/${NODE_FULLNAME}/lib" "$CE/"  
       remove-item "$CE/${NODE_FULLNAME}" -force -recurse 
     } 
     default { 
-      $shh = tar "-zxvf" "${NODE_ARCHIVE}" -C "${VCPKG_ROOT}/ce"  
+      $shh = tar "-zxvf" "${NODE_ARCHIVE}" -C "${CE}"  
       move-item "$CE/${NODE_FULLNAME}/bin" "$CE/" 
       move-item "$CE/${NODE_FULLNAME}/lib" "$CE/"   
       remove-item "$CE/${NODE_FULLNAME}" -force -recurse 
@@ -229,33 +207,38 @@ function bootstrap-node {
   return $FALSE; 
 }
 
-
 function bootstrap-vcpkg-ce {
   if( test-path $VCPKG_SCRIPT ) {
     return $TRUE;
   }
 
   ## if we're running from an installed module location, we'll keep that. 
-  $MODULE=(resolve ${PSScriptRoot}/ce/node_modules/vcpkg-ce )
+  $MODULE=(resolve ${PSScriptRoot}/CE/node_modules/vcpkg-ce )
 
   if( test-path $MODULE ) {
     $SCRIPT:CE_MODULE=$MODULE
     return $TRUE
   }
-    
-  ce-debug "Bootstrapping vcpkg-ce: ${VCPKG_ROOT}"
 
-  # ensure we have a ce here, so npm won't search for one up the tree.
-  $shh = new-item -type directory -ea 0 $CE
-  
+  # cleanup the yarn cache. 
+  ce-debug "Clearing YARN cache"
   $shh = & $VCPKG_NODE $YARN cache clean --force 2>&1 
   $error.clear();
 
   write-host "Installing vcpkg-ce to ${VCPKG_ROOT}"
 
   $PKG == $USE_LOCAL_VCPKG_PKG ?? https://aka.ms/vcpkg-ce.tgz
-  ce-debug "$VCPKG_NODE $YARN add $PKG --no-lockfile --force --no-save --scripts-prepend-node-path=true --modules-folder=$MODULES --verbose"
-  & $VCPKG_NODE $YARN add $PKG --no-lockfile --force --no-save --scripts-prepend-node-path=true --modules-folder=$MODULES  --immutable --verbose
+  pushd $CE
+  
+  $PATH = $ENV:PATH
+  $ENV:PATH="C:\Users\garre\.vcpkg\ce\bin\;$PATH"
+  # &$VCPKG_NODE $NPM install $PKG --no-lockfile --force --verbose 2>&1 >> $VCPKG_ROOT/log.txt
+  &$VCPKG_NODE $YARN add $PKG --no-lockfile --force --scripts-prepend-node-path=true --modules-folder=$MODULES 2>&1 >> $VCPKG_ROOT/log.txt
+  $ENV:PATH = $PATH
+
+  remove-item -path $ce/package.json -ea 0 
+  
+  popd
   # 2>&1 >> $VCPKG_ROOT/log.txt
   ce-debug 'yarn finished.'
   if( $error.count -gt 0 ) {
@@ -267,8 +250,7 @@ function bootstrap-vcpkg-ce {
   copy-item "$MODULES/.bin/ce.*" $VCPKG_ROOT
 
   # Copy the NOTICE and LICENSE files to $VCPKG_ROOT to improve discoverability.
-  copy-item "$CE_MODULE/NOTICE.txt" $VCPKG_ROOT
-  copy-item "$CE_MODULE/LICENSE.txt" $VCPKG_ROOT
+  copy-item "$CE_MODULE/NOTICE.txt","$CE_MODULE/LICENSE.txt" $VCPKG_ROOT
 
   ce-debug "Bootstrapped vcpkg-ce: ${VCPKG_ROOT}"
 
@@ -280,33 +262,34 @@ function bootstrap-vcpkg-ce {
 }
 
 # ensure it's there.
-$shh = new-item -type directory $CE -ea 0
+$shh = new-item -type directory $CE,$MODULES,"$CE/files" -ea 0
 
 # grab the yarn cli script
-$SCRIPT:YARN = resolve "$CE/yarn.js"
+$SCRIPT:YARN = resolve "$CE/files/yarn.js"
 if( -not (test-path $SCRIPT:YARN )) {
-  download https://aka.ms/yarn.js $YARN
+  $SCRIPT:YARN = download https://aka.ms/yarn.js $YARN
 }
 
 if( -not (bootstrap-node )) {
-  return 1;
+  write-error "Unable to acquire an appropriate version of Node."
+  write-error "You should install the LTS version or greater of NodeJS"
+  throw "Installation Unsuccessful."
 }
 
 if( -not (bootstrap-vcpkg-ce )) { 
-  return 1
+  write-error "Unable to install vcpkg-ce."
+  throw "Installation Unsuccessful."
 }
-
 
 # export vcpkg-ce to the current shell.
 $shh = New-Module -name vcpkg-ce -ArgumentList @($VCPKG_NODE,$CE_MODULE,$VCPKG_ROOT) -ScriptBlock { 
   param($VCPKG_NODE,$CE_MODULE,$VCPKG_ROOT) 
 
-  function resolve { 
-      param ( [string] $name )
-      $name = Resolve-Path $name -ErrorAction 0 -ErrorVariable _err
-      if (-not($name)) { return $_err[0].TargetObject }
-      $Error.clear()
-      return $name
+  function resolve([string]$name) { 
+    $name = Resolve-Path $name -ErrorAction 0 -ErrorVariable _err
+    if (-not($name)) { return $_err[0].TargetObject }
+    $Error.clear()
+    return $name
   }
 
   function ce() { 
@@ -338,8 +321,7 @@ $shh = New-Module -name vcpkg-ce -ArgumentList @($VCPKG_NODE,$CE_MODULE,$VCPKG_R
       if( $postscr ) {
         iex $postscr
       }
-      Remove-Item -Force $env:VCPKG_POSTSCRIPT
-      remove-item -ea 0 -force env:VCPKG_POSTSCRIPT
+      Remove-Item -Force -ea 0 $env:VCPKG_POSTSCRIPT,env:VCPKG_POSTSCRIPT
     }
   }  
 }
@@ -363,17 +345,17 @@ if exist $null erase $null
 :: do anything we need to before calling into powershell
 if exist $null erase $null 
 
-IF "%VCPKG_ROOT%"=="" SET VCPKG_ROOT=%USERPROFILE%\.ce
+IF "%VCPKG_ROOT%"=="" SET VCPKG_ROOT=%USERPROFILE%\.vcpkg
 
-if exist %~dp0ce\vcpkg-ce\package.json ( 
+if exist %~dp0ce\node_modules\vcpkg-ce\package.json ( 
   :: we're running the wrapper script for a module-installed vcpkg-ce
   set VCPKG_CMD=%~dpf0
-  set VCPKG_SCRIPT=%~dp0ce\vcpkg-ce
+  set VCPKG_MODULE=%~dp0ce\node_modules\vcpkg-ce
   goto INVOKE
 )
 
 :: we're running vcpkg-ce from the ce home folder
-set VCPKG_CMD=%VCPKG_ROOT%\ce\vcpkg-ce\ce.cmd
+set VCPKG_CMD=%VCPKG_ROOT%\ce\node_modules\vcpkg-ce\ce.cmd
 
 :: if we're being asked to reset the install, call bootstrap
 if "%1" EQU "--reset-ce" goto BOOTSTRAP
@@ -388,7 +370,7 @@ if "%1" EQU "--remove-ce" (
 :: do we even have it installed?
 if NOT exist "%VCPKG_CMD%" goto BOOTSTRAP
 
-set VCPKG_SCRIPT="%VCPKG_ROOT%\ce\vcpkg-ce"
+set VCPKG_MODULE="%VCPKG_ROOT%\ce\node_modules\vcpkg-ce"
 
 :: if this is the actual installed vcpkg-ce, let's get to the invocation
 if "%~dfp0" == "%VCPKG_CMD%" goto INVOKE
@@ -404,14 +386,14 @@ SET /A VCPKG_POSTSCRIPT=%RANDOM% * 32768 + %RANDOM%
 SET VCPKG_POSTSCRIPT=%VCPKG_ROOT%\VCPKG_tmp_%VCPKG_POSTSCRIPT%.cmd
 
 :: find the right node
-if exist %VCPKG_ROOT%\ce\bin\node.exe set VCPKG_NODE=%VCPKG_ROOT%\cache\bin\node.exe
+if exist %VCPKG_ROOT%\ce\bin\node.exe set VCPKG_NODE=%VCPKG_ROOT%\ce\bin\node.exe
 if "%VCPKG_NODE%" EQU "" ( 
   for %%i in (node.exe) do set VCPKG_NODE=%%~$PATH:i      
 )
 if "%VCPKG_NODE%" EQU "" goto OHNONONODE:
 
 :: call the program
-"%VCPKG_NODE%" --harmony "%VCPKG_SCRIPT%" %* 
+"%VCPKG_NODE%" --harmony "%VCPKG_MODULE%" %* 
 set VCPKG_EXITCODE=%ERRORLEVEL%
 doskey ce="%VCPKG_CMD%" $*
 
@@ -451,7 +433,7 @@ if "%REMOVE_CE%" EQU "TRUE" (
 )
 
 :CREATEALIAS
-doskey ce="%VCPKG_ROOT%\ce\.bin\ce.cmd" $*
+doskey ce="%VCPKG_ROOT%\ce.cmd" $*
 
 :fin
 SET VCPKG_POSTSCRIPT=

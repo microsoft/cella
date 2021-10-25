@@ -31,7 +31,6 @@ if [ $sourced -eq 0 ]; then
   exit
 fi
 
-
 # GLOBALS
 VCPKG_NODE_LATEST=16.12.0
 VCPKG_NODE_REMOTE=https://nodejs.org/dist/
@@ -76,10 +75,11 @@ else
   export VCPKG_ROOT=~/.vcpkg
 fi;
 
-mkdir -p $VCPKG_ROOT
+CE=${VCPKG_ROOT}/CE
+mkdir -p $CE
 
-VCPKG_NODE=${VCPKG_ROOT}/cache/bin/node
-VCPKG_NPM=${VCPKG_ROOT}/cache/bin/npm
+VCPKG_NODE=${CE}/bin/node
+VCPKG_NPM=${CE}/bin/npm
 
 VCPKG_debug() {
   if [ ! -z "$VCPKG_IS_THIS_BSD" ]; then
@@ -106,32 +106,32 @@ VCPKG_debug() {
 }
 
 if [ ! -z "$VCPKG_RESET" ]; then
-  if [ -d $VCPKG_ROOT/node_modules ]; then 
+  if [ -d $CE/node_modules ]; then 
     echo Forcing reinstall of vcpkg-ce package
-    rm -rf $VCPKG_ROOT/node_modules
+    rm -rf $CE/node_modules
   fi
 
-  if [ -d $VCPKG_ROOT/cache/bin ]; then 
-    rm -rf $VCPKG_ROOT/cache/bin
+  if [ -d $CE/bin ]; then 
+    rm -rf $CE/bin
   fi 
 
-  if [ -d $VCPKG_ROOT/cache/lib ]; then 
-    rm -rf $VCPKG_ROOT/cache/lib
+  if [ -d $CE/lib ]; then 
+    rm -rf $CE/lib
   fi
 fi
 
 if [ ! -z "$VCPKG_REMOVE" ]; then
-  if [ -d $VCPKG_ROOT/node_modules ]; then 
+  if [ -d $CE/node_modules ]; then 
     echo Removing vcpkg-ce package
-    rm -rf $VCPKG_ROOT/node_modules
+    rm -rf $CE/node_modules
   fi
 
-  if [ -d $VCPKG_ROOT/cache/bin ]; then 
-    rm -rf $VCPKG_ROOT/cache/bin
+  if [ -d $CE/bin ]; then 
+    rm -rf $CE/bin
   fi 
 
-  if [ -d $VCPKG_ROOT/cache/lib ]; then 
-    rm -rf $VCPKG_ROOT/cache/lib
+  if [ -d $CE/lib ]; then 
+    rm -rf $CE/lib
   fi
 
   if [ -f $VCPKG_ROOT/ce.ps1 ]; then 
@@ -206,13 +206,13 @@ VCPKG_bootstrap_node() {
   # we don't have a good node in the path
   # we would install one here if we tried 
   # before
-  VCPKG_NODE=${VCPKG_ROOT}/cache/bin/node
+  VCPKG_NODE=${CE}/bin/node
   
   if [ -f $VCPKG_NODE ]; then 
     if [ `$VCPKG_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>16 || major == 16 & minor >= 12))"` = "true" ]; then
       # looks good, lets grab NPM in case we need it, and get out.
-      VCPKG_NPM=`which ${VCPKG_ROOT}/cache/bin/npm`
-      VCPKG_debug using node from ce cache
+      VCPKG_NPM=`which ${CE}/bin/npm`
+      VCPKG_debug using node from ce 
       return 0
     fi 
   fi
@@ -228,10 +228,10 @@ VCPKG_bootstrap_node() {
 
   local NODE_FULLNAME="node-v${VCPKG_NODE_LATEST}-${VCPKG_OS}-${VCPKG_ARCH}"
   local NODE_URI="${VCPKG_NODE_REMOTE}v${VCPKG_NODE_LATEST}/${NODE_FULLNAME}${VCPKG_ARCHIVE_EXT}"
-  local VCPKG_ARCHIVE="${VCPKG_ROOT}/cache/${NODE_FULLNAME}${VCPKG_ARCHIVE_EXT}"
+  local VCPKG_ARCHIVE="${CE}/files/${NODE_FULLNAME}${VCPKG_ARCHIVE_EXT}"
   
-  if [ ! -d "${VCPKG_ROOT}/cache" ]; then
-    command mkdir -p "${VCPKG_ROOT}/cache"
+  if [ ! -d "${CE}/files" ]; then
+    command mkdir -p "${CE}/files"
   fi
 
   echo "Downloading bootstrap node from ${NODE_URI}"
@@ -248,17 +248,17 @@ VCPKG_bootstrap_node() {
     
   # UNPACK IT
   if [ "${VCPKG_OS}" = "aix" ]; then
-    gunzip "${VCPKG_ARCHIVE}" | tar -xvC "${VCPKG_ROOT}/cache" "${NODE_FULLNAME}/bin/${NODE_EXE}" >> $VCPKG_ROOT/log.txt 2>&1
+    gunzip "${VCPKG_ARCHIVE}" | tar -xvC "${CE}" "${NODE_FULLNAME}/bin/${NODE_EXE}" >> $VCPKG_ROOT/log.txt 2>&1
   else
-    tar $TAR_FLAGS "${VCPKG_ARCHIVE}" -C "${VCPKG_ROOT}/cache" >> $VCPKG_ROOT/log.txt 2>&1
+    tar $TAR_FLAGS "${VCPKG_ARCHIVE}" -C "${CE}" >> $VCPKG_ROOT/log.txt 2>&1
   fi
-  mv "${VCPKG_ROOT}/cache/${NODE_FULLNAME}/bin" "${VCPKG_ROOT}/cache/" >> $VCPKG_ROOT/log.txt 2>&1
-  mv "${VCPKG_ROOT}/cache/${NODE_FULLNAME}/lib" "${VCPKG_ROOT}/cache/" >> $VCPKG_ROOT/log.txt 2>&1
-  rm -r "${VCPKG_ROOT}/cache/${NODE_FULLNAME}" >> $VCPKG_ROOT/log.txt 2>&1
+  mv "${CE}/${NODE_FULLNAME}/bin" "${CE}/" >> $VCPKG_ROOT/log.txt 2>&1
+  mv "${CE}/${NODE_FULLNAME}/lib" "${CE}/" >> $VCPKG_ROOT/log.txt 2>&1
+  rm -r "${CE}/${NODE_FULLNAME}" >> $VCPKG_ROOT/log.txt 2>&1
 
   # OK, we good?
-  VCPKG_NODE=${VCPKG_ROOT}/cache/bin/node
-  VCPKG_NPM=${VCPKG_ROOT}/cache/bin/npm
+  VCPKG_NODE=${CE}/bin/node
+  VCPKG_NPM=${CE}/bin/npm
 
   if [ ! -f $VCPKG_NODE ]; then
     echo "ERROR! Unable to find/get nodejs."
@@ -278,12 +278,12 @@ VCPKG_bootstrap_node() {
     return 1;
   fi
 
-  VCPKG_debug installed node in cache
+  VCPKG_debug installed node in ce
   return 0
 }
 
-VCPKG_SCRIPT=${VCPKG_ROOT}/node_modules/.bin/ce
-VCPKG_MAIN=${VCPKG_ROOT}/node_modules/@microsoft/vcpkg-ce
+VCPKG_SCRIPT=${CE}/node_modules/.bin/ce
+VCPKG_MAIN=${CE}/node_modules/vcpkg-ce
 
 VCPKG_bootstrap_ce() {
   VCPKG_debug checking for installed ce $VCPKG_SCRIPT
@@ -297,32 +297,32 @@ VCPKG_bootstrap_ce() {
   # let's install it where we want it
 
   # ensure we have a node_modules here, so npm won't search for one up the tree.
-  command mkdir -p $VCPKG_ROOT/node_modules
+  command mkdir -p $CE/node_modules
   
   echo Installing vcpkg-ce in $VCPKG_ROOT
   unset VCPKG_RESET
 
-  cd $VCPKG_ROOT
+  cd $CE
   $VCPKG_NODE $VCPKG_NPM cache clean --force >> $VCPKG_ROOT/log.txt 2>&1
   local OLD_PATH=$PATH
   PATH=`dirname $VCPKG_NODE`:$PATH
   if [ ! -z "$USE_LOCAL_VCPKG_PKG" ]; then
     echo USING LOCAL CE PACKAGE $USE_LOCAL_VCPKG_PKG
+    
     $VCPKG_NODE $VCPKG_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true $USE_LOCAL_VCPKG_PKG  >> $VCPKG_ROOT/log.txt 2>&1
   else
     $VCPKG_NODE $VCPKG_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz  >> $VCPKG_ROOT/log.txt 2>&1
   fi
 
   PATH=$OLD_PATH
+# go back where we were
+  cd $VCPKG_PWD
 
-  cp $VCPKG_ROOT/node_modules/.bin/* .
+  cp $CE/node_modules/.bin/* $VCPKG_ROOT/
 
   # Copy the NOTICE and LICENSE files to $VCPKG_ROOT to improve discoverability.
-  cp $VCPKG_ROOT/node_modules/@microsoft/vcpkg-ce/NOTICE.txt .
-  cp $VCPKG_ROOT/node_modules/@microsoft/vcpkg-ce/LICENSE.txt .
-
-  # go back where we were
-  cd $VCPKG_PWD
+  cp $CE/node_modules/vcpkg-ce/NOTICE.txt $VCPKG_ROOT/
+  cp $CE/node_modules/vcpkg-ce/LICENSE.txt $VCPKG_ROOT/
   
   if [  ! -f $VCPKG_SCRIPT ]; then
     echo "ERROR! Unable to find/get ce script command $VCPKG_SCRIPT"
@@ -369,17 +369,17 @@ ce() {
   VCPKG_init "$@"
 
   if [ ! -z "$VCPKG_RESET" ]; then
-    if [ -d $VCPKG_ROOT/node_modules ]; then 
+    if [ -d $CE/node_modules ]; then 
       echo Forcing reinstall of vcpkg-ce package
-      rm -rf $VCPKG_ROOT/node_modules
+      rm -rf $CE/node_modules
     fi
 
-    if [ -d $VCPKG_ROOT/cache/bin ]; then 
-      rm -rf $VCPKG_ROOT/cache/bin
+    if [ -d $CE/bin ]; then 
+      rm -rf $CE/bin
     fi 
 
-    if [ -d $VCPKG_ROOT/cache/lib ]; then 
-      rm -rf $VCPKG_ROOT/cache/lib
+    if [ -d $CE/lib ]; then 
+      rm -rf $CE/lib
     fi
     unset VCPKG_RESET
     
@@ -394,18 +394,18 @@ ce() {
   fi
 
   if [ ! -z "$VCPKG_REMOVE" ]; then
-    if [ -d $VCPKG_ROOT/node_modules ]; then 
+    if [ -d $CE/node_modules ]; then 
       unset VCPKG_REMOVE
       echo Removing vcpkg-ce package
-      rm -rf $VCPKG_ROOT/node_modules
+      rm -rf $CE/node_modules
     fi
 
-    if [ -d $VCPKG_ROOT/cache/bin ]; then 
-      rm -rf $VCPKG_ROOT/cache/bin
+    if [ -d $CE/bin ]; then 
+      rm -rf $CE/bin
     fi 
 
-    if [ -d $VCPKG_ROOT/cache/lib ]; then 
-      rm -rf $VCPKG_ROOT/cache/lib
+    if [ -d $CE/lib ]; then 
+      rm -rf $CE/lib
     fi
 
     if [ -f $VCPKG_ROOT/ce.ps1 ]; then 
