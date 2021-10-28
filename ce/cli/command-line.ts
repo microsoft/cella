@@ -4,8 +4,8 @@
 import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
-import { i } from '../lib/i18n';
-import { intersect } from '../lib/util/intersect';
+import { i } from '../i18n';
+import { intersect } from '../util/intersect';
 import { Command } from './command';
 import { cmdSwitch } from './format';
 

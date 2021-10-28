@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { strict } from 'assert';
-import { i } from '../lib/i18n';
+import { i } from '../i18n';
 import { Command } from './command';
 import { Help } from './command-line';
 import { cmdSwitch } from './format';

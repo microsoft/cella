@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 import { MultiBar, SingleBar } from 'cli-progress';
-import { Activation } from '../lib/artifacts/activation';
-import { Artifact } from '../lib/artifacts/artifact';
-import { i } from '../lib/i18n';
+import { Activation } from '../artifacts/activation';
+import { Artifact } from '../artifacts/artifact';
+import { i } from '../i18n';
 import { session } from '../main';
 import { UpdateCommand } from './commands/update';
 import { artifactIdentity, artifactReference } from './format';

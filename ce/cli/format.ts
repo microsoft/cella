@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { bold, cyan, gray, green, greenBright, grey, underline, whiteBright, yellowBright } from 'chalk';
-import { Uri } from '../lib/util/uri';
+import { Uri } from '../util/uri';
 
 export function projectFile(uri: Uri): string {
   return cyan(uri.fsPath);

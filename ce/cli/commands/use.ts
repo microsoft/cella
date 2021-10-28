@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from '../../lib/i18n';
+import { i } from '../../i18n';
 import { session } from '../../main';
 import { activateArtifacts as getArtifactActivation, getRegistry, installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
 import { Command } from '../command';

@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Artifact, createArtifact } from '../lib/artifacts/artifact';
-import { i } from '../lib/i18n';
-import { Uri } from '../lib/util/uri';
+import { Artifact, createArtifact } from '../artifacts/artifact';
+import { i } from '../i18n';
 import { session } from '../main';
+import { Uri } from '../util/uri';
 import { activateArtifacts, installArtifacts, showArtifacts } from './artifacts';
 import { blank } from './constants';
 import { projectFile } from './format';

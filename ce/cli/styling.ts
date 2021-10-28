@@ -5,7 +5,7 @@ import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
 import { argv } from 'process';
-import { Session } from '../lib/session';
+import { Session } from '../session';
 import { CommandLine } from './command-line';
 
 function formatTime(t: number) {

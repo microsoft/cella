@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 
-import { Registry } from '../../lib/artifacts/registry';
-import { i } from '../../lib/i18n';
-import { RemoteFileUnavailable } from '../../lib/util/exceptions';
+import { Registry } from '../../artifacts/registry';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { RemoteFileUnavailable } from '../../util/exceptions';
 import { Command } from '../command';
 import { CommandLine } from '../command-line';
 import { count } from '../format';

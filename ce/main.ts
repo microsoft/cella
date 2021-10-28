@@ -26,9 +26,9 @@ import { VersionCommand } from './cli/commands/version';
 import { blank, cli, product } from './cli/constants';
 import { cmdSwitch, command as formatCommand, hint } from './cli/format';
 import { debug, error, initStyling, log } from './cli/styling';
-import { i, setLocale } from './lib/i18n';
-import { Session } from './lib/session';
-import { Version as cliVersion } from './lib/version';
+import { i, setLocale } from './i18n';
+import { Session } from './session';
+import { Version as cliVersion } from './version';
 
 // parse the command line
 const commandline = new CommandLine(argv.slice(2));

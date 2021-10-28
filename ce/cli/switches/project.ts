@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType } from '../../lib/fs/filesystem';
-import { i } from '../../lib/i18n';
-import { Uri } from '../../lib/util/uri';
+import { FileType } from '../../fs/filesystem';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Uri } from '../../util/uri';
 import { resolvePath } from '../command-line';
 import { projectFile } from '../format';
 import { error } from '../styling';

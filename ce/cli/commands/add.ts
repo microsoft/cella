@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { MetadataFile } from '../../lib/amf/metadata-file';
-import { i } from '../../lib/i18n';
+import { MetadataFile } from '../../amf/metadata-file';
+import { i } from '../../i18n';
 import { session } from '../../main';
 import { selectArtifacts, Selections } from '../artifacts';
 import { Command } from '../command';

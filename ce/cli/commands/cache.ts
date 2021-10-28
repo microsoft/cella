@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 import { basename } from 'path';
-import { FileType } from '../../lib/fs/filesystem';
-import { i } from '../../lib/i18n';
-import { Uri } from '../../lib/util/uri';
+import { FileType } from '../../fs/filesystem';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Uri } from '../../util/uri';
 import { Command } from '../command';
 import { Table } from '../markdown-table';
 import { log } from '../styling';

@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseConfiguration } from '../../lib/amf/metadata-file';
-import { acquireArtifactFile } from '../../lib/fs/acquire';
-import { FileType } from '../../lib/fs/filesystem';
-import { i } from '../../lib/i18n';
-import { Session } from '../../lib/session';
-import { Uri } from '../../lib/util/uri';
-import { templateAmfApplyVsManifestInformation } from '../../lib/willow/template-amf';
-import { parseVsManFromChannel, VsManDatabase } from '../../lib/willow/willow';
+import { parseConfiguration } from '../../amf/metadata-file';
+import { acquireArtifactFile } from '../../fs/acquire';
+import { FileType } from '../../fs/filesystem';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Session } from '../../session';
+import { Uri } from '../../util/uri';
+import { templateAmfApplyVsManifestInformation } from '../../willow/template-amf';
+import { parseVsManFromChannel, VsManDatabase } from '../../willow/willow';
 import { Command } from '../command';
 import { log } from '../styling';
 import { Switch } from '../switch';
