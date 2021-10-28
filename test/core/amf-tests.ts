@@ -17,7 +17,7 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
 
-    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
     strict.equal(doc.info.id, 'sample1', 'identity incorrect');
@@ -28,7 +28,7 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'repo', 'sdks', 'microsoft', 'windows.yaml'))).toString('utf-8');
     const doc = parse('windows.yaml', content);
 
-    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
 
     console.log(doc.content);
@@ -43,7 +43,7 @@ describe('Amf', () => {
       console.log(each);
     }
 
-    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it\'s valid yaml');
     strict.ok(doc.isValid, 'better be valid!');
 
     console.log(doc.content);
@@ -53,7 +53,7 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
     const doc = parse('sample1.yaml', content);
 
-    strict.ok(doc.isValidYaml, 'Ensure it\'s valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it\'s valid yaml');
     console.log(doc.validationErrors);
     strict.ok(doc.isValid, 'better be valid!');
 
@@ -136,8 +136,8 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'errors.yaml'))).toString('utf-8');
     const doc = parse('errors.yaml', content);
 
-    strict.equal(doc.isValidYaml, false, 'this document should have errors');
-    strict.equal(doc.yamlErrors.length, 2, 'This document should have one error');
+    strict.equal(doc.isFormatValid, false, 'this document should have errors');
+    strict.equal(doc.formatErrors.length, 2, 'This document should have one error');
 
     strict.equal(doc.info.id, 'bob', 'identity incorrect');
     strict.equal(doc.info.version, '1.0.2', 'version incorrect');
@@ -147,7 +147,7 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'empty.yaml'))).toString('utf-8');
     const doc = parse('empty.yaml', content);
 
-    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
 
     strict.equal(doc.isValid, false, 'Should have some validation errors');
     strict.equal(doc.validationErrors[0], 'empty.yaml:1:1 SectionMessing, Missing section \'info\'', 'Should have an error about info');
@@ -157,7 +157,7 @@ describe('Amf', () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'validation-errors.yaml'))).toString('utf-8');
     const doc = parse('validation-errors.yaml', content);
 
-    strict.ok(doc.isValidYaml, 'Ensure it is valid yaml');
+    strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
 
     console.log(doc.validationErrors);
     strict.equal(doc.validationErrors.length, 5, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);

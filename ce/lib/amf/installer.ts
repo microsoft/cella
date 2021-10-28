@@ -4,11 +4,11 @@
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { GitInstaller } from '../interfaces/metadata/installers/git-installer';
+import { GitInstaller } from '../interfaces/metadata/installers/git';
 import { Installer } from '../interfaces/metadata/installers/Installer';
-import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg-installer';
-import { UnTarInstaller } from '../interfaces/metadata/installers/untar-installer';
-import { UnZipInstaller } from '../interfaces/metadata/installers/unzip-installer';
+import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg';
+import { UnTarInstaller } from '../interfaces/metadata/installers/tar';
+import { UnZipInstaller } from '../interfaces/metadata/installers/zip';
 import { ValidationError } from '../interfaces/validation-error';
 import { checkOptionalString } from '../util/checks';
 import { ObjectSequence } from '../yaml/ObjectSequence';

@@ -46,8 +46,8 @@ export class StandardRegistry implements Registry {
       try {
         const amf = parseConfiguration(uri.fsPath, content);
 
-        if (!amf.isValidYaml) {
-          for (const err of amf.yamlErrors) {
+        if (!amf.isFormatValid) {
+          for (const err of amf.formatErrors) {
             repo.session.channels.warning(`Parse errors in metadata file ${err}}`);
           }
           throw new Error('invalid yaml');

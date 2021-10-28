@@ -3,140 +3,24 @@
 
 
 import { extname } from 'path';
-import { Document, isMap, isSeq, LineCounter, parseDocument, Scalar, YAMLMap, YAMLSeq } from 'yaml';
+import { Document, LineCounter, parseDocument, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { KnownArtifactRegistryTypes } from '../interfaces/metadata-format';
-import { Contact } from '../interfaces/metadata/contact';
-import { Demands } from '../interfaces/metadata/demands';
-import { VersionReference } from '../interfaces/metadata/version-reference';
 import { ValidationError } from '../interfaces/validation-error';
 import { parseQuery } from '../mediaquery/media-query';
-import { isNullish } from '../util/checks';
 import { Uri } from '../util/uri';
-import { ObjectDictionary } from '../yaml/ImplMapOf';
-import { YamlDictionary } from '../yaml/MapOf';
-import { ObjectSequence } from '../yaml/ObjectSequence';
 import { toYAML } from '../yaml/yaml';
-import { ParentNode } from '../yaml/yaml-node';
-import { LocalRegistryNode, RemoteArtifactRegistry } from './artifact-source';
-import { ContactNode } from './contact';
-import { DemandNode } from './demands';
+import { Contacts } from './contact';
+import { ConditionalDemands, DemandNode } from './demands';
+import { GlobalSettingsNode } from './global-settings';
 import { InfoNode } from './info';
 import { Installs } from './installer';
+import { Registries } from './registries';
+import { Requires } from './Requires';
 import { SettingsNode } from './settings';
-import { VersionReferenceNode } from './version-reference';
 
 export type KindofNode = YAMLMap | YAMLSeq | Scalar;
 export type Primitive = string | number | boolean;
-
-export class Requires extends YamlDictionary<VersionReference> {
-  constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
-    super(parent, kind);
-  }
-  protected override  wrapMember(key: string, value: any): VersionReference {
-    return new VersionReferenceNode(this, key);
-  }
-
-  set(key: string, value: string | VersionReference): void {
-    if (typeof value === 'string') {
-      const v = new VersionReferenceNode(this, key);
-      v.raw = value;
-    } else {
-      const v = new VersionReferenceNode(this, key);
-      if (value.resolved) {
-        v.raw = `${value.range} ${value.resolved}`;
-      } else {
-        v.raw = `${value.range}`;
-      }
-    }
-  }
-}
-
-export class Contacts extends YamlDictionary<Contact> {
-  constructor(parent: ParentNode) {
-    super(parent, 'contacts');
-  }
-  protected override  wrapMember(key: string, value: any): Contact {
-    return new ContactNode(this, key);
-  }
-  add(name: string) {
-    return this.getOrCreate(name);
-  }
-}
-
-export class GlobalSettingsNode extends YamlDictionary<Primitive | Record<string, unknown>>  {
-  constructor(parent: ParentNode) {
-    super(parent, 'global');
-  }
-
-  override wrapMember(key: string, value: any): Primitive | Record<string, unknown> {
-    return isNullish(value?.value) ? value : value.value;
-  }
-
-  set(key: string, value: Primitive | Record<string, unknown>): void {
-    if (value === undefined || value === null || value === '') {
-      this.selfNode.delete(key);
-      return;
-    }
-    this.selfNode.set(key, value);
-  }
-}
-
-export class Registries extends ObjectSequence<KnownArtifactRegistryTypes> {
-  constructor(parent: ParentNode) {
-    super(parent, 'registries');
-  }
-
-  override wrapValue(value: any): KnownArtifactRegistryTypes | undefined {
-    if (value.kind === 'artifact' && value.path) {
-      return new LocalRegistryNode(this, value);
-    }
-    if (value.kind === 'artifact' && value.url) {
-      return new RemoteArtifactRegistry(this, value);
-    }
-
-    return undefined;
-  }
-
-  get values() {
-    const result = new Array<KnownArtifactRegistryTypes>();
-    for (const each of this.selfNode.items) {
-      const v = this.wrapValue(each);
-      if (v) {
-        result.push(v);
-      }
-    }
-    return result;
-  }
-}
-
-export class ConditionalDemands extends ObjectDictionary<Demands> {
-  constructor(parent: ParentNode, nodeName: string) {
-    super(parent, nodeName, (k, v) => new DemandNode(this, k));
-  }
-
-  /** @internal */
-  override *validate(): Iterable<ValidationError> {
-    for (const each of this.members) {
-      const n = <YAMLSeq | YAMLMap | Scalar>each.key;
-      if (!isMap(each.value) && !isSeq(each.value)) {
-
-        yield {
-          message: `Conditional Demand ${each.key} is not an object`,
-          range: n.range || [0, 0, 0],
-          category: ErrorKind.IncorrectType
-        };
-      }
-    }
-
-    for (const demand of this.values) {
-      yield* demand.validate();
-    }
-  }
-
-}
-
 
 export class MetadataFile extends ConditionalDemands {
 
@@ -218,17 +102,16 @@ export class MetadataFile extends ConditionalDemands {
   /* Profile */
   info = new InfoNode(this);
   contacts = new Contacts(this)
-  sources = new Registries(this);
+  registries = new Registries(this);
 
   globalSettings = new GlobalSettingsNode(this);
 
-
-  get isValidYaml(): boolean {
+  get isFormatValid(): boolean {
     return this.document.errors.length === 0;
   }
 
   #errors!: Array<string>;
-  get yamlErrors(): Array<string> {
+  get formatErrors(): Array<string> {
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
       const line = each.linePos?.[0] || 1;
@@ -287,7 +170,7 @@ export class MetadataFile extends ConditionalDemands {
     this.install.validate();
 
     if (this.document.has('registries')) {
-      for (const each of this.sources.values) {
+      for (const each of this.registries.values) {
         yield* each.validate();
       }
     }

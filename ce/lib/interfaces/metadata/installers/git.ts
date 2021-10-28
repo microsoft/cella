@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { StringsSequence } from '../../../yaml/strings';
+import { Strings } from '../../collections';
 import { Installer } from './Installer';
 
 /**
@@ -12,7 +12,7 @@ import { Installer } from './Installer';
 
 export interface GitInstaller extends Installer {
   /** the git repository location to be cloned */
-  location: StringsSequence;
+  location: Strings;
 
   /** optionally, a tag/branch to be checked out */
   tag?: string;

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { YamlDictionary } from '../../yaml/MapOf';
-import { ObjectSequence } from '../../yaml/ObjectSequence';
+
+import { Dictionary, Sequence } from '../collections';
 import { Validation } from '../validation';
 import { Installer } from './installers/Installer';
 import { Settings } from './Settings';
@@ -14,7 +14,7 @@ import { VersionReference } from './version-reference';
 
 export interface Demands extends Validation {
   /** set of required artifacts */
-  requires: YamlDictionary<VersionReference>;
+  requires: Dictionary<VersionReference>;
 
   /** An error message that the user should get, and abort the installation */
   error: string | undefined; // markdown text with ${} replacements
@@ -29,7 +29,7 @@ export interface Demands extends Validation {
 
 
   /** set of artifacts that the consumer should be aware of */
-  seeAlso: YamlDictionary<VersionReference>;
+  seeAlso: Dictionary<VersionReference>;
 
   /** settings that should be applied to the context when activated */
   settings: Settings;
@@ -43,5 +43,5 @@ export interface Demands extends Validation {
    *       then there would need to be a 'requires' that refers to the additional
    *       package.
    */
-  install: ObjectSequence<Installer>;
+  install: Sequence<Installer>;
 }

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { StringsSequence } from '../../../yaml/strings';
+import { Strings } from '../../collections';
 
 
 export interface UnpackSettings {
@@ -9,5 +9,5 @@ export interface UnpackSettings {
   strip?: number;
 
   /** one or more transform strings to apply to the filenames as they are restored (think tar --xform ... ) */
-  transform: StringsSequence;
+  transform: Strings;
 }

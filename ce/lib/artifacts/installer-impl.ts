@@ -4,11 +4,11 @@
 import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from '../fs/acquire';
 import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from '../fs/archive';
 import { Installer } from '../interfaces/metadata/installers/Installer';
-import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg-installer';
+import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg';
+import { UnTarInstaller } from '../interfaces/metadata/installers/tar';
 import { UnpackSettings } from '../interfaces/metadata/installers/unpack-settings';
-import { UnTarInstaller } from '../interfaces/metadata/installers/untar-installer';
-import { UnZipInstaller } from '../interfaces/metadata/installers/unzip-installer';
 import { Verifiable } from '../interfaces/metadata/installers/verifiable';
+import { UnZipInstaller } from '../interfaces/metadata/installers/zip';
 import { Session } from '../session';
 import { Uri } from '../util/uri';
 

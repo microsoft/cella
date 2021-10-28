@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { YamlDictionary } from '../../yaml/MapOf';
-import { StringsSequence } from '../../yaml/strings';
-import { StringOrStrings } from '../metadata-format';
+import { Dictionary, Strings } from '../collections';
 
 /**
  * types of paths that we can handle when crafting the context
@@ -11,19 +9,19 @@ import { StringOrStrings } from '../metadata-format';
  * Paths has a well-known list of path types that we handle, but we make it a dictionary anyway.
  */
 
-export interface Paths extends YamlDictionary<StringsSequence> {
+export interface Paths extends Dictionary<Strings> {
   /** entries that should be added to the PATH environment variable */
-  bin: StringOrStrings;
+  bin: Strings;
 
   /** entries that should be in the INCLUDE environment variable  */
-  include: StringOrStrings;
+  include: Strings;
 
   /** entries that should be in the LIB environment variable  */
-  lib: StringOrStrings;
+  lib: Strings;
 
   /** entries that should be used for GCC's LDSCRIPT */
-  ldscript: StringOrStrings;
+  ldscript: Strings;
 
   /** object files that should be linked */
-  object: StringOrStrings;
+  object: Strings;
 }

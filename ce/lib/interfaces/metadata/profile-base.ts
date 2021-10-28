@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { LineCounter } from 'yaml';
-import { YamlDictionary } from '../../yaml/MapOf';
+import { Dictionary } from '../collections';
 import { KnownArtifactRegistryTypes } from '../metadata-format';
 import { Contact } from './contact';
 import { Demands } from './demands';
@@ -26,30 +25,23 @@ export interface ProfileBase extends Demands {
   info: Info;
 
   /** any contact information related to this profile/package */
-  contacts: YamlDictionary<Contact>; // optional
+  contacts: Dictionary<Contact>; // optional
 
-
-  /** artifact sources list the references necessary to install artifacts in this file */
-  registries?: YamlDictionary<KnownArtifactRegistryTypes>;
-
-  /** mark an artifact as supporting insert (either allowed or only) */
-  insert?: 'allowed' | 'only';
+  /** artifact registries list the references necessary to install artifacts in this file */
+  registries?: Dictionary<KnownArtifactRegistryTypes>;
 
   /** global settings */
-  globalSettings: YamlDictionary<Primitive | Record<string, unknown>>;
+  globalSettings: Dictionary<Primitive | Record<string, unknown>>;
 
   /** is this document valid */
-  readonly isValidYaml: boolean;
+  readonly isFormatValid: boolean;
 
   /** YAML errors in this document */
-  readonly yamlErrors: Array<string>;
+  readonly formatErrors: Array<string>;
 
   /** does the document pass validation checks? */
   readonly isValid: boolean;
 
   /** what are the valiation check errors? */
   readonly validationErrors: Array<string>;
-
-  /** @internal */
-  readonly lineCounter: LineCounter;
 }

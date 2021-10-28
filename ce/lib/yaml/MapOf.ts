@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 import { Pair, Scalar, YAMLMap, YAMLSeq } from 'yaml';
+import { Dictionary, Range } from '../interfaces/collections';
 import { YamlObject } from './YamlObject';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class YamlDictionary<T extends Object> extends YamlObject {
+export abstract class YamlDictionary<T extends Object> extends YamlObject implements Dictionary<T>{
   protected cache = new WeakMap<T>();
 
   protected abstract wrapMember(key: string, value: any): T;
@@ -35,7 +36,7 @@ export abstract class YamlDictionary<T extends Object> extends YamlObject {
     return this.isCreated ? this.selfNode.delete(key) : false;
   }
 
-  forEach(callbackfn: (value: T, key: string, map: YamlDictionary<T>) => void, thisArg?: any): void {
+  forEach(callbackfn: (value: T, key: string, map: Dictionary<T>) => void, thisArg?: any): void {
     if (this.isCreated) {
       for (const { key, value } of this.members) {
         callbackfn(<any>value, <any>key, this);
@@ -62,7 +63,7 @@ export abstract class YamlDictionary<T extends Object> extends YamlObject {
     return this.isCreated ? this.selfNode.has(key) : false;
   }
 
-  positionOf(key: string) {
+  positionOf(key: string): Range | undefined {
     return this.isCreated && (<Scalar>this.selfNode.get(key, true))?.range || undefined;
   }
 
