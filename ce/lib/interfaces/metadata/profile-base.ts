@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 import { LineCounter } from 'yaml';
-import { Primitive } from '../../amf/metadata-file';
 import { YamlDictionary } from '../../yaml/MapOf';
 import { KnownArtifactRegistryTypes } from '../metadata-format';
 import { Contact } from './contact';
 import { Demands } from './demands';
 import { Info } from './info';
+
+
+type Primitive = string | number | boolean;
 
 /**
  * a profile defines the requirements and/or artifact that should be installed

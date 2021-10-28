@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Installs } from '../../amf/installer';
-import { Requires } from '../../amf/metadata-file';
+import { YamlDictionary } from '../../yaml/MapOf';
+import { ObjectSequence } from '../../yaml/ObjectSequence';
 import { Validation } from '../validation';
+import { Installer } from './installers/Installer';
 import { Settings } from './Settings';
+import { VersionReference } from './version-reference';
 
 /**
  * These are the things that are necessary to install/set/depend-on/etc for a given 'artifact'
@@ -12,7 +14,7 @@ import { Settings } from './Settings';
 
 export interface Demands extends Validation {
   /** set of required artifacts */
-  requires: Requires;
+  requires: YamlDictionary<VersionReference>;
 
   /** An error message that the user should get, and abort the installation */
   error: string | undefined; // markdown text with ${} replacements
@@ -27,7 +29,7 @@ export interface Demands extends Validation {
 
 
   /** set of artifacts that the consumer should be aware of */
-  seeAlso: Requires;
+  seeAlso: YamlDictionary<VersionReference>;
 
   /** settings that should be applied to the context when activated */
   settings: Settings;
@@ -41,5 +43,5 @@ export interface Demands extends Validation {
    *       then there would need to be a 'requires' that refers to the additional
    *       package.
    */
-  install: Installs;
+  install: ObjectSequence<Installer>;
 }
