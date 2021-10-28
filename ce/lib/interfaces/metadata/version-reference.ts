@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Range, SemVer } from 'semver';
-import { Validation } from './validation';
+import { Validation } from '../validation';
 
 
 export interface VersionReference extends Validation {

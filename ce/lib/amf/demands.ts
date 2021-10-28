@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Demands } from '../interfaces/metadata/demands';
-import { Settings } from '../interfaces/Settings';
+import { Settings } from '../interfaces/metadata/Settings';
 import { ValidationError } from '../interfaces/validation-error';
 import { YamlObject } from '../yaml/YamlObject';
 import { Installs } from './installer';

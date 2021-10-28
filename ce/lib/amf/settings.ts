@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 
-import { Settings } from '../interfaces/Settings';
+import { Settings } from '../interfaces/metadata/Settings';
 import { ValidationError } from '../interfaces/validation-error';
 import { PrimitiveDictionary, StringDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';

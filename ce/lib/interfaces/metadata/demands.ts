@@ -3,8 +3,8 @@
 
 import { Installs } from '../../amf/installer';
 import { Requires } from '../../amf/metadata-file';
-import { Settings } from '../Settings';
 import { Validation } from '../validation';
+import { Settings } from './Settings';
 
 /**
  * These are the things that are necessary to install/set/depend-on/etc for a given 'artifact'

@@ -3,10 +3,10 @@
 
 import { SemVer } from 'semver';
 import { MetadataFile } from '../amf/metadata-file';
-import { IdentityKey, Index, SemverKey, StringKey } from './catalog';
+import { IdentityKey, IndexSchema, SemverKey, StringKey } from './indexer';
 
 
-export class RegistryIndex extends Index<MetadataFile, RegistryIndex> {
+export class RegistryIndex extends IndexSchema<MetadataFile, RegistryIndex> {
   id = new IdentityKey(this, (i) => i.info.id);
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
   summary = new StringKey(this, (i) => i.info.summary);

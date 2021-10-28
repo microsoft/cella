@@ -24,11 +24,18 @@ export abstract class ObjectSequence<TElement> extends Sequence<TElement, YAMLSe
       const n = this.selfNode;
       if (isSeq(n)) {
         for (const each of n.items) {
-          yield this.wrapValue(each);
+          const v = this.wrapValue(each);
+          if (v) {
+            yield v;
+          }
         }
       }
       if (isMap(n)) {
-        yield this.wrapValue(<any>n);
+        const v = this.wrapValue(<any>n);
+        if (v) {
+          yield v;
+        }
+
       }
     }
   }

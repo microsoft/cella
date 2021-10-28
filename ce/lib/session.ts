@@ -3,7 +3,7 @@
 
 import { fail, strict } from 'assert';
 import { delimiter } from 'path';
-import { MetadataFile } from './amf/metadata-file';
+import { MetadataFile, parseConfiguration } from './amf/metadata-file';
 import { Activation } from './artifacts/activation';
 import { Artifact, createArtifact } from './artifacts/artifact';
 import { Registry } from './artifacts/registry';
@@ -14,7 +14,6 @@ import { LocalFileSystem } from './fs/local-filesystem';
 import { UnifiedFileSystem } from './fs/unified-filesystem';
 import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
-import { parseConfiguration } from './interfaces/metadata-format';
 import { DefaultRegistry } from './registries/standard-registry';
 import { Channels, Stopwatch } from './util/channels';
 import { Dictionary, items } from './util/linq';

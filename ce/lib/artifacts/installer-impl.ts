@@ -3,12 +3,12 @@
 
 import { acquireArtifactFile, AcquireEvents, AcquireOptions, nuget } from '../fs/acquire';
 import { OutputOptions, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, UnpackEvents, ZipUnpacker } from '../fs/archive';
-import { Installer } from '../interfaces/Installer';
-import { NupkgInstaller } from '../interfaces/nupkg-installer';
-import { UnpackSettings } from '../interfaces/unpack-settings';
-import { UnTarInstaller } from '../interfaces/untar-installer';
-import { UnZipInstaller } from '../interfaces/unzip-installer';
-import { Verifiable } from '../interfaces/verifiable';
+import { Installer } from '../interfaces/metadata/installers/Installer';
+import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg-installer';
+import { UnpackSettings } from '../interfaces/metadata/installers/unpack-settings';
+import { UnTarInstaller } from '../interfaces/metadata/installers/untar-installer';
+import { UnZipInstaller } from '../interfaces/metadata/installers/unzip-installer';
+import { Verifiable } from '../interfaces/metadata/installers/verifiable';
 import { Session } from '../session';
 import { Uri } from '../util/uri';
 

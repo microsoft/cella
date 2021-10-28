@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Primitive } from '../amf/metadata-file';
-import { YamlDictionary } from '../yaml/MapOf';
-import { StringsSequence } from '../yaml/strings';
-import { Validation } from './validation';
+import { Primitive } from '../../amf/metadata-file';
+import { YamlDictionary } from '../../yaml/MapOf';
+import { StringsSequence } from '../../yaml/strings';
+import { Validation } from '../validation';
 
 /** settings that should be applied to the context */
 

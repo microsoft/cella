@@ -1,23 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+
 import { extname } from 'path';
-import { Document, isMap, isSeq, LineCounter, Scalar, YAMLMap, YAMLSeq } from 'yaml';
+import { Document, isMap, isSeq, LineCounter, parseDocument, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { ArtifactSource } from '../interfaces/metadata-format';
+import { KnownArtifactRegistryTypes } from '../interfaces/metadata-format';
 import { Contact } from '../interfaces/metadata/contact';
 import { Demands } from '../interfaces/metadata/demands';
+import { VersionReference } from '../interfaces/metadata/version-reference';
 import { ValidationError } from '../interfaces/validation-error';
-import { VersionReference } from '../interfaces/version-reference';
 import { parseQuery } from '../mediaquery/media-query';
 import { isNullish } from '../util/checks';
 import { Uri } from '../util/uri';
 import { ObjectDictionary } from '../yaml/ImplMapOf';
 import { YamlDictionary } from '../yaml/MapOf';
+import { ObjectSequence } from '../yaml/ObjectSequence';
 import { toYAML } from '../yaml/yaml';
 import { ParentNode } from '../yaml/yaml-node';
-import { createRegistryNode } from './artifact-source';
+import { LocalRegistryNode, RemoteArtifactRegistry } from './artifact-source';
 import { ContactNode } from './contact';
 import { DemandNode } from './demands';
 import { InfoNode } from './info';
@@ -81,13 +83,31 @@ export class GlobalSettingsNode extends YamlDictionary<Primitive | Record<string
   }
 }
 
-export class Catalogs extends YamlDictionary<ArtifactSource> {
+export class Registries extends ObjectSequence<KnownArtifactRegistryTypes> {
   constructor(parent: ParentNode) {
-    super(parent, 'catalogs');
+    super(parent, 'registries');
   }
 
-  override wrapMember(key: string, value: any): ArtifactSource {
-    return createRegistryNode(this, key);
+  override wrapValue(value: any): KnownArtifactRegistryTypes | undefined {
+    if (value.kind === 'artifact' && value.path) {
+      return new LocalRegistryNode(this, value);
+    }
+    if (value.kind === 'artifact' && value.url) {
+      return new RemoteArtifactRegistry(this, value);
+    }
+
+    return undefined;
+  }
+
+  get values() {
+    const result = new Array<KnownArtifactRegistryTypes>();
+    for (const each of this.selfNode.items) {
+      const v = this.wrapValue(each);
+      if (v) {
+        result.push(v);
+      }
+    }
+    return result;
   }
 }
 
@@ -111,7 +131,6 @@ export class ConditionalDemands extends ObjectDictionary<Demands> {
     }
 
     for (const demand of this.values) {
-
       yield* demand.validate();
     }
   }
@@ -121,7 +140,7 @@ export class ConditionalDemands extends ObjectDictionary<Demands> {
 
 export class MetadataFile extends ConditionalDemands {
 
-  static reservedWords = ['info', 'contacts', 'catalogs', 'registries', 'settings', 'requires', 'seeAlso', 'install']
+  static reservedWords = ['info', 'contacts', 'registries', 'settings', 'requires', 'seeAlso', 'install']
 
   override get isCreated(): boolean {
     return !!(<any>this.document.contents)?.items;
@@ -158,7 +177,6 @@ export class MetadataFile extends ConditionalDemands {
   set message(message: string | undefined) {
     this.selfNode.set('message', message);
   }
-
 
   /** @internal */
   constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
@@ -200,7 +218,7 @@ export class MetadataFile extends ConditionalDemands {
   /* Profile */
   info = new InfoNode(this);
   contacts = new Contacts(this)
-  sources = new Catalogs(this);
+  sources = new Registries(this);
 
   globalSettings = new GlobalSettingsNode(this);
 
@@ -268,7 +286,7 @@ export class MetadataFile extends ConditionalDemands {
 
     this.install.validate();
 
-    if (this.document.has('sources')) {
+    if (this.document.has('registries')) {
       for (const each of this.sources.values) {
         yield* each.validate();
       }
@@ -303,4 +321,11 @@ export class MetadataFile extends ConditionalDemands {
       yield* demandBlock.validate();
     }
   }
+}
+
+export function parseConfiguration(filename: string, content: string): MetadataFile {
+  const lc = new LineCounter();
+  const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
+  const m = new MetadataFile(doc, filename, lc);
+  return m;
 }

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { parseConfiguration } from '../../lib/amf/metadata-file';
 import { i } from '../../lib/i18n';
-import { parseConfiguration } from '../../lib/interfaces/metadata-format';
 import { session } from '../../main';
 import { Command } from '../command';
 import { project } from '../constants';

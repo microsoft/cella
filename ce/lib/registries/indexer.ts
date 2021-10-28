@@ -16,37 +16,37 @@ interface HasToString {
 }
 
 /**
- * A Catalog is a index of Indexes. (This is the means to search a registry)
+ * An Index is the means to search a registry
  *
  * @param TGraph The type of object to create an index for
- * @param TIndex the custom index type.
+ * @param TIndexSchema the custom index schema (layout).
  */
-export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>> {
+export class Index<TGraph extends Object, TIndexSchema extends IndexSchema<TGraph, TIndexSchema>> {
   /** @internal */
-  index: TIndex;
+  indexSchema: TIndexSchema;
   /** @internal */
   indexOfTargets = new Array<string>();
 
   /**
-   * Creates a catalog for fast searching.
+   * Creates an index for fast searching.
    *
    * @param indexConstructor the class for the custom index.
    */
-  constructor(protected indexConstructor: new (index: Catalog<TGraph, TIndex>) => TIndex) {
-    this.index = new indexConstructor(this);
+  constructor(protected indexConstructor: new (index: Index<TGraph, TIndexSchema>) => TIndexSchema) {
+    this.indexSchema = new indexConstructor(this);
   }
 
   reset() {
-    this.index = new this.indexConstructor(this);
+    this.indexSchema = new this.indexConstructor(this);
   }
 
   /**
-   * Serializes the catalog to a javascript object graph that can be persisted.
+   * Serializes the index to a javascript object graph that can be persisted.
    */
   serialize() {
     return {
       items: this.indexOfTargets,
-      indexes: this.index.serialize()
+      indexes: this.indexSchema.serialize()
     };
   }
 
@@ -57,33 +57,33 @@ export class Catalog<TGraph extends Object, TIndex extends Index<TGraph, TIndex>
    */
   deserialize(content: any) {
     this.indexOfTargets = content.items;
-    this.index.deserialize(content.indexes);
+    this.indexSchema.deserialize(content.indexes);
   }
 
   /**
    * Returns a clone of the index that can be searched, which narrows the list of
    */
-  get where(): TIndex {
+  get where(): TIndexSchema {
     // clone the index so that the consumer can filter on it.
-    const cat = new Catalog(this.indexConstructor);
-    cat.indexOfTargets = this.indexOfTargets;
-    for (const [key, impl] of this.index.mapOfKeyObjects.entries()) {
-      cat.index.mapOfKeyObjects.get(key)!.cloneKey(impl);
+    const index = new Index(this.indexConstructor);
+    index.indexOfTargets = this.indexOfTargets;
+    for (const [key, impl] of this.indexSchema.mapOfKeyObjects.entries()) {
+      index.indexSchema.mapOfKeyObjects.get(key)!.cloneKey(impl);
     }
-    return cat.index;
+    return index.indexSchema;
   }
 
   /** inserts an object into the index */
   insert(content: TGraph, target: string) {
     const n = this.indexOfTargets.push(target) - 1;
     const start = process.uptime() * 1000;
-    for (const indexKey of this.index.mapOfKeyObjects.values()) {
+    for (const indexKey of this.indexSchema.mapOfKeyObjects.values()) {
       indexKey.insert(content, n);
     }
   }
 
   doneInsertion() {
-    for (const indexKey of this.index.mapOfKeyObjects.values()) {
+    for (const indexKey of this.indexSchema.mapOfKeyObjects.values()) {
       indexKey.doneInsertion();
     }
   }
@@ -112,7 +112,7 @@ function deconstruct(accessor: string) {
 /**
  * A Key is a means to creating a searchable, sortable index
  */
-abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex extends Index<TGraph, any>> {
+abstract class Key<TGraph extends Object, TKey extends HasToString, TIndexSchema extends IndexSchema<TGraph, any>> {
 
   /** child class must implement a standard compare function */
   abstract compare(a: TKey, b: TKey): number;
@@ -120,14 +120,14 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   /** child class must implement a function to transform value into comparable key */
   abstract coerce(value: TKey | string): TKey;
 
-  protected nestedKeys = new Array<Key<TGraph, any, TIndex>>();
+  protected nestedKeys = new Array<Key<TGraph, any, TIndexSchema>>();
   protected values = new BTree<TKey, Set<number>>(undefined, this.compare);
   protected words = new BTree<string, Set<number>>();
-  protected index: TIndex;
+  protected indexSchema: TIndexSchema;
   protected path: Array<string>;
 
   /** attaches a nested key in the index. */
-  with<TNestedKey extends Dictionary<Key<TGraph, any, TIndex>>>(nestedKey: TNestedKey): Key<TGraph, TKey, TIndex> & TNestedKey {
+  with<TNestedKey extends Dictionary<Key<TGraph, any, TIndexSchema>>>(nestedKey: TNestedKey): Key<TGraph, TKey, TIndexSchema> & TNestedKey {
     for (const child of keys(nestedKey)) {
       this.nestedKeys.push(nestedKey[child]);
     }
@@ -234,32 +234,32 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   }
 
   /** construct a Key */
-  constructor(index: Index<TGraph, TIndex>, public accessor: (value: TGraph, ...args: Array<any>) => TKey | undefined | Array<TKey> | Iterable<TKey>) {
+  constructor(indexSchema: IndexSchema<TGraph, TIndexSchema>, public accessor: (value: TGraph, ...args: Array<any>) => TKey | undefined | Array<TKey> | Iterable<TKey>) {
     this.path = deconstruct(accessor.toString());
-    this.index = <TIndex><unknown>index;
-    this.index.mapOfKeyObjects.set(this.identity, this);
+    this.indexSchema = <TIndexSchema><unknown>indexSchema;
+    this.indexSchema.mapOfKeyObjects.set(this.identity, this);
   }
 
   /** word search */
-  contains(value: TKey | string): TIndex {
+  contains(value: TKey | string): TIndexSchema {
     if (value !== undefined && value !== '') {
       const matches = this.words.get(value.toString());
-      this.index.filter(matches || []);
+      this.indexSchema.filter(matches || []);
     }
-    return this.index;
+    return this.indexSchema;
   }
 
   /** exact match search */
-  equals(value: TKey | string): TIndex {
+  equals(value: TKey | string): TIndexSchema {
     if (value !== undefined && value !== '') {
       const matches = this.values.get(this.coerce(value));
-      this.index.filter(matches || []);
+      this.indexSchema.filter(matches || []);
     }
-    return this.index;
+    return this.indexSchema;
   }
 
   /** metadata value is greater than search */
-  greaterThan(value: TKey | string): TIndex {
+  greaterThan(value: TKey | string): TIndexSchema {
     const max = this.values.maxKey();
     const set = new Set<number>();
     if (max && value !== undefined && value !== '') {
@@ -269,12 +269,12 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
         }
       });
     }
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
 
   /** metadata value is less than search */
-  lessThan(value: TKey | string): TIndex {
+  lessThan(value: TKey | string): TIndexSchema {
     const min = this.values.minKey();
     const set = new Set<number>();
     if (min && value !== undefined && value !== '') {
@@ -285,12 +285,12 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
         }
       });
     }
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
 
   /** regex search -- WARNING: slower */
-  match(regex: string): TIndex {
+  match(regex: string): TIndexSchema {
     // This could be faster if we stored a reverse lookup
     // array that had the id for each key, but .. I don't
     // think the perf will suffer much doing it this way.
@@ -299,7 +299,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
     for (const node of this.values.entries()) {
       for (const id of node[1]) {
-        if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
+        if (!this.indexSchema.selectedElements || this.indexSchema.selectedElements.has(id)) {
           // it's currently in the keep list.
           if (regex.match(node.toString())) {
             set.add(id);
@@ -308,11 +308,11 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
       }
     }
 
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
   /** substring match -- slower */
-  startsWith(value: TKey | string): TIndex {
+  startsWith(value: TKey | string): TIndexSchema {
     // ok, I'm being lazy here. I can add a check to see if we're past
     // the point where this could be a match, but I don't know if I'll
     // even need this enough to keep it.
@@ -321,7 +321,7 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
 
     for (const node of this.values.entries()) {
       for (const id of node[1]) {
-        if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
+        if (!this.indexSchema.selectedElements || this.indexSchema.selectedElements.has(id)) {
           // it's currently in the keep list.
           if (node[0].toString().startsWith((<any>value).toString())) {
             set.add(id);
@@ -330,18 +330,18 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
       }
     }
 
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
   /** substring match -- slower */
-  endsWith(value: TKey | string): TIndex {
+  endsWith(value: TKey | string): TIndexSchema {
     // Same thing here, but I'd have to do a reversal of all the strings.
 
     const set = new Set<number>();
 
     for (const node of this.values.entries()) {
       for (const id of node[1]) {
-        if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
+        if (!this.indexSchema.selectedElements || this.indexSchema.selectedElements.has(id)) {
           // it's currently in the keep list.
           if (node[0].toString().endsWith((<any>value).toString())) {
             set.add(id);
@@ -350,8 +350,8 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
       }
     }
 
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
 
   doneInsertion() {
@@ -359,8 +359,8 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndex exten
   }
 }
 
-/** An index key for string values. */
-export class StringKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends Key<TGraph, string, TIndex> {
+/** An  key for string values. */
+export class StringKey<TGraph extends Object, TIndexSchema extends IndexSchema<TGraph, any>> extends Key<TGraph, string, TIndexSchema> {
 
   compare(a: string, b: string): number {
     if (a && b) {
@@ -390,7 +390,7 @@ function shortName(value: string, n: number) {
   return v.slice(p).join('/');
 }
 
-export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends StringKey<TGraph, TIndex> {
+export class IdentityKey<TGraph extends Object, TIndexSchema extends IndexSchema<TGraph, any>> extends StringKey<TGraph, TIndexSchema> {
 
   protected identities = new BTree<string, Set<number>>(undefined, this.compare);
   protected idShortName = new Map<string, string>();
@@ -433,17 +433,17 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
     return this.idShortName.get(id);
   }
 
-  nameOrShortNameIs(value: string): TIndex {
+  nameOrShortNameIs(value: string): TIndexSchema {
     if (value !== undefined && value !== '') {
       const matches = this.identities.get(value);
       if (matches) {
-        this.index.filter(matches);
+        this.indexSchema.filter(matches);
       }
       else {
         return this.equals(value);
       }
     }
-    return this.index;
+    return this.indexSchema;
   }
 
   /** deserializes an object graph back into this key */
@@ -453,8 +453,8 @@ export class IdentityKey<TGraph extends Object, TIndex extends Index<TGraph, any
   }
 }
 
-/** An index key for string values. Does not support 'word' searches */
-export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>> extends Key<TGraph, SemVer, TIndex> {
+/** An key for string values. Does not support 'word' searches */
+export class SemverKey<TGraph extends Object, TIndex extends IndexSchema<TGraph, any>> extends Key<TGraph, SemVer, TIndex> {
   compare(a: SemVer, b: SemVer): number {
     return a.compare(b);
   }
@@ -480,7 +480,7 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
     for (const node of this.values.entries()) {
       for (const id of node[1]) {
 
-        if (!this.index.selectedElements || this.index.selectedElements.has(id)) {
+        if (!this.indexSchema.selectedElements || this.indexSchema.selectedElements.has(id)) {
           // it's currently in the keep list.
           if (range.test(node[0])) {
             set.add(id);
@@ -489,8 +489,8 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
       }
     }
 
-    this.index.filter(set.values());
-    return this.index;
+    this.indexSchema.filter(set.values());
+    return this.indexSchema;
   }
 
   override serialize() {
@@ -502,13 +502,13 @@ export class SemverKey<TGraph extends Object, TIndex extends Index<TGraph, any>>
 }
 
 /**
- * Base class for a custom Index
+ * Base class for a custom IndexSchema
  *
  * @param TGraph - the object kind to be indexing
  * @param TSelf - the child class that is being constructed.
  */
-export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
-  /** the collection of keys in this index */
+export abstract class IndexSchema<TGraph, TSelf extends IndexSchema<TGraph, any>> {
+  /** the collection of keys in this IndexSchema */
   readonly mapOfKeyObjects = new Map<string, Key<TGraph, any, TSelf>>();
 
   /**
@@ -538,7 +538,7 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
   }
 
   /**
-   * Serializes this index to a persistable object graph.
+   * Serializes this IndexSchema to a persistable object graph.
    */
   serialize() {
     const result = <any>{
@@ -550,9 +550,9 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
   }
 
   /**
-   * Deserializes a persistable object graph into the index.
+   * Deserializes a persistable object graph into the IndexSchema.
    *
-   * replaces any existing data in the index.
+   * replaces any existing data in the IndexSchema.
    * @param content the persistable object graph.
    */
   deserialize(content: any) {
@@ -565,11 +565,11 @@ export abstract class Index<TGraph, TSelf extends Index<TGraph, any>> {
    * returns the selected
    */
   get items(): Array<string> {
-    return this.selectedElements ? [...this.selectedElements].map(each => this.catalog.indexOfTargets[each]) : this.catalog.indexOfTargets;
+    return this.selectedElements ? [...this.selectedElements].map(each => this.index.indexOfTargets[each]) : this.index.indexOfTargets;
   }
 
   /** @internal */
-  constructor(public catalog: Catalog<TGraph, TSelf>) {
+  constructor(public index: Index<TGraph, TSelf>) {
   }
 }
 

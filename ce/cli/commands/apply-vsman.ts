@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { parseConfiguration } from '../../lib/amf/metadata-file';
 import { acquireArtifactFile } from '../../lib/fs/acquire';
 import { FileType } from '../../lib/fs/filesystem';
 import { i } from '../../lib/i18n';
-import { parseConfiguration } from '../../lib/interfaces/metadata-format';
 import { Session } from '../../lib/session';
 import { Uri } from '../../lib/util/uri';
 import { templateAmfApplyVsManifestInformation } from '../../lib/willow/template-amf';

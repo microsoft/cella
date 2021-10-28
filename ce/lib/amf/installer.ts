@@ -4,11 +4,11 @@
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { GitInstaller } from '../interfaces/git-installer';
-import { Installer } from '../interfaces/Installer';
-import { NupkgInstaller } from '../interfaces/nupkg-installer';
-import { UnTarInstaller } from '../interfaces/untar-installer';
-import { UnZipInstaller } from '../interfaces/unzip-installer';
+import { GitInstaller } from '../interfaces/metadata/installers/git-installer';
+import { Installer } from '../interfaces/metadata/installers/Installer';
+import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg-installer';
+import { UnTarInstaller } from '../interfaces/metadata/installers/untar-installer';
+import { UnZipInstaller } from '../interfaces/metadata/installers/unzip-installer';
 import { ValidationError } from '../interfaces/validation-error';
 import { checkOptionalString } from '../util/checks';
 import { ObjectSequence } from '../yaml/ObjectSequence';
@@ -28,6 +28,7 @@ abstract class InstallerNode extends NonNavigableYamlObject implements Installer
     const v = this.selfNode.get(property);
     return typeof v === 'string' ? v : undefined;
   }
+
   protected setString(property: string, value: string | undefined) {
     if (!value) {
       if (this.selfNode.has(property)) {
@@ -42,6 +43,7 @@ abstract class InstallerNode extends NonNavigableYamlObject implements Installer
     const v = this.selfNode.get(property);
     return typeof v === 'number' ? v : undefined;
   }
+
   protected setNumber(property: string, value: number | undefined) {
     if (value === undefined) {
       if (this.selfNode.has(property)) {
@@ -189,6 +191,7 @@ export class Installs extends ObjectSequence<Installer> {
   constructor(parent: ParentNode) {
     super(parent, 'install');
   }
+
   protected wrapValue(value: any): Installer {
     const v = <YAMLMap>value;
     if (v.has('unzip')) {
@@ -216,5 +219,4 @@ export class Installs extends ObjectSequence<Installer> {
       }
     }
   }
-
 }

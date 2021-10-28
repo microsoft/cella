@@ -6,7 +6,7 @@ import { parse as parseSemver } from 'semver';
 import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { Info } from '../interfaces/info';
+import { Info } from '../interfaces/metadata/info';
 import { ValidationError } from '../interfaces/validation-error';
 import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
 import { YamlStringSet } from '../yaml/strings';

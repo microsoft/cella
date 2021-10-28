@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { StringsSequence } from '../yaml/strings';
+import { StringsSequence } from '../../../yaml/strings';
 import { Installer } from './Installer';
 
 /**

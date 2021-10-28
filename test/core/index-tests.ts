@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 
-import { Catalog, Index, SemverKey, StringKey } from '@microsoft/vcpkg-ce/dist/lib/registries/catalog';
+import { Index, IndexSchema, SemverKey, StringKey } from '@microsoft/vcpkg-ce/dist/lib/registries/indexer';
 import { Dictionary, keys } from '@microsoft/vcpkg-ce/dist/lib/util/linq';
 import { describe, it } from 'mocha';
 import { SemVer } from 'semver';
@@ -22,7 +22,7 @@ interface TestData {
 
 
 /** An Index implementation for TestData */
-class MyIndex extends Index<TestData, MyIndex> {
+class MyIndex extends IndexSchema<TestData, MyIndex> {
 
   id = new StringKey(this, (i) => i.info.id)
   version = new SemverKey(this, (i) => new SemVer(i.info.version));
@@ -37,7 +37,7 @@ class MyIndex extends Index<TestData, MyIndex> {
 // sample test using decorators.
 describe('Index Tests', () => {
   it('Create index from some data', () => {
-    const index = new Catalog<TestData, MyIndex>(MyIndex);
+    const index = new Index<TestData, MyIndex>(MyIndex);
 
     index.insert({
       info: {
@@ -86,7 +86,7 @@ describe('Index Tests', () => {
     // console.log(serialize(index.serialize()));
 
     const data = index.serialize();
-    const index2 = new Catalog<TestData, MyIndex>(MyIndex);
+    const index2 = new Index<TestData, MyIndex>(MyIndex);
     index2.deserialize(data);
     const results2 = index.where.
 

@@ -3,8 +3,8 @@
 
 import { Range, SemVer } from 'semver';
 import { isScalar, Scalar } from 'yaml';
+import { VersionReference } from '../interfaces/metadata/version-reference';
 import { ValidationError } from '../interfaces/validation-error';
-import { VersionReference } from '../interfaces/version-reference';
 import { YamlNode } from '../yaml/YamlNode';
 
 // nuget-semver parser doesn't have a ts typings package

@@ -3,7 +3,7 @@
 
 import { MetadataFile } from '../amf/metadata-file';
 import { Demands } from '../interfaces/metadata/demands';
-import { VersionReference } from '../interfaces/version-reference';
+import { VersionReference } from '../interfaces/metadata/version-reference';
 import { parseQuery } from '../mediaquery/media-query';
 import { Session } from '../session';
 import { MultipleInstallsMatched } from '../util/exceptions';

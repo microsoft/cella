@@ -8,7 +8,6 @@ import { YamlObject } from '../yaml/YamlObject';
 
 /** @internal */
 export class ContactNode extends YamlObject implements Contact {
-
   get name() {
     return this.nodeName;
   }
@@ -27,5 +26,4 @@ export class ContactNode extends YamlObject implements Contact {
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
-
 }

@@ -10,7 +10,6 @@ import { Sequence } from './Sequence';
  *
  * This type wraps the behavior to support that for sequence of primitive values;
  */
-
 export class PrimitiveSequence<TElement extends string | boolean | number = string> extends Sequence<TElement, YAMLSeq | Scalar> {
   protected create() {
     return new YAMLSeq();

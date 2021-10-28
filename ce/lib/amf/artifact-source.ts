@@ -1,68 +1,67 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail } from 'assert';
-import { i } from '../i18n';
-import { GitRegistry } from '../interfaces/git-registry';
-import { LocalRegistry } from '../interfaces/local-registry';
-import { NugetRegistry } from '../interfaces/nuget-registry';
+import { ErrorKind } from '../interfaces/error-kind';
+import { LocalRegistry } from '../interfaces/metadata/registries/local-registry';
 import { ValidationError } from '../interfaces/validation-error';
 import { StringsSequence } from '../yaml/strings';
-import { ParentNode } from '../yaml/yaml-node';
-import { YamlObject } from '../yaml/YamlObject';
+import { NonNavigableYamlObject } from '../yaml/yaml-node';
 
-export class RegistryNode extends YamlObject {
-  // ArtifactSource nodes are shape-polymorphic.
+export abstract class RegistryNode extends NonNavigableYamlObject {
+  // KnownArtifactRegistryTypes nodes are shape-polymorphic.
+  abstract readonly location: StringsSequence;
 
-  location = new StringsSequence(this, 'location');
-}
+  get kind(): string {
+    return <string>this.selfNode.get('kind');
+  }
 
-class NugetRegistryNode extends RegistryNode implements NugetRegistry {
-
-  override location = new StringsSequence(this, 'nuget');
+  set kind(kind: string | undefined) {
+    this.setMember('kind', kind);
+  }
 
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     //
+    if (this.kind === undefined) {
+      yield {
+        message: 'Registry missing \'kind\'',
+        range: this._range,
+        category: ErrorKind.FieldMissing,
+      };
+    }
   }
 }
 
-class LocalRegistryNode extends RegistryNode implements LocalRegistry {
-  constructor(parent: ParentNode, sourceName: string) {
-    super(parent, sourceName);
-  }
+export class LocalRegistryNode extends RegistryNode implements LocalRegistry {
   override location = new StringsSequence(this, 'path');
 
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     //
+    if (this.kind !== 'artifact') {
+      yield {
+        message: 'Registry \'kind\' is not correct for LocalRegistry ',
+        range: this._range,
+        category: ErrorKind.IncorrectType,
+      };
+    }
   }
 }
 
-class GitRegistryNode extends RegistryNode implements GitRegistry {
-  constructor(parent: ParentNode, sourceName: string) {
-    super(parent, sourceName);
-  }
-  override location = new StringsSequence(this, 'git');
+
+export class RemoteArtifactRegistry extends RegistryNode implements LocalRegistry {
+  override location = new StringsSequence(this, 'url');
 
   /** @internal */
   override *validate(): Iterable<ValidationError> {
-    // yield* super.validate();
+    //
+    if (this.kind !== 'artifact') {
+      yield {
+        message: 'Registry \'kind\' is not correct for RemoteArtifactRegistry ',
+        range: this._range,
+        category: ErrorKind.IncorrectType,
+      };
+    }
   }
-}
-
-/** internal */
-export function createRegistryNode(parent: ParentNode, name: string) {
-  // detect type by presence of fields
-  if (parent.selfNode.has('path')) {
-    return new LocalRegistryNode(parent, name);
-  }
-  if (parent.selfNode.has('nupkg')) {
-    return new NugetRegistryNode(parent, name);
-  }
-  if (parent.selfNode.has('git')) {
-    return new GitRegistryNode(parent, name);
-  }
-  fail(i`unknown source node type`);
 }
 

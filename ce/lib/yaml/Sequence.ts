@@ -7,7 +7,7 @@ import { YamlNode } from './YamlNode';
 
 
 export abstract class Sequence<TElement, TNode extends YAMLMap | Scalar | YAMLSeq> extends YamlNode<TNode> {
-  protected abstract wrapValue(value: any): TElement;
+  protected abstract wrapValue(value: any): TElement | undefined;
   abstract [Symbol.iterator](): Iterator<TElement>;
 
   get length(): number {

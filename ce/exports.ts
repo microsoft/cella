@@ -19,7 +19,7 @@ export * from './lib/fs/unzip';
 export * from './lib/i18n';
 export * from './lib/interfaces/metadata-format';
 export * from './lib/mediaquery/media-query';
-export * from './lib/registries/catalog';
+export * from './lib/registries/indexer';
 export * from './lib/registries/standard-registry';
 export * from './lib/session';
 export * from './lib/util/channels';

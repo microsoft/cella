@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Validation } from './validation';
+import { Validation } from '../../validation';
 
 /**
    * defines what should be physically laid out on disk for this artifact

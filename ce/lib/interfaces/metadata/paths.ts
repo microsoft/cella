@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { YamlDictionary } from '../yaml/MapOf';
-import { StringsSequence } from '../yaml/strings';
-import { StringOrStrings } from './metadata-format';
+import { YamlDictionary } from '../../yaml/MapOf';
+import { StringsSequence } from '../../yaml/strings';
+import { StringOrStrings } from '../metadata-format';
 
 /**
  * types of paths that we can handle when crafting the context

@@ -4,25 +4,25 @@
 import { strict } from 'assert';
 import { compare } from 'semver';
 import { parse } from 'yaml';
+import { parseConfiguration } from '../amf/metadata-file';
 import { Artifact, createArtifact } from '../artifacts/artifact';
 import { Registry } from '../artifacts/registry';
 import { acquireArtifactFile } from '../fs/acquire';
 import { ZipUnpacker } from '../fs/archive';
 import { FileType } from '../fs/filesystem';
 import { i } from '../i18n';
-import { parseConfiguration } from '../interfaces/metadata-format';
 import { Session } from '../session';
 import { Queue } from '../util/promise';
 import { Uri } from '../util/uri';
 import { isYAML, serialize } from '../yaml/yaml';
-import { Catalog } from './catalog';
+import { Index } from './indexer';
 import { RegistryIndex } from './registry-index';
 
 const THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING = '# MANIFEST-INDEX';
 
 export class StandardRegistry implements Registry {
 
-  private catalog = new Catalog(RegistryIndex);
+  private index = new Index(RegistryIndex);
   private indexYaml: Uri;
 
   constructor(private session: Session, readonly baseFolder: Uri, readonly remoteLocation: Uri) {
@@ -30,7 +30,7 @@ export class StandardRegistry implements Registry {
   }
 
   get count() {
-    return this.catalog.indexOfTargets.length;
+    return this.index.indexOfTargets.length;
   }
 
   async regenerate(): Promise<void> {
@@ -62,7 +62,7 @@ export class StandardRegistry implements Registry {
           throw new Error('invalid manifest');
         }
 
-        repo.catalog.insert(amf, repo.baseFolder.relative(uri));
+        repo.index.insert(amf, repo.baseFolder.relative(uri));
 
       } catch (e: any) {
         repo.session.channels.debug(e.toString());
@@ -82,12 +82,12 @@ export class StandardRegistry implements Registry {
         }
       }
     }
-    this.catalog.reset();
+    this.index.reset();
     await process(this.baseFolder);
     await q.done;
 
     // we're done inserting values
-    this.catalog.doneInsertion();
+    this.index.doneInsertion();
   }
 
   #loaded = false;
@@ -104,16 +104,16 @@ export class StandardRegistry implements Registry {
     strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
 
     this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
-    this.catalog.deserialize(parse(await this.indexYaml.readUTF8()));
+    this.index.deserialize(parse(await this.indexYaml.readUTF8()));
     this.#loaded = true;
   }
 
   async save(): Promise<void> {
-    await this.indexYaml.writeFile(Buffer.from(`${THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING}\n${serialize(this.catalog.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
+    await this.indexYaml.writeFile(Buffer.from(`${THIS_IS_NOT_A_MANIFEST_ITS_AN_INDEX_STRING}\n${serialize(this.index.serialize()).replace(/\s*(\d*,)\n/g, '$1')}`));
   }
 
   get where(): RegistryIndex {
-    return this.catalog.where;
+    return this.index.where;
   }
 
   async update() {
@@ -134,7 +134,7 @@ export class StandardRegistry implements Registry {
 
   async openArtifact(manifestPath: string) {
     const metadata = await this.openManifest(manifestPath);
-    return createArtifact(this.session, metadata, this.catalog.index.id.getShortNameOf(metadata.info.id) || metadata.info.id);
+    return createArtifact(this.session, metadata, this.index.indexSchema.id.getShortNameOf(metadata.info.id) || metadata.info.id);
   }
 
   async openArtifacts(manifestPaths: Array<string>) {

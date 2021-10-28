@@ -2,12 +2,12 @@
 // Licensed under the MIT License.
 
 import { LineCounter } from 'yaml';
-import { Primitive } from '../amf/metadata-file';
-import { YamlDictionary } from '../yaml/MapOf';
+import { Primitive } from '../../amf/metadata-file';
+import { YamlDictionary } from '../../yaml/MapOf';
+import { KnownArtifactRegistryTypes } from '../metadata-format';
+import { Contact } from './contact';
+import { Demands } from './demands';
 import { Info } from './info';
-import { ArtifactSource } from './metadata-format';
-import { Contact } from './metadata/contact';
-import { Demands } from './metadata/demands';
 
 /**
  * a profile defines the requirements and/or artifact that should be installed
@@ -28,7 +28,7 @@ export interface ProfileBase extends Demands {
 
 
   /** artifact sources list the references necessary to install artifacts in this file */
-  catalogs?: YamlDictionary<ArtifactSource>;
+  registries?: YamlDictionary<KnownArtifactRegistryTypes>;
 
   /** mark an artifact as supporting insert (either allowed or only) */
   insert?: 'allowed' | 'only';
