@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Dictionary } from '../collections';
-import { KnownArtifactRegistryTypes } from '../metadata-format';
+import { KnownArtifactRegistryTypes } from './metadata-format';
 import { Contact } from './contact';
 import { Demands } from './demands';
 import { Info } from './info';

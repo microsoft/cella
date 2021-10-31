@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Demands } from './metadata/demands';
-import { ProfileBase } from './metadata/profile-base';
-import { GitRegistry } from './metadata/registries/git-registry';
-import { LocalRegistry } from './metadata/registries/local-registry';
-import { NugetRegistry } from './metadata/registries/nuget-registry';
+import { ProfileBase } from './profile-base';
+import { GitRegistry } from './registries/git-registry';
+import { LocalRegistry } from './registries/local-registry';
+import { NugetRegistry } from './registries/nuget-registry';
 
 
 /**
@@ -17,9 +16,7 @@ import { NugetRegistry } from './metadata/registries/nuget-registry';
  *
  * @see the section below in this document entitled 'Host/Environment Queries"
  */
-export type Profile = ProfileBase & {
-  [key: string]: Demands;
-}
+export type Profile = ProfileBase;
 
 export type KnownArtifactRegistryTypes = NugetRegistry | LocalRegistry | GitRegistry;
 

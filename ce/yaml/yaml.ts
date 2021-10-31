@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { Document, Node, Pair, parseDocument, Scalar, stringify, visit, YAMLMap, YAMLSeq } from 'yaml';
-import { StringOrStrings } from '../interfaces/metadata-format';
+import { StringOrStrings } from '../interfaces/metadata/metadata-format';
 
 /** @internal */
 export const createNode = (v: any, b = true) => parseDocument('', { prettyErrors: false }).createNode(v, {});
