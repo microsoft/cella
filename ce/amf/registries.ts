@@ -118,7 +118,6 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
   protected createInstance(node: Node) {
     if (isMap(node)) {
       const k = node.get('kind');
-      const p = node.get('path');
 
       if (k === 'artifact' && node.has('path')) {
         return new LocalRegistry(node, this);
@@ -128,6 +127,14 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
       }
     }
     return undefined;
+  }
+  /** @internal */
+  override *validate(): Iterable<ValidationError> {
+    if (this.exists) {
+      for (const [key, registry] of this) {
+        yield* registry.validate();
+      }
+    }
   }
 }
 

@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { isMap, isSeq } from 'yaml';
+import { ErrorKind } from '../interfaces/error-kind';
+import { ValidationError } from '../interfaces/validation-error';
 import { Coerce } from '../yaml/Coerce';
 import { Entity } from '../yaml/Entity';
 import { EntityMap } from '../yaml/EntityMap';
@@ -11,10 +14,28 @@ import { Settings } from './settings';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
 
-
+/**
+ * A map of mediaquery to DemandBlock
+ */
 export class Demands extends EntityMap<YAMLDictionary, DemandBlock> {
   constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
     super(DemandBlock, node, parent, key);
+  }
+
+  /** @internal */
+  override *validate(): Iterable<ValidationError> {
+    yield* super.validate();
+
+    for (const [key, value] of this) {
+      if (!isMap(value) && !isSeq(value)) {
+        yield {
+          message: `Conditional Demand ${key} is not an object`,
+          range: value.node?.range || [0, 0, 0],
+          category: ErrorKind.IncorrectType
+        };
+      }
+      yield* value.validate();
+    }
   }
 }
 
@@ -33,43 +54,11 @@ export class DemandBlock extends Entity {
 
   settings = new Settings(undefined, this, 'settings');
   install = new Installs(undefined, this, 'install');
-}
 
-
-/*
-export class DemandNode extends YamlObject implements Demands {
-
-  /* Demands * /
-  settings: Settings = new SettingsNode(this);
-  requires = new Requires(this);
-  seeAlso = new Requires(this, 'seeAlso');
-  install = new Installs(this);
-
-  get error(): string | undefined {
-    return <string>this.selfNode.get('error');
-  }
-  set error(errorMessage: string | undefined) {
-    this.selfNode.set('error', errorMessage);
-  }
-
-  get warning(): string | undefined {
-    return <string>this.self?.get('warning');
-  }
-  set warning(warningMessage: string | undefined) {
-    this.selfNode.set('warning', warningMessage);
-  }
-
-  get message(): string | undefined {
-    return <string>this.self?.get('message');
-  }
-  set message(message: string | undefined) {
-    this.selfNode.set('message', message);
-  }
-
-  /** @internal * /
+  /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
-    if (this.self) {
+    if (this.exists) {
       yield* this.settings.validate();
       yield* this.requires.validate();
       yield* this.seeAlso.validate();
@@ -77,29 +66,3 @@ export class DemandNode extends YamlObject implements Demands {
     }
   }
 }
-
-
-export class ConditionalDemands extends ObjectDictionary<Demands> {
-  constructor(parent: ParentNode, nodeName: string) {
-    super(parent, nodeName, (k, v) => new DemandNode(this, k));
-  }
-
-  /** @internal * /
-  override *validate(): Iterable<ValidationError> {
-    for (const each of this.members) {
-      const n = <YAMLSeq | YAMLMap | Scalar>each.key;
-      if (!isMap(each.value) && !isSeq(each.value)) {
-
-        yield {
-          message: `Conditional Demand ${each.key} is not an object`,
-          range: n.range || [0, 0, 0],
-          category: ErrorKind.IncorrectType
-        };
-      }
-    }
-
-    for (const demand of this.values) {
-      yield* demand.validate();
-    }
-  }
-}*/

@@ -25,9 +25,6 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
 
   get node(): ThisType | undefined {
     if (this._node) {
-      if (typeof this._node === 'string') {
-        debugger;
-      }
       return this._node;
     }
 
@@ -39,9 +36,6 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
   }
 
   set node(n: ThisType | undefined) {
-    if (typeof n === 'string') {
-      debugger;
-    }
     this._node = n;
   }
 
