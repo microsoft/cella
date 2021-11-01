@@ -1,44 +1,32 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Contact } from '../interfaces/metadata/contact';
+import { Dictionary } from '../interfaces/collections';
+import { Contact as IContact } from '../interfaces/metadata/contact';
 import { ValidationError } from '../interfaces/validation-error';
-import { YamlDictionary } from '../yaml/MapOf';
-import { StringsSequence } from '../yaml/strings';
-import { ParentNode } from '../yaml/yaml-node';
-import { YamlObject } from '../yaml/YamlObject';
+import { Coerce } from '../yaml/Coerce';
+import { Entity } from '../yaml/Entity';
+import { EntityMap } from '../yaml/EntityMap';
+import { Strings } from '../yaml/strings';
+import { Yaml, YAMLDictionary } from '../yaml/yaml-types';
 
-/** @internal */
-export class ContactNode extends YamlObject implements Contact {
-  get name() {
-    return this.nodeName;
-  }
+export class Contact extends Entity implements IContact {
+  get email(): string | undefined { return Coerce.String(this.getMember('email')); }
+  set email(value: string | undefined) { this.setMember('email', value); }
 
-  get email(): string | undefined {
-    return <string>this.selfNode.get('email');
-  }
-
-  set email(address: string | undefined) {
-    this.setMember('email', address);
-  }
-
-  readonly roles = new StringsSequence(this, 'role');
-
+  readonly roles = new Strings(undefined, this, 'roles');
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
   }
 }
 
-
-export class Contacts extends YamlDictionary<Contact> {
-  constructor(parent: ParentNode) {
-    super(parent, 'contacts');
+export class Contacts extends EntityMap<YAMLDictionary, Contact> implements Dictionary<IContact> {
+  constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
+    super(Contact, node, parent, key);
   }
-  protected override  wrapMember(key: string, value: any): Contact {
-    return new ContactNode(this, key);
-  }
-  add(name: string) {
-    return this.getOrCreate(name);
+  /** @internal */
+  override *validate(): Iterable<ValidationError> {
+    yield* super.validate();
   }
 }

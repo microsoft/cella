@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-
 import { Dictionary, Strings } from '../collections';
 import { Validation } from '../validation';
 
-type Primitive = string | number | boolean
-
 /** settings that should be applied to the context */
 
-export interface Settings extends Dictionary<Primitive | Record<string, any>>, Validation {
+export interface Settings extends Validation {
   /** a map of path categories to one or more values */
   paths: Dictionary<Strings>;
 

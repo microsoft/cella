@@ -1,12 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { VersionReference } from '../interfaces/metadata/version-reference';
-import { YamlDictionary } from '../yaml/MapOf';
-import { ParentNode } from '../yaml/yaml-node';
-import { VersionReferenceNode } from './version-reference';
+import { CustomScalarMap } from '../yaml/CustomScalarMap';
+import { Yaml, YAMLDictionary } from '../yaml/yaml-types';
+import { VersionReference } from './version-reference';
 
 
+export class Requires extends CustomScalarMap<VersionReference> {
+  constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
+    super(VersionReference, node, parent, key);
+  }
+}
+
+
+/*
 export class Requires extends YamlDictionary<VersionReference> {
   constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
     super(parent, kind);
@@ -29,3 +36,4 @@ export class Requires extends YamlDictionary<VersionReference> {
     }
   }
 }
+*/

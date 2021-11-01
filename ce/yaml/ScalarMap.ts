@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { isScalar } from 'yaml';
 import { BaseMap } from './BaseMap';
+import { Coerce } from './Coerce';
 import { Primitive } from './yaml-types';
 
 
@@ -13,5 +15,16 @@ export /** @internal */ class ScalarMap<TElement extends Primitive = Primitive> 
   set(key: string, value: TElement) {
     this.assert(true);
     this.node!.set(key, value);
+  }
+
+  *[Symbol.iterator](): Iterator<[string, TElement]> {
+    if (this.node) {
+      for (const { key, value } of this.node.items) {
+        const v = isScalar(value) ? Coerce.Primitive(value) : undefined;
+        if (v) {
+          yield [key, value];
+        }
+      }
+    }
   }
 }

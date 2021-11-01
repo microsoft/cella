@@ -121,6 +121,7 @@ export async function installArtifacts(artifacts: Iterable<Artifact>, options?: 
     } catch (e: any) {
       bar.stop();
       debug(e);
+      debug(e.stack);
       error(i`Error installing ${artifactIdentity(id)} - ${e} `);
       return [false, installed];
     }

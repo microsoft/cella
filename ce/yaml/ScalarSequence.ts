@@ -65,14 +65,14 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
     return undefined;
   }
 
-  [Symbol.iterator](): Iterable<TElement> {
+  *[Symbol.iterator](): Iterator<TElement> {
     if (isSeq(this.node)) {
-      return this.node.items.values();
+      return yield* this.node.items.values();
     }
     if (isScalar(this.node)) {
-      return [this.node.value];
+      return yield this.node.value;
     }
-    return [];
+    return;
   }
 
   clear() {

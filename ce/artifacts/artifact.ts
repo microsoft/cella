@@ -47,7 +47,7 @@ export class Artifact {
       return;
     }
 
-    switch (installInfo.kind) {
+    switch (installInfo.installerKind) {
       case 'nupkg':
         await installNuGet(this.session, this, <NupkgInstaller>installInfo, options);
         break;
@@ -60,7 +60,7 @@ export class Artifact {
       case 'git':
         throw new Error('not implemented');
       default:
-        fail(i`Unknown installer type ${installInfo!.kind}`);
+        fail(i`Unknown installer type ${installInfo!.installerKind}`);
     }
   }
 
@@ -166,7 +166,7 @@ export class Artifact {
 
     for (const s of this.applicableDemands.settings) {
       // eslint-disable-next-line prefer-const
-      for (let [key, value] of s.defines.entries) {
+      for (let [key, value] of s.defines) {
         if (value === 'true') {
           value = '1';
         }
@@ -185,7 +185,8 @@ export class Artifact {
         }
         const pathEnvVariable = key.toUpperCase();
         const p = activation.paths.getOrDefault(pathEnvVariable, []);
-        const locations = s.paths.get(key)?.toArray().map(each => each).selectMany(path => {
+        const l = s.paths.get(key);
+        const locations = (l ? [...l] : []).map(each => each).selectMany(path => {
           const p = sanitizePath(path);
           return p ? micromatch(allPaths, p) : [''];
         }).map(each => this.targetLocation.join(each));
@@ -212,7 +213,7 @@ export class Artifact {
         activation.tools.set(envVariable, uri);
       }
 
-      for (const [key, value] of s.variables.entries) {
+      for (const [key, value] of s.variables) {
         const envKey = activation.environment.getOrDefault(key, []);
         envKey.push(...value);
       }

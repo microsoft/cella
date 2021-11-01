@@ -8,7 +8,10 @@ import { Yaml, YAMLSequence } from './yaml-types';
 export /** @internal */ class Flags extends Yaml<YAMLSequence> {
 
   has(flag: string) {
-    return this.node!.items.some(each => each.value === flag);
+    if (this.node) {
+      return this.node!.items.some(each => each.value === flag);
+    }
+    return false;
   }
 
   set(flag: string, value: boolean) {

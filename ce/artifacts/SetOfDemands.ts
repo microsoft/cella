@@ -16,7 +16,7 @@ export class SetOfDemands {
   constructor(metadata: MetadataFile, session: Session) {
     this._demands.set('', metadata);
 
-    for (const [query, demands] of metadata.entries) {
+    for (const [query, demands] of metadata.conditionalDemands) {
       if (parseQuery(query).match(session.context)) {
         session.channels.debug(`Matching demand query: '${query}'`);
         this._demands.set(query, demands);
@@ -55,14 +55,14 @@ export class SetOfDemands {
     const rq1 = linq.values(d).selectNonNullable(d => d.requires).toArray();
     const result = new Dictionary<VersionReference>();
     for (const dict of rq1) {
-      for (const [query, demands] of dict.entries) {
+      for (const [query, demands] of dict) {
         result[query] = demands;
       }
     }
     const rq = [...d.values()].map(each => each.requires).filter(each => each);
 
     for (const dict of rq) {
-      for (const [query, demands] of dict.entries) {
+      for (const [query, demands] of dict) {
         result[query] = demands;
       }
     }

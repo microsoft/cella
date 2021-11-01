@@ -3,7 +3,7 @@
 
 export type Range = [number, number, number];
 
-export interface Dictionary<T> {
+export interface Dictionary<T> extends Iterable<[string, T]> {
   clear(): void;
   delete(key: string): boolean;
   get(key: string): T | undefined;
@@ -13,14 +13,14 @@ export interface Dictionary<T> {
   readonly keys: Array<string>;
 }
 
-export interface Sequence<T> {
+export interface Sequence<T> extends Iterable<T> {
   [Symbol.iterator](): Iterator<T>;
   readonly length: number;
   clear(): void;
 }
 
 export interface Strings extends Sequence<string> {
-  add(value: string | Array<string>): void;
-  remove(val: string | Array<string>): void;
+  // add(value: string | Array<string>): void;
+  // delete(val: string | Array<string>): void;
 
 }

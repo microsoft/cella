@@ -5,7 +5,7 @@ import { Strings } from '../../collections';
 import { Validation } from '../../validation';
 
 export interface Registry {
-  readonly kind: string;
+  readonly registryKind?: string;
 }
 
 export interface ArtifactRegistry extends Registry, Validation {

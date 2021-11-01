@@ -1,85 +1,56 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail } from 'assert';
-import { parse as parseSemver } from 'semver';
-import { YAMLMap } from 'yaml';
 import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
-import { Info } from '../interfaces/metadata/info';
+import { Info as IInfo } from '../interfaces/metadata/info';
 import { ValidationError } from '../interfaces/validation-error';
-import { checkOptionalArrayOfStrings, checkOptionalString } from '../util/checks';
-import { YamlStringSet } from '../yaml/strings';
-import { ParentNode } from '../yaml/yaml-node';
-import { YamlObject } from '../yaml/YamlObject';
+import { Coerce } from '../yaml/Coerce';
+import { Entity } from '../yaml/Entity';
+import { Flags } from '../yaml/Flags';
 
-export class InfoNode extends YamlObject implements Info {
-  constructor(parent: ParentNode) {
-    super(parent, 'info');
-  }
 
-  get id(): string {
-    return <string>this.getMember('id');
-  }
+export class Info extends Entity implements IInfo {
+  get version(): string { return Coerce.String(this.getMember('version')) || ''; }
+  set version(value: string) { this.setMember('version', value); }
 
-  set id(value: string) {
-    this.setMember('id', value);
-  }
+  get id(): string { return Coerce.String(this.getMember('id')) || ''; }
+  set id(value: string) { this.setMember('id', value); }
 
-  get version(): string {
-    return <string>this.getMember('version');
-  }
+  get summary(): string | undefined { return Coerce.String(this.getMember('summary')); }
+  set summary(value: string | undefined) { this.setMember('summary', value); }
 
-  set version(value: string) {
-    const v = parseSemver(value);
-    this.setMember('version', v?.format() || fail(i`Version '${value}' is not a legal semver version`));
-  }
+  get description(): string | undefined { return Coerce.String(this.getMember('description')); }
+  set description(value: string | undefined) { this.setMember('description', value); }
 
-  get summary(): string | undefined {
-    return <string>this.getMember('summary') || undefined;
-  }
+  private flags = new Flags(undefined, this, 'options');
 
-  set summary(value: string | undefined) {
-    this.setMember('summary', value);
-  }
-
-  get description(): string | undefined {
-    return <string>this.selfNode.get('description') || undefined;
-  }
-
-  set description(value: string | undefined) {
-    this.setMember('description', value);
-  }
-
-  get dependencyOnly(): boolean {
-    return (new YamlStringSet(this.selfNode, 'options').has('dependencyOnly'));
-  }
-
-  set dependencyOnly(value: boolean) {
-    if (value) {
-      new YamlStringSet(this.selfNode, 'options').set('dependencyOnly');
-    } else {
-      new YamlStringSet(this.selfNode, 'options').unset('dependencyOnly');
-    }
-  }
+  get dependencyOnly(): boolean { return this.flags.has('dependencyOnly'); }
+  set dependencyOnly(value: boolean) { this.flags.set('dependencyOnly', value); }
 
   /** @internal */
   override *validate(): Iterable<ValidationError> {
-    if (!(this.selfNode instanceof YAMLMap)) {
-      yield { message: i`Incorrect type for '${'info'}' - should be an object`, range: this._range, category: ErrorKind.IncorrectType };
-      return; // stop processing in this block
+    yield* super.validate();
+
+    if (!this.has('id')) {
+      yield { message: i`Missing identity '${'info.id'}'`, range: this, category: ErrorKind.FieldMissing };
+    } else if (!this.is('id', 'string')) {
+      yield { message: i`info.id should be of type 'string', found ${this.kind('id')}`, range: this.sourcePosition('id'), category: ErrorKind.IncorrectType };
     }
 
-    if (!this.selfNode.has('id')) {
-      yield { message: i`Missing identity '${'info.id'}'`, range: this._range, category: ErrorKind.FieldMissing };
+    if (!this.has('version')) {
+      yield { message: i`Missing version '${'info.version'}'`, range: this, category: ErrorKind.FieldMissing };
+    } else if (!this.is('version', 'string')) {
+      yield { message: i`info.version should be of type 'string', found ${this.kind('version')}`, range: this.sourcePosition('version'), category: ErrorKind.IncorrectType };
     }
-
-    if (!this.selfNode.has('version')) {
-      yield { message: i`Missing version '${'info.version'}'`, range: this._range, category: ErrorKind.FieldMissing };
+    if (this.is('summary', 'string') === false) {
+      yield { message: i`info.summary should be of type 'string', found ${this.kind('summary')}`, range: this.sourcePosition('summary'), category: ErrorKind.IncorrectType };
     }
-
-    yield* checkOptionalString(this.selfNode, this._range, 'summary');
-    yield* checkOptionalString(this.selfNode, this._range, 'description');
-    yield* checkOptionalArrayOfStrings(this.selfNode, this._range, 'options');
+    if (this.is('description', 'string') === false) {
+      yield { message: i`info.description should be of type 'string', found ${this.kind('description')}`, range: this.sourcePosition('description'), category: ErrorKind.IncorrectType };
+    }
+    if (this.is('options', 'sequence') === false) {
+      yield { message: i`info.options should be a seqence, found ${this.kind('options')}`, range: this.sourcePosition('options'), category: ErrorKind.IncorrectType };
+    }
   }
 }

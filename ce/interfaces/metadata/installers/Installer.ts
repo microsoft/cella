@@ -16,7 +16,7 @@ import { Validation } from '../../validation';
    */
 
 export interface Installer extends Validation {
-  readonly kind: string;
+  readonly installerKind: string;
   readonly lang?: string; // note to only install this entry when the current locale is this language
   readonly nametag?: string; // note to include this tag in the file name of the cached artifact
 }

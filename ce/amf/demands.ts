@@ -1,23 +1,45 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { isMap, isSeq, Scalar, YAMLMap, YAMLSeq } from 'yaml';
-import { ErrorKind } from '../interfaces/error-kind';
-import { Demands } from '../interfaces/metadata/demands';
-import { Settings } from '../interfaces/metadata/Settings';
-import { ValidationError } from '../interfaces/validation-error';
-import { ObjectDictionary } from '../yaml/ImplMapOf';
-import { ParentNode } from '../yaml/yaml-node';
-import { YamlObject } from '../yaml/YamlObject';
+import { Coerce } from '../yaml/Coerce';
+import { Entity } from '../yaml/Entity';
+import { EntityMap } from '../yaml/EntityMap';
+import { Yaml, YAMLDictionary } from '../yaml/yaml-types';
 import { Installs } from './installer';
 import { Requires } from './Requires';
-import { SettingsNode } from './settings';
+import { Settings } from './settings';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
 
+
+export class Demands extends EntityMap<YAMLDictionary, DemandBlock> {
+  constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
+    super(DemandBlock, node, parent, key);
+  }
+}
+
+export class DemandBlock extends Entity {
+  get error(): string | undefined { return Coerce.String(this.getMember('error')); }
+  set error(value: string | undefined) { this.setMember('error', value); }
+
+  get warning(): string | undefined { return Coerce.String(this.getMember('warning')); }
+  set warning(value: string | undefined) { this.setMember('warning', value); }
+
+  get message(): string | undefined { return Coerce.String(this.getMember('message')); }
+  set message(value: string | undefined) { this.setMember('message', value); }
+
+  seeAlso = new Requires(undefined, this, 'seeAlso');
+  requires = new Requires(undefined, this, 'requires');
+
+  settings = new Settings(undefined, this, 'settings');
+  install = new Installs(undefined, this, 'install');
+}
+
+
+/*
 export class DemandNode extends YamlObject implements Demands {
 
-  /* Demands */
+  /* Demands * /
   settings: Settings = new SettingsNode(this);
   requires = new Requires(this);
   seeAlso = new Requires(this, 'seeAlso');
@@ -44,7 +66,7 @@ export class DemandNode extends YamlObject implements Demands {
     this.selfNode.set('message', message);
   }
 
-  /** @internal */
+  /** @internal * /
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
     if (this.self) {
@@ -62,7 +84,7 @@ export class ConditionalDemands extends ObjectDictionary<Demands> {
     super(parent, nodeName, (k, v) => new DemandNode(this, k));
   }
 
-  /** @internal */
+  /** @internal * /
   override *validate(): Iterable<ValidationError> {
     for (const each of this.members) {
       const n = <YAMLSeq | YAMLMap | Scalar>each.key;
@@ -80,4 +102,4 @@ export class ConditionalDemands extends ObjectDictionary<Demands> {
       yield* demand.validate();
     }
   }
-}
+}*/

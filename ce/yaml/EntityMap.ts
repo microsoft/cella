@@ -3,6 +3,7 @@
 
 import { Dictionary } from '../interfaces/collections';
 import { BaseMap } from './BaseMap';
+import { Coerce } from './Coerce';
 import { EntityFactory, Node, Yaml, YAMLDictionary } from './yaml-types';
 
 
@@ -18,7 +19,10 @@ export /** @internal */ abstract class EntityMap<TNode extends Node, TElement ex
   *[Symbol.iterator](): Iterator<[string, TElement]> {
     if (this.node) {
       for (const each of this.node.items) {
-        yield [each.key, new this.factory(each.value)];
+        const k = Coerce.String(each.key);
+        if (k) {
+          yield [k, new this.factory(each.value)];
+        }
       }
     }
   }

@@ -11,6 +11,16 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
     super(node, parent, key);
   }
 
+  *[Symbol.iterator](): Iterator<[string, TElement]> {
+    if (this.node) {
+      for (const { key, value } of this.node.items) {
+        if (isScalar(value)) {
+          yield [key, new this.factory(value, this, key)];
+        }
+      }
+    }
+  }
+
   get(key: string): TElement | undefined {
     if (this.node) {
       const v = this.node!.get(key, true);

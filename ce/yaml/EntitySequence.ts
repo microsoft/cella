@@ -73,11 +73,11 @@ export /** @internal */ class EntitySequence<TElement extends Yaml<YAMLDictionar
     return undefined;
   }
 
-  [Symbol.iterator](): Iterable<TElement> {
+  *[Symbol.iterator](): Iterator<TElement> {
     if (isScalar(this.node)) {
-      return [new this.factory(this.node)];
+      return yield new this.factory(this.node);
     }
-    return EntitySequence.generator(this);
+    yield* EntitySequence.generator(this);
   }
 
   clear() {

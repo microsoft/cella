@@ -4,9 +4,6 @@
 import { isCollection, isMap, isScalar, isSeq, Scalar, YAMLMap, YAMLSeq } from 'yaml';
 import { ValidationError } from '../interfaces/validation-error';
 import { isNullish } from '../util/checks';
-import { Coerce } from './Coerce';
-import { Entity } from './Entity';
-import { Flags } from './Flags';
 
 export class YAMLDictionary extends YAMLMap<string, any> { }
 export class YAMLSequence extends YAMLSeq<any> { }
@@ -24,7 +21,32 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
     throw new Error('creator not Not implemented on base class.');
   }
 
-  constructor(/** @internal */ public node?: ThisType, protected parent?: Yaml<Node>, protected key?: string) {
+  private _node: ThisType | undefined;
+
+  get node(): ThisType | undefined {
+    if (this._node) {
+      if (typeof this._node === 'string') {
+        debugger;
+      }
+      return this._node;
+    }
+
+    if (this.key && isMap(this.parent?.node)) {
+      this._node = <any>this.parent!.node.get(this.key, true);
+    }
+
+    return this._node;
+  }
+
+  set node(n: ThisType | undefined) {
+    if (typeof n === 'string') {
+      debugger;
+    }
+    this._node = n;
+  }
+
+  constructor(/** @internal */ node?: ThisType, protected parent?: Yaml<Node>, protected key?: string) {
+    this.node = node;
     if (!(<NodeFactory<ThisType>>(this.constructor)).create) {
       throw new Error(`class ${this.constructor.name} is missing implementation for create`);
     }
@@ -66,9 +88,21 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
     }
     return !isNullish(this.node?.value);
   }
-
+  /** @internal */ get exists(): boolean {
+    if (this.node) {
+      return true;
+    }
+    // well, if we're lazy and haven't instantiated it yet, check if it's created.
+    if (this.key && isMap(this.parent?.node)) {
+      this.node = <any>this.parent!.node.get(this.key);
+      if (this.node) {
+        return true;
+      }
+    }
+    return false;
+  }
   /** @internal */ assert(recreateIfDisposed = false, node = this.node) {
-    if (this.node === node) {
+    if (this.node && this.node === node) {
       return; // quick and fast
     }
 
@@ -153,28 +187,5 @@ export /** @internal */ interface EntityFactory<TNode extends Node, TEntity exte
 
 export /** @internal */ interface NodeFactory<TNode extends Node> extends Function {
   /**@internal*/ create(): TNode;
-}
-
-export /** @internal */ class Info extends Entity {
-  /** @internal */ constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
-    super(node, parent, key);
-  }
-
-  get version(): string | undefined { return Coerce.String(this.getMember('version')); }
-  set version(value: string | undefined) { this.setMember('version', value); }
-
-  get id(): string | undefined { return Coerce.String(this.getMember('id')); }
-  set id(value: string | undefined) { this.setMember('id', value); }
-
-  get summary(): string | undefined { return Coerce.String(this.getMember('summary')); }
-  set summary(value: string | undefined) { this.setMember('summary', value); }
-
-  get description(): string | undefined { return Coerce.String(this.getMember('description')); }
-  set description(value: string | undefined) { this.setMember('description', value); }
-
-  private flags = new Flags(undefined, this, 'options');
-
-  get dependencyOnly(): boolean { return this.flags.has('dependencyOnly'); }
-  set dependencyOnly(value: boolean) { this.flags.set('dependencyOnly', value); }
 }
 
