@@ -40,6 +40,8 @@ export class Uri implements URI {
 
   }
 
+  static readonly invalid = new Uri(<any>undefined, URI.parse('invalid:'));
+
   /**
   * scheme is the 'https' part of 'https://www.msft.com/some/path?query#fragment'.
   * The part before the first colon.
@@ -197,6 +199,10 @@ bad.fragment === '/project1';
     return this.uri.toString(skipEncoding);
   }
 
+  get formatted(): string {
+    return this.scheme === 'file' ? this.uri.fsPath : this.uri.toString();
+  }
+
   /** returns a JSON object with the components of the Uri */
   toJSON(): UriComponents {
     return this.uri.toJSON();
@@ -287,6 +293,11 @@ bad.fragment === '/project1';
     return uri.fileSystem.isSymlink(uri);
   }
 
+  isDirectory(uri?: Uri | string): Promise<boolean> {
+    uri = this.resolve(uri);
+    return uri.fileSystem.isDirectory(uri);
+  }
+
   async size(uri?: Uri | string): Promise<number> {
     return (await this.stat(uri)).size;
   }
@@ -306,9 +317,13 @@ bad.fragment === '/project1';
     return false;
   }
 
-  parent(): Uri {
+  get parent(): Uri {
     return new Uri(this.fileSystem, this.with({
       path: dirname(this.path)
     }));
   }
+}
+
+export function isFilePath(uriOrPath?: Uri | string): boolean {
+  return !!(/^[/\\.]|^[a-zA-Z]:/g.exec((uriOrPath || '').toString()));
 }

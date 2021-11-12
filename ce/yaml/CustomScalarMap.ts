@@ -11,6 +11,13 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
     super(node, parent, key);
   }
 
+  add(key: string): TElement {
+    this.assert(true);
+    this.node!.set(key, '');
+    return this.get(key)!;
+  }
+
+
   *[Symbol.iterator](): Iterator<[string, TElement]> {
     if (this.node) {
       for (const { key, value } of this.node.items) {
@@ -40,11 +47,8 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
       throw new Error('Cannot set an empty entity to a map');
     }
 
-    if (!this.node) {
-      // if we don't have a node at the moment, we need to create one.
-      this.assert(true);
-    }
+    this.assert(true);   // if we don't have a node at the moment, we need to create one.
 
-    this.node!.set(key, value.node);
+    this.node!.set(key, new Scalar(value));
   }
 }

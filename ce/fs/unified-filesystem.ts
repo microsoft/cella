@@ -66,6 +66,7 @@ export class UnifiedFileSystem extends FileSystem {
     return this.filesystem(uri).parse(uri);
   }
 
+
   stat(uri: Uri): Promise<FileStat> {
     return this.filesystem(uri).stat(uri);
   }

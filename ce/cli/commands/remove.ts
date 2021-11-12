@@ -7,6 +7,7 @@ import { Command } from '../command';
 import { projectFile } from '../format';
 import { activateProject } from '../project';
 import { debug, error, log } from '../styling';
+import { Project } from '../switches/project';
 import { WhatIf } from '../switches/whatIf';
 
 export class RemoveCommand extends Command {
@@ -15,6 +16,7 @@ export class RemoveCommand extends Command {
   seeAlso = [];
   argumentsHelp = [];
   whatIf = new WhatIf(this);
+  project: Project = new Project(this);
 
   get summary() {
     return i`Removes an artifact from a project`;
@@ -27,8 +29,9 @@ export class RemoveCommand extends Command {
   }
 
   override async run() {
-    const project = await session.findProjectProfile(session.currentDirectory);
-    if (!project) {
+    const projectManifest = await this.project.manifest;
+
+    if (!projectManifest) {
       error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
       return false;
     }
@@ -38,12 +41,11 @@ export class RemoveCommand extends Command {
       return false;
     }
 
-    const manifest = await session.openManifest(project);
 
-    const req = manifest.requires.keys;
+    const req = projectManifest.metadata.requires.keys;
     for (const input of this.inputs) {
       if (req.indexOf(input) !== -1) {
-        manifest.requires.delete(input);
+        projectManifest.metadata.requires.delete(input);
         log(i`Removing ${input} from project manifest`);
       } else {
         error(i`unable to find artifact ${input} in the project manifest`);
@@ -52,11 +54,11 @@ export class RemoveCommand extends Command {
     }
 
     // write the file out.
-    await manifest.save(project);
+    await projectManifest.metadata.save();
 
-    debug(`Deactivating project ${projectFile(project)}`);
+    debug(`Deactivating project ${projectFile(projectManifest.metadata.context.file)}`);
     await session.deactivate();
 
-    return await activateProject(project, this.commandLine);
+    return await activateProject(projectManifest, this.commandLine);
   }
 }

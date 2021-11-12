@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 
-import { Index, IndexSchema, SemverKey, StringKey } from '@microsoft/vcpkg-ce/dist/lib/registries/indexer';
-import { Dictionary, keys } from '@microsoft/vcpkg-ce/dist/lib/util/linq';
+import { Index, IndexSchema, SemverKey, StringKey } from '@microsoft/vcpkg-ce/dist/registries/indexer';
+import { Dictionary, keys } from '@microsoft/vcpkg-ce/dist/util/linq';
 import { describe, it } from 'mocha';
 import { SemVer } from 'semver';
 

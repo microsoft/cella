@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseQuery } from '@microsoft/vcpkg-ce/dist/lib/mediaquery/media-query';
+import { parseQuery } from '@microsoft/vcpkg-ce/dist/mediaquery/media-query';
 import { strict } from 'assert';
 import * as s from '../sequence-equal';
 

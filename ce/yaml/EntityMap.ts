@@ -27,6 +27,13 @@ export /** @internal */ abstract class EntityMap<TNode extends Node, TElement ex
     }
   }
 
+  add(key: string): TElement {
+    if (this.has(key)) {
+      return this.get(key)!;
+    }
+    return new this.factory(this.factory.create(), this, key);
+  }
+
   get(key: string): TElement | undefined {
     return this.getEntity<TNode, TElement>(key, this.factory);
   }

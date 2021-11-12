@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { LocalFileSystem } from '@microsoft/vcpkg-ce/dist/lib/fs/local-filesystem';
-import { Session } from '@microsoft/vcpkg-ce/dist/lib/session';
-import { Uri } from '@microsoft/vcpkg-ce/dist/lib/util/uri';
+import { LocalFileSystem } from '@microsoft/vcpkg-ce/dist/fs/local-filesystem';
+import { Session } from '@microsoft/vcpkg-ce/dist/session';
+import { Uri } from '@microsoft/vcpkg-ce/dist/util/uri';
 import { strict } from 'assert';
 import { statSync } from 'fs';
 import { rm } from 'fs/promises';

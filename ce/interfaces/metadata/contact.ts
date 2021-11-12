@@ -11,4 +11,5 @@ export interface Contact extends Validation {
   email?: string;
 
   readonly roles: Strings;
+
 }

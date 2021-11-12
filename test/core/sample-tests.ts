@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { sanitizePath } from '@microsoft/vcpkg-ce/dist/lib/artifacts/artifact';
+import { sanitizePath } from '@microsoft/vcpkg-ce/dist/artifacts/artifact';
 import { notStrictEqual, strict } from 'assert';
 import { describe, it } from 'mocha';
 import { pipeline as origPipeline } from 'stream';

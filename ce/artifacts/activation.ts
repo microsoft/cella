@@ -12,7 +12,7 @@ export class Activation {
   environment = new Map<string, Array<string>>();
 
   get Paths(): Array<[string, string]> {
-    return [...linq.items(this.paths).select(([variable, values]) => <[string, string]>[variable, values.map(uri => uri.fsPath).join(delimiter)])];
+    return [...linq.entries(this.paths).select(([variable, values]) => <[string, string]>[variable, values.map(uri => uri.fsPath).join(delimiter)])];
   }
 
   get Variables() {
@@ -32,6 +32,6 @@ export class Activation {
   }
 
   get Defines(): Array<[string, string]> {
-    return linq.items(this.defines).toArray();
+    return linq.entries(this.defines).toArray();
   }
 }

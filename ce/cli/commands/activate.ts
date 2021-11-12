@@ -29,15 +29,16 @@ export class ActivateCommand extends Command {
   }
 
   override async run() {
-    const project = await this.project.value;
-    if (!project) {
-      error(i`Unable to find project manifest file`);
+    const projectManifest = await this.project.manifest;
+
+    if (!projectManifest) {
+      error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
       return false;
     }
 
-    debug(i`Deactivating project ${projectFile(project)}`);
+    debug(i`Deactivating project ${projectFile(projectManifest.metadata.context.file)}`);
     await session.deactivate();
 
-    return await activateProject(project, this.commandLine);
+    return await activateProject(projectManifest, this.commandLine);
   }
 }

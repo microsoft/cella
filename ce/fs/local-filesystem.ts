@@ -98,7 +98,7 @@ export class LocalFileSystem extends FileSystem {
 
   async writeFile(uri: Uri, content: Uint8Array): Promise<void> {
     try {
-      await uri.parent().createDirectory();
+      await uri.parent.createDirectory();
       return writeFile(uri.fsPath, content);
     } finally {
       this.write(uri, content);
@@ -134,7 +134,7 @@ export class LocalFileSystem extends FileSystem {
 
     if (type & FileType.File) {
       // make sure the target folder is there
-      await target.parent().createDirectory();
+      await target.parent.createDirectory();
       await copyFile(source.fsPath, target.fsPath, overwrite);
       return 1;
     }

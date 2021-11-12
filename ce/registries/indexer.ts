@@ -6,7 +6,7 @@ import { Range, SemVer } from 'semver';
 import BTree from 'sorted-btree';
 import { isIterable } from '../util/checks';
 import { intersect } from '../util/intersect';
-import { Dictionary, items, keys, ManyMap } from '../util/linq';
+import { Dictionary, entries, keys, ManyMap } from '../util/linq';
 
 /* eslint-disable @typescript-eslint/ban-types */
 
@@ -156,10 +156,10 @@ abstract class Key<TGraph extends Object, TKey extends HasToString, TIndexSchema
 
   /** deserializes an object graph back into this key */
   deserialize(content: any) {
-    for (const [key, ids] of items(content.keys)) {
+    for (const [key, ids] of entries(content.keys)) {
       this.values.set(this.coerce(key), new Set(<any>ids));
     }
-    for (const [key, ids] of items(content.words)) {
+    for (const [key, ids] of entries(content.words)) {
       this.words.set(key, new Set(<any>ids));
     }
   }

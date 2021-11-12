@@ -26,7 +26,7 @@ describe('Uri', () => {
 
   it('Can go to parent path', () => {
     const child = tempUrl.join('uriChild');
-    const actual = child.parent().join().toString();
+    const actual = child.parent.join().toString();
     strictEqual(actual.toString(), tempUrlForward);
   });
 });

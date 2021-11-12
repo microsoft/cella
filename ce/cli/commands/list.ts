@@ -33,7 +33,7 @@ export class ListCommand extends Command {
 
       for (const { artifact, id, folder } of artifacts) {
         const latest = artifacts[0];
-        const name = artifactIdentity(id);
+        const name = artifactIdentity('?????', id);
         table.push(name, artifact.version, artifact.metadata.info.summary || '');
       }
       log(table.toString());

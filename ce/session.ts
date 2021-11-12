@@ -1,26 +1,37 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { fail, strict } from 'assert';
+import { strict } from 'assert';
 import { delimiter } from 'path';
-import { MetadataFile, parseConfiguration } from './amf/metadata-file';
+import { MetadataFile, parseConfiguration, parseMetadata } from './amf/metadata-file';
 import { Activation } from './artifacts/activation';
-import { Artifact, createArtifact } from './artifacts/artifact';
+import { Artifact, InstalledArtifact } from './artifacts/artifact';
 import { Registry } from './artifacts/registry';
 import { undo } from './constants';
-import { FileSystem } from './fs/filesystem';
+import { FileSystem, FileType } from './fs/filesystem';
 import { HttpsFileSystem } from './fs/http-filesystem';
 import { LocalFileSystem } from './fs/local-filesystem';
 import { UnifiedFileSystem } from './fs/unified-filesystem';
 import { VsixLocalFilesystem } from './fs/vsix-local-filesystem';
 import { i } from './i18n';
-import { DefaultRegistry } from './registries/standard-registry';
+import { AggregateRegistry } from './registries/aggregate-registry';
+import { LocalRegistry } from './registries/LocalRegistry';
+import { Registries } from './registries/registries';
+import { RemoteRegistry } from './registries/RemoteRegistry';
+import { isIndexFile, isMetadataFile } from './registries/standard-registry';
 import { Channels, Stopwatch } from './util/channels';
-import { Dictionary, items } from './util/linq';
-import { Uri } from './util/uri';
+import { Dictionary, entries } from './util/linq';
+import { Queue } from './util/promise';
+import { isFilePath, Uri } from './util/uri';
+import { isYAML } from './yaml/yaml';
 
 const defaultConfig =
   `# Global configuration
+
+registries:
+  - kind: artifact
+    name: microsoft
+    location: https://aka.ms/vcpkg-ce-default
 
 global:
   send-anonymous-telemetry: true 
@@ -61,13 +72,15 @@ export class Session {
   readonly homeFolder: Uri;
   readonly tmpFolder: Uri;
   readonly installFolder: Uri;
+  readonly registryFolder: Uri;
 
   readonly globalConfig: Uri;
   readonly cache: Uri;
   currentDirectory: Uri;
   configuration!: MetadataFile;
 
-  private readonly registries: Map<string, Registry>;
+  readonly defaultRegistry: AggregateRegistry;
+  private readonly registries = new Registries(this);
 
   constructor(currentDirectory: string, public readonly context: Context, public readonly settings: Dictionary<string>, public readonly environment: NodeJS.ProcessEnv) {
     this.fileSystem = new UnifiedFileSystem(this).
@@ -87,81 +100,113 @@ export class Session {
     this.tmpFolder = this.homeFolder.join('tmp');
     this.installFolder = this.homeFolder.join('artifacts');
 
+    this.registryFolder = this.homeFolder.join('registries');
+
     this.currentDirectory = this.fileSystem.file(currentDirectory);
 
-    // built in registry
-
-    this.registries = new Map<string, Registry>([
-      ['default', new DefaultRegistry(this)],
-      ['microsoft', new DefaultRegistry(this)]
-    ]);
+    // add built in registries
+    this.defaultRegistry = new AggregateRegistry(this);
+    // this.defaultRegistry.add(this.loadRegistry('https://aka.ms/vcpkg-ce-default', 'artifact')!, 'microsoft');
   }
 
-  get sourceNames() {
-    return this.registries.keys();
+  parseUri(uriOrPath: string | Uri): Uri {
+    return (typeof uriOrPath === 'string') ? isFilePath(uriOrPath) ? this.fileSystem.file(uriOrPath) : this.fileSystem.parse(uriOrPath) : uriOrPath;
   }
 
-  /** returns a registry given the name */
-  getRegistry(source = 'default') {
-    const result = this.registries.get(source);
+  loadRegistry(registryLocation: Uri | string | undefined, registryKind = 'artifact'): Registry | undefined {
+    if (registryLocation) {
+      const r = this.registries.getRegistry(registryLocation.toString());
 
-    if (!result) {
-      throw new Error(i`Unknown registry '${source}'`);
-    }
-    return result;
-  }
-
-  parseName(id: string) {
-    return id.indexOf(':') > -1 ? id.split(':') : ['default', id];
-  }
-
-  /**
-   * returns an artifact for the strongly-named artifact id/version.
-   *
-   * @param idOrShortName the identity of the artifact. If the string has no '<source>:' at the front, default source is assumed.
-   * @param version the version of the artifact
-   */
-  async getArtifact(idOrShortName: string, version: string | undefined): Promise<Artifact | undefined> {
-    const [source, name] = this.parseName(idOrShortName);
-    const registry = this.getRegistry(source);
-    if (!registry.loaded) {
-      await registry.load();
-    }
-
-    const query = registry.where.id.nameOrShortNameIs(name);
-    if (version) {
-      query.version.rangeMatch(version);
-    }
-    const matches = query.items;
-
-    switch (matches.length) {
-      case 0:
-        // did not match a name or short name.
-        return undefined; // nothing matched.
-
-      case 1: {
-        // found the artifact. awesome.
-        return await registry.openArtifact(matches[0]);
+      if (r) {
+        return r;
       }
 
-      default: {
-        // multiple matches.
-        const artifacts = await registry.openArtifacts(matches);
-        // there should be a single id matched.
-        switch (artifacts.size) {
-          case 0:
-            return undefined;
-          case 1:
-            // we want the first item, because it's the highest version that matches in what we were asked for
-            return artifacts.entries().next().value[1][0];
+      // not already loaded
+      registryLocation = this.parseUri(registryLocation);
+
+      switch (registryKind) {
+
+        case 'artifact':
+          switch (registryLocation.scheme) {
+            case 'https':
+              return this.registries.add(new RemoteRegistry(this, registryLocation));
+
+            case 'file':
+              return this.registries.add(new LocalRegistry(this, registryLocation));
+
+            default:
+              throw new Error(i`Unsupported registry scheme '${registryLocation.scheme}'`);
+          }
+      }
+      throw new Error(i`Unsupported registry kind '${registryKind}'`);
+    }
+
+    return undefined;
+  }
+
+  async isLocalRegistry(location: Uri | string): Promise<boolean> {
+    location = this.parseUri(location);
+    if (location.scheme === 'file') {
+      if (await isIndexFile(location)) {
+        return true;
+      }
+
+      if (await location.isDirectory()) {
+        const index = location.join('index.yaml');
+        if (await isIndexFile(index)) {
+          return true;
         }
-        // this should not be happening.
-        fail(i`Artifact identity '${idOrShortName}' matched more than one result (${[...artifacts.keys()].join(',')}). This should never happen. or is this multiple version matches?`);
+
+        let result = false;
+        const q = new Queue();
+
+        // still could be a folder of artifact files
+        // eslint-disable-next-line no-inner-declarations
+        async function process(folder: Uri) {
+          for (const [entry, type] of await folder.readDirectory()) {
+            if (result) {
+              return;
+            }
+
+            if (type & FileType.Directory) {
+              await process(entry);
+              continue;
+            }
+
+            if (type & FileType.File && isYAML(entry.path)) {
+              void q.enqueue(async () => { result = result || await isMetadataFile(entry); });
+            }
+          }
+        }
+        await process(location);
+        await q.done;
+        return result; // whatever we guess, we'll use
       }
-        break;
+      return false;
     }
+
+    return false;
   }
 
+  async isRemoteRegistry(location: Uri | string): Promise<boolean> {
+    location = this.parseUri(location);
+    if (location.scheme === 'https') {
+      return true;
+    }
+    return false;
+  }
+
+  parseName(id: string): [string, string] {
+    const parts = id.split(':');
+    switch (parts.length) {
+      case 0:
+        throw new Error(i`Invalid artifact id '${id}'`);
+      case 1:
+        return ['default', id];
+    }
+    return <[string, string]>parts;
+
+  }
 
   get telemetryEnabled() {
     return !!this.configuration.globalSettings.get('send-anonymous-telemetry');
@@ -210,9 +255,22 @@ export class Session {
     }
 
     // got past the checks, let's load the configuration.
-    this.configuration = parseConfiguration(this.globalConfig.toString(), (await this.fileSystem.readFile(this.globalConfig)).toString());
+    // this.configuration = parseConfiguration(this.globalConfig.toString(), (await this.fileSystem.readFile(this.globalConfig)).toString());
+    this.configuration = await parseMetadata(this.globalConfig, this);
     this.channels.debug(`Loaded global configuration file '${this.globalConfig.fsPath}'`);
 
+    // load the registries
+    for (const [name, regDef] of this.configuration.registries) {
+      const loc = regDef.location.get(0);
+      if (loc) {
+        const uri = this.parseUri(loc);
+        const reg = this.loadRegistry(uri, regDef.registryKind);
+        if (reg) {
+          this.channels.debug(`Loaded global manifest ${name} => ${uri.formatted}`);
+          this.defaultRegistry.add(reg, name);
+        }
+      }
+    }
     return this;
   }
 
@@ -245,7 +303,7 @@ export class Session {
     this.addPostscript(undo, '');
 
     if (lastEnv) {
-      const fileUri = this.fileSystem.parse(lastEnv);
+      const fileUri = this.parseUri(lastEnv);
       if (await fileUri.exists()) {
         const contents = await fileUri.readUTF8();
         await fileUri.delete();
@@ -256,7 +314,7 @@ export class Session {
 
             // reset the environment variables
             // and queue them up in the postscript
-            for (const [variable, value] of items(original.environment)) {
+            for (const [variable, value] of entries(original.environment)) {
               if (value) {
                 this.environment[variable] = value;
                 this.addPostscript(variable, value);
@@ -324,17 +382,17 @@ export class Session {
       switch (psf?.fsPath.substr(-3)) {
         case 'ps1':
           // update environment variables. (powershell)
-          content += [...items(this.#postscript)].map((k, v) => { return `$\{ENV:${k[0]}}="${k[1]}"`; }).join('\n');
+          content += [...entries(this.#postscript)].map((k, v) => { return `$\{ENV:${k[0]}}="${k[1]}"`; }).join('\n');
           break;
 
         case 'cmd':
           // update environment variables. (cmd)
-          content += [...items(this.#postscript)].map((k) => { return `set ${k[0]}=${k[1]}`; }).join('\r\n');
+          content += [...entries(this.#postscript)].map((k) => { return `set ${k[0]}=${k[1]}`; }).join('\r\n');
           break;
 
         case '.sh':
           // update environment variables. (posix)'
-          content += [...items(this.#postscript)].map((k, v) => {
+          content += [...entries(this.#postscript)].map((k, v) => {
             return k[1] ? `export ${k[0]}="${k[1]}"` : `unset ${k[0]}`;
           }).join('\n');
       }
@@ -361,13 +419,11 @@ export class Session {
     }
     for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
-
-        const content = await folder.readUTF8('artifact.yaml');
-        const metadata = parseConfiguration(folder.fsPath, content);
+        const metadata = await parseMetadata(folder.join('artifact.yaml'), this);
         result.push({
           folder,
           id: metadata.info.id,
-          artifact: createArtifact(this, metadata, '')
+          artifact: new InstalledArtifact(this, metadata)
         });
       } catch {
         // not a valid install.
@@ -377,7 +433,7 @@ export class Session {
   }
 
   async openManifest(manifestFile: Uri): Promise<MetadataFile> {
-    return parseConfiguration(manifestFile.fsPath, await manifestFile.readUTF8());
+    return await parseConfiguration(manifestFile.fsPath, await manifestFile.readUTF8(), this);
   }
 
   serializer(key: any, value: any) {

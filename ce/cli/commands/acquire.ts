@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 import { i } from '../../i18n';
-import { installArtifacts, selectArtifacts, Selections, showArtifacts } from '../artifacts';
+import { session } from '../../main';
+import { countWhere } from '../../util/linq';
+import { installArtifacts, selectArtifacts, showArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { blank } from '../constants';
 import { cmdSwitch } from '../format';
 import { debug, error, log, warning } from '../styling';
-import { Repo } from '../switches/repo';
+import { Registry } from '../switches/registry';
 import { Version } from '../switches/version';
 import { WhatIf } from '../switches/whatIf';
 
@@ -16,9 +18,9 @@ export class AcquireCommand extends Command {
   readonly aliases = ['install'];
   seeAlso = [];
   argumentsHelp = [];
-  repo = new Repo(this);
   version = new Version(this);
   whatIf = new WhatIf(this);
+  registrySwitch = new Registry(this);
 
   get summary() {
     return i`Acquire artifacts in the repository`;
@@ -36,25 +38,28 @@ export class AcquireCommand extends Command {
       return false;
     }
 
+    const registries = await this.registrySwitch.loadRegistries(session);
+
     const versions = this.version.values;
     if (versions.length && this.inputs.length !== versions.length) {
       error(i`Multiple packages specified, but not an equal number of ${cmdSwitch('version')} switches.`);
       return false;
     }
 
-    const artifacts = await selectArtifacts(<Selections>this.inputs.map((v, i) => [v, versions[i]]));
+    const artifacts = await selectArtifacts(new Map(this.inputs.map((v, i) => [v, versions[i] || '*'])), registries);
 
     if (!artifacts) {
       debug('No artifacts selected - stopping');
       return false;
     }
 
-    if (!await showArtifacts(artifacts, this.commandLine)) {
+    if (!await showArtifacts(artifacts.artifacts, this.commandLine)) {
       warning(i`No artifacts are acquired`);
       return false;
     }
 
-    const numberOfArtifacts = await [...artifacts].count(async each => !(!this.commandLine.force && await each.isInstalled));
+    // const numberOfArtifacts = await [...artifacts.artifacts].count(async ([artifact, details]) => !(!this.commandLine.force && await artifact.isInstalled));
+    const numberOfArtifacts = await countWhere(artifacts.artifacts, async (artifact) => !(!this.commandLine.force && await artifact.isInstalled));
 
     if (!numberOfArtifacts) {
       log(blank);
@@ -64,7 +69,7 @@ export class AcquireCommand extends Command {
 
     debug(`Installing ${numberOfArtifacts} artifacts`);
 
-    const [success] = await installArtifacts(artifacts, { force: this.commandLine.force, language: this.commandLine.language, allLanguages: this.commandLine.allLanguages });
+    const [success] = await installArtifacts(artifacts.artifacts, { force: this.commandLine.force, language: this.commandLine.language, allLanguages: this.commandLine.allLanguages });
 
     if (success) {
       log(blank);

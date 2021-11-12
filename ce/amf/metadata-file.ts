@@ -8,12 +8,14 @@ import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
 import { Profile } from '../interfaces/metadata/metadata-format';
 import { ValidationError } from '../interfaces/validation-error';
+import { Session } from '../session';
 import { Uri } from '../util/uri';
 import { BaseMap } from '../yaml/BaseMap';
 import { Coerce } from '../yaml/Coerce';
 import { toYAML } from '../yaml/yaml';
 import { Contacts } from './contact';
 import { Demands } from './demands';
+import { DocumentContext } from './document-context';
 import { GlobalSettings } from './global-settings';
 import { Info } from './info';
 import { Installs } from './installer';
@@ -21,10 +23,24 @@ import { Registries } from './registries';
 import { Requires } from './Requires';
 import { Settings } from './settings';
 
+
 export class MetadataFile extends BaseMap implements Profile {
+  readonly context: DocumentContext;
+  session!: Session;
   /** @internal */
   constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
     super(<YAMLMap<string, any>><any>document.contents);
+    this.context = <DocumentContext>{
+      filename,
+      lineCounter,
+    };
+  }
+
+  async init(session: Session): Promise<MetadataFile> {
+    this.context.session = session;
+    this.context.file = session.parseUri(this.context.filename);
+    this.context.folder = this.context.file.parent;
+    return this;
   }
 
   info = new Info(undefined, this, 'info');
@@ -47,13 +63,18 @@ export class MetadataFile extends BaseMap implements Profile {
   settings = new Settings(undefined, this, 'settings');
   install = new Installs(undefined, this, 'install');
 
-  conditionalDemands = new Demands(this.node);
+  // conditionalDemands = new Demands(undefined, this, 'demands');
+  conditionalDemands = new Demands(this.node, undefined);
 
   get isFormatValid(): boolean {
     return this.document.errors.length === 0;
   }
 
-  async save(uri: Uri) {
+  get content() {
+    return toYAML(this.document.toString());
+  }
+
+  async save(uri: Uri = this.context.file): Promise<void> {
     // check the filename, and select the format.
     let content = '';
 
@@ -160,8 +181,14 @@ export class MetadataFile extends BaseMap implements Profile {
   }
 }
 
-export function parseConfiguration(filename: string, content: string): MetadataFile {
+export async function parseMetadata(uri: Uri, session: Session): Promise<MetadataFile> {
+  const lc = new LineCounter();
+  const content = await uri.readUTF8();
+  return new MetadataFile(parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true }), uri.toString(), lc).init(session);
+}
+
+export async function parseConfiguration(filename: string, content: string, session: Session): Promise<MetadataFile> {
   const lc = new LineCounter();
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return new MetadataFile(doc, filename, lc);
+  return new MetadataFile(doc, filename, lc).init(session);
 }

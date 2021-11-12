@@ -66,7 +66,7 @@ export class ApplyVsManCommand extends Command {
       return 0;
     }
 
-    const outputAmf = parseConfiguration(inputPath, outputContent);
+    const outputAmf = await parseConfiguration(inputPath, outputContent, session);
     if (!outputAmf.isValid) {
       const errors = outputAmf.validationErrors.join('\n');
       session.channels.warning(i`After transformation, ${inputPath} did not result in a valid AMF; skipping:\n${outputContent}\n${errors}`);
@@ -120,11 +120,11 @@ export class ApplyVsManCommand extends Command {
     const channelUriStr = this.channelUri.requiredValue;
     const repoRoot = session.fileSystem.file(this.repoRoot.requiredValue);
     log(i`Downloading channel manifest from ${channelUriStr}`);
-    const channelUriUri = session.fileSystem.parse(channelUriStr);
+    const channelUriUri = session.parseUri(channelUriStr);
     const channelFile = await acquireArtifactFile(session, [channelUriUri], 'channel.chman');
     const vsManPayload = parseVsManFromChannel(await channelFile.readUTF8());
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
-    const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
+    const vsManUri = await acquireArtifactFile(session, [session.parseUri(vsManPayload.url)], vsManPayload.fileName);
     const vsManLookup = new VsManDatabase(await vsManUri.readUTF8());
     let totalProcessed = 0;
     for (const inputPath of this.inputs) {

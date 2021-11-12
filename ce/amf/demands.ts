@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { isMap, isSeq } from 'yaml';
+import { isMap } from 'yaml';
+import { i } from '../i18n';
 import { ErrorKind } from '../interfaces/error-kind';
 import { ValidationError } from '../interfaces/validation-error';
+import { parseQuery } from '../mediaquery/media-query';
 import { Coerce } from '../yaml/Coerce';
 import { Entity } from '../yaml/Entity';
 import { EntityMap } from '../yaml/EntityMap';
@@ -14,6 +16,7 @@ import { Settings } from './settings';
 
 const hostFeatures = new Set<string>(['x64', 'x86', 'arm', 'arm64', 'windows', 'linux', 'osx', 'freebsd']);
 
+const ignore = new Set<string>(['info', 'contacts', 'error', 'message', 'warning', 'requires', 'see-also']);
 /**
  * A map of mediaquery to DemandBlock
  */
@@ -22,19 +25,31 @@ export class Demands extends EntityMap<YAMLDictionary, DemandBlock> {
     super(DemandBlock, node, parent, key);
   }
 
+  override get keys() {
+    return super.keys.filter(each => !ignore.has(each));
+  }
+
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
 
-    for (const [key, value] of this) {
-      if (!isMap(value) && !isSeq(value)) {
+    for (const [mediaQuery, demandBlock] of this) {
+      if (ignore.has(mediaQuery)) {
+        continue;
+      }
+      if (!isMap(demandBlock.node)) {
         yield {
-          message: `Conditional Demand ${key} is not an object`,
-          range: value.node?.range || [0, 0, 0],
+          message: `Conditional demand '${mediaQuery}' is not an object`,
+          range: demandBlock.node!.range || [0, 0, 0],
           category: ErrorKind.IncorrectType
         };
+        const query = parseQuery(mediaQuery);
+        if (!query.isValid) {
+          yield { message: i`Error parsing conditional demand '${mediaQuery}'- ${query.error?.message}`, range: this.sourcePosition(mediaQuery)/* mediaQuery.range! */, rangeOffset: query.error, category: ErrorKind.ParseError };
+          continue;
+        }
       }
-      yield* value.validate();
+      yield* demandBlock.validate();
     }
   }
 }

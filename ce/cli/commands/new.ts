@@ -32,13 +32,7 @@ export class NewCommand extends Command {
       return false;
     }
 
-    await parseConfiguration(project, `# Environment configuration
-info:
-  name: NAME
-  version: 1.0.0
-  summary: My Project
-
-`).save(session.currentDirectory.join(project));
+    await (await parseConfiguration(project, '# Environment configuration\n', session)).save(session.currentDirectory.join(project));
 
     return true;
   }

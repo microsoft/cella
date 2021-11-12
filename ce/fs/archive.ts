@@ -150,7 +150,7 @@ export class ZipUnpacker extends Unpacker {
 
       this.fileProgress(fileEntry, 0);
       this.session.channels.debug(`unpacking ZIP file ${archiveUri}/${file.name} => ${destination}`);
-      await destination.parent().createDirectory();
+      await destination.parent.createDirectory();
       const readStream = await file.read();
       const mode = ((file.attr >> 16) & 0xfff);
 
@@ -213,8 +213,8 @@ abstract class BasicTarUnpacker extends Unpacker {
       if (destination) {
         switch (header?.type) {
           case 'symlink': {
-            const linkTargetUri = destination?.parent().join(header.linkname!) || fail('');
-            await destination.parent().createDirectory();
+            const linkTargetUri = destination?.parent.join(header.linkname!) || fail('');
+            await destination.parent.createDirectory();
             await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
           }
             return;
@@ -223,7 +223,7 @@ abstract class BasicTarUnpacker extends Unpacker {
             // this should be a 'hard-link' -- but I'm not sure if we can make hardlinks on windows. todo: find out
             const linkTargetUri = outputUri.join(Unpacker.implementOutputOptions(header.linkname!, options)!);
             // quick hack
-            await destination.parent().createDirectory();
+            await destination.parent.createDirectory();
             await (<UnifiedFileSystem>this.session.fileSystem).filesystem(linkTargetUri).createSymlink(linkTargetUri, destination!);
           }
             return;
@@ -252,7 +252,7 @@ abstract class BasicTarUnpacker extends Unpacker {
         this.fileProgress(fileEntry, 0);
 
         if (header.size) {
-          const parentDirectory = destination.parent();
+          const parentDirectory = destination.parent;
           await parentDirectory.createDirectory();
           const fileProgress = new ProgressTrackingStream(0, header.size);
           fileProgress.on('progress', (filePercentage) => this.fileProgress(fileEntry, filePercentage));

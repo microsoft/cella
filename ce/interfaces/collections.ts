@@ -8,6 +8,7 @@ export interface Dictionary<T> extends Iterable<[string, T]> {
   delete(key: string): boolean;
   get(key: string): T | undefined;
   has(key: string): boolean;
+  add(key: string): T;
   sourcePosition(key: string): Range | undefined;
   readonly length: number;
   readonly keys: Array<string>;
@@ -20,7 +21,8 @@ export interface Sequence<T> extends Iterable<T> {
 }
 
 export interface Strings extends Sequence<string> {
+  get(index: number): string | undefined;
   // add(value: string | Array<string>): void;
-  // delete(val: string | Array<string>): void;
+  delete(val: string | Array<string>): void;
 
 }

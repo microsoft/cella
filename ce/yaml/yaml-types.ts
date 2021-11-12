@@ -13,6 +13,17 @@ export type Node = YAMLDictionary | YAMLSequence | YAMLScalar;
 export type Range = [number, number, number];
 
 export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
+  constructor(/** @internal */ node?: ThisType, protected parent?: Yaml<Node>, protected key?: string) {
+    this.node = node;
+    if (!(<NodeFactory<ThisType>>(this.constructor)).create) {
+      throw new Error(`class ${this.constructor.name} is missing implementation for create`);
+    }
+  }
+
+  get root(): Yaml {
+    return this.parent ? this.parent.root : this;
+  }
+
   protected createNode(): ThisType {
     return (<NodeFactory<ThisType>>this.constructor).create();
   }
@@ -37,13 +48,6 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
 
   set node(n: ThisType | undefined) {
     this._node = n;
-  }
-
-  constructor(/** @internal */ node?: ThisType, protected parent?: Yaml<Node>, protected key?: string) {
-    this.node = node;
-    if (!(<NodeFactory<ThisType>>(this.constructor)).create) {
-      throw new Error(`class ${this.constructor.name} is missing implementation for create`);
-    }
   }
 
   sourcePosition(key?: string | number): Range | undefined {

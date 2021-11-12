@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 import { Dictionary } from '../collections';
-import { KnownArtifactRegistryTypes } from './metadata-format';
 import { Contact } from './contact';
 import { Demands } from './demands';
 import { Info } from './info';
+import { RegistryDeclaration } from './metadata-format';
 
 
 type Primitive = string | number | boolean;
@@ -28,7 +28,7 @@ export interface ProfileBase extends Demands {
   contacts: Dictionary<Contact>; // optional
 
   /** artifact registries list the references necessary to install artifacts in this file */
-  registries?: Dictionary<KnownArtifactRegistryTypes>;
+  registries?: Dictionary<RegistryDeclaration>;
 
   /** global settings */
   globalSettings: Dictionary<Primitive | Record<string, unknown>>;
@@ -36,7 +36,7 @@ export interface ProfileBase extends Demands {
   /** is this document valid */
   readonly isFormatValid: boolean;
 
-  /** YAML errors in this document */
+  /** parsing errors in this document */
   readonly formatErrors: Array<string>;
 
   /** does the document pass validation checks? */

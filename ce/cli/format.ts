@@ -8,15 +8,15 @@ export function projectFile(uri: Uri): string {
   return cyan(uri.fsPath);
 }
 
-export function artifactIdentity(identity: string, alias?: string) {
+export function artifactIdentity(registryName: string, identity: string, alias?: string) {
   if (alias) {
-    return `${identity.substr(0, identity.length - alias.length)}${yellowBright(alias)}`;
+    return `${registryName}:${identity.substr(0, identity.length - alias.length)}${yellowBright(alias)}`;
   }
   return yellowBright(identity);
 }
 
-export function artifactReference(identity: string, version: string) {
-  return `${artifactIdentity(identity)}-v${gray(version)}`;
+export function artifactReference(registryName: string, identity: string, version: string) {
+  return `${artifactIdentity(registryName, identity)}-v${gray(version)}`;
 }
 
 export function heading(text: string, level = 1) {

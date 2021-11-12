@@ -1,22 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { isMap, isSeq } from 'yaml';
+import { isMap, isSeq, YAMLMap } from 'yaml';
 import { Dictionary } from '../interfaces/collections';
 import { ErrorKind } from '../interfaces/error-kind';
-import { KnownArtifactRegistryTypes } from '../interfaces/metadata/metadata-format';
+import { RegistryDeclaration } from '../interfaces/metadata/metadata-format';
 import { Registry as IRegistry } from '../interfaces/metadata/registries/artifact-registry';
 import { ValidationError } from '../interfaces/validation-error';
+import { isFilePath, Uri } from '../util/uri';
 import { Coerce } from '../yaml/Coerce';
 import { Entity } from '../yaml/Entity';
 import { Strings } from '../yaml/strings';
 import { Node, Yaml, YAMLDictionary, YAMLSequence } from '../yaml/yaml-types';
 
-export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements Dictionary<KnownArtifactRegistryTypes>, Iterable<[string, KnownArtifactRegistryTypes]>  {
-  *[Symbol.iterator](): Iterator<[string, KnownArtifactRegistryTypes]> {
+export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements Dictionary<RegistryDeclaration>, Iterable<[string, RegistryDeclaration]>  {
+  *[Symbol.iterator](): Iterator<[string, RegistryDeclaration]> {
     if (isMap(this.node)) {
       for (const { key, value } of this.node.items) {
-        const v = this.createInstance(value);
+        const v = this.createRegistry(value);
         if (v) {
           yield [key, v];
         }
@@ -27,7 +28,7 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
         if (isMap(item)) {
           const name = Coerce.String(item.get('name'));
           if (name) {
-            const v = this.createInstance(item);
+            const v = this.createRegistry(item);
             if (v) {
               yield [name, v];
             }
@@ -36,8 +37,32 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
       }
     }
   }
+
   clear(): void {
     this.dispose(true);
+  }
+
+  override createNode() {
+    return new YAMLSequence();
+  }
+
+  add(name: string, location?: Uri, kind?: string): RegistryDeclaration {
+    if (this.get(name)) {
+      throw new Error(`Registry ${name} already exists.`);
+    }
+
+    this.assert(true);
+    if (isMap(this.node)) {
+      throw new Error('Not Implemented as a map right now.');
+    }
+    if (isSeq(this.node)) {
+      const m = new YAMLMap();
+      this.node.add(m);
+      m.set('name', name);
+      m.set('location', location?.formatted);
+      m.set('kind', kind);
+    }
+    return this.get(name)!;
   }
   delete(key: string): boolean {
     const n = this.node;
@@ -60,15 +85,15 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
     }
     return false;
   }
-  get(key: string): KnownArtifactRegistryTypes | undefined {
+  get(key: string): RegistryDeclaration | undefined {
     const n = this.node;
     if (isMap(n)) {
-      return this.createInstance(<Node>n.get(key, true));
+      return this.createRegistry(<Node>n.get(key, true));
     }
     if (isSeq(n)) {
       for (const item of n.items) {
         if (isMap(item) && item.get('name') === key) {
-          return this.createInstance(<Node>item);
+          return this.createRegistry(<Node>item);
         }
       }
     }
@@ -115,16 +140,22 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
     return [];
   }
 
-  protected createInstance(node: Node) {
+  protected createRegistry(node: Node) {
     if (isMap(node)) {
-      const k = node.get('kind');
+      const k = Coerce.String(node.get('kind'));
+      const l = Coerce.String(node.get('location'));
 
-      if (k === 'artifact' && node.has('path')) {
-        return new LocalRegistry(node, this);
+      // simplistic check to see if we're pointing to a file or a https:// url
+      if (k === 'artifact' && l) {
+        const ll = l?.toLowerCase();
+        if (ll.startsWith('https://')) {
+          return new RemoteRegistry(node, this);
+        }
+        if (isFilePath(l)) {
+          return new LocalRegistry(node, this);
+        }
       }
-      if (k === 'artifact' && node.has('url')) {
-        return new RemoteRegistry(node, this);
-      }
+
     }
     return undefined;
   }
@@ -172,7 +203,7 @@ class LocalRegistry extends Registry {
 }
 
 class RemoteRegistry extends Registry {
-  readonly location = new Strings(undefined, this, 'url');
+  readonly location = new Strings(undefined, this, 'location');
   override *validate(): Iterable<ValidationError> {
     //
     if (this.registryKind !== 'artifact') {

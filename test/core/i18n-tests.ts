@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i, setLocale } from '@microsoft/vcpkg-ce/dist/lib/i18n';
+import { i, setLocale } from '@microsoft/vcpkg-ce/dist/i18n';
 import { strict } from 'assert';
 
 // sample test using decorators.

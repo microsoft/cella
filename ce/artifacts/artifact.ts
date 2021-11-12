@@ -11,6 +11,7 @@ import { Installer } from '../interfaces/metadata/installers/Installer';
 import { NupkgInstaller } from '../interfaces/metadata/installers/nupkg';
 import { UnTarInstaller } from '../interfaces/metadata/installers/tar';
 import { UnZipInstaller } from '../interfaces/metadata/installers/zip';
+import { Registries } from '../registries/registries';
 import { Session } from '../session';
 import { linq } from '../util/linq';
 import { Uri } from '../util/uri';
@@ -18,20 +19,73 @@ import { Activation } from './activation';
 import { installNuGet, installUnTar, installUnZip } from './installer-impl';
 import { SetOfDemands } from './SetOfDemands';
 
-export function createArtifact(session: Session, metadata: MetadataFile, shortName: string): Artifact {
-  return new Artifact(session, metadata, shortName);
+export type Selections = Map<string, string>;
+export type UID = string;
+export type ID = string;
+export type VersionRange = string;
+export type Selection = [Artifact, ID, VersionRange]
+
+export class ArtifactMap extends Map<UID, Selection>{
+  get artifacts() {
+    return linq.values(this).select(([artifact, id, range]) => artifact);
+  }
 }
 
-export class Artifact {
+class ArtifactBase {
+  public registries: Registries;
+  readonly applicableDemands: SetOfDemands;
+
+  constructor(protected session: Session, public readonly metadata: MetadataFile) {
+    this.applicableDemands = new SetOfDemands(this.metadata, this.session);
+    this.registries = new Registries(session);
+
+    // load the repositories from the project file
+    for (const [name, registry] of this.metadata.registries) {
+      const reg = session.loadRegistry(registry.location.get(0), registry.registryKind || 'artifact');
+      if (reg) {
+        this.registries.add(reg, name);
+      }
+    }
+  }
+
+  async resolveDependencies(artifacts = new ArtifactMap(), recurse = true) {
+    // find the dependencies and add them to the set
+    for (const [id, version] of linq.entries(this.applicableDemands.requires)) {
+      if (id.indexOf(':') === -1) {
+        throw new Error(`Dependency '${id}' version '${version.raw}' does not specify the registry.`);
+      }
+      const dep = await this.registries.getArtifact(id, version.raw);
+      if (!dep) {
+        throw new Error(`Unable to resolve dependency ${id}/${version}`);
+      }
+      const artifact = dep[2];
+      if (!artifacts.has(artifact.uniqueId)) {
+        artifacts.set(artifact.uniqueId, [artifact, id, version.raw || '*']);
+
+        if (recurse) {
+          // process it's dependencies too.
+          await artifact.resolveDependencies(artifacts);
+        }
+      }
+    }
+    return artifacts;
+  }
+
+}
+
+export class Artifact extends ArtifactBase {
   isPrimary = false;
 
-  readonly applicableDemands: SetOfDemands;
-  constructor(protected session: Session, public readonly metadata: MetadataFile, public shortName: string) {
-    this.applicableDemands = new SetOfDemands(this.metadata, this.session);
+  constructor(session: Session, metadata: MetadataFile, public shortName: string = '', protected targetLocation: Uri, public readonly registryId: string, public readonly registryUri: Uri) {
+    super(session, metadata);
   }
 
   get id() {
     return this.metadata.info.id;
+  }
+
+  get reference() {
+    return `${this.registryId}:${this.id}`;
   }
 
   get version() {
@@ -42,6 +96,10 @@ export class Artifact {
     return this.targetLocation.exists('artifact.yaml');
   }
 
+  get uniqueId() {
+    return `${this.registryUri.toString()}::${this.id}::${this.version}`;
+  }
+
   private async installSingle(installInfo: Installer, options: { events?: Partial<UnpackEvents & AcquireEvents>, allLanguages?: boolean, language?: string }): Promise<void> {
     if (installInfo.lang && !options.allLanguages && options.language && options.language.toLowerCase() !== installInfo.lang.toLowerCase()) {
       return;
@@ -49,13 +107,13 @@ export class Artifact {
 
     switch (installInfo.installerKind) {
       case 'nupkg':
-        await installNuGet(this.session, this, <NupkgInstaller>installInfo, options);
+        await installNuGet(this.session, { name: this.id, targetLocation: this.targetLocation }, <NupkgInstaller>installInfo, options);
         break;
       case 'unzip':
-        await installUnZip(this.session, this, <UnZipInstaller>installInfo, options);
+        await installUnZip(this.session, { name: this.id, targetLocation: this.targetLocation }, <UnZipInstaller>installInfo, options);
         break;
       case 'untar':
-        await installUnTar(this.session, this, <UnTarInstaller>installInfo, options);
+        await installUnTar(this.session, { name: this.id, targetLocation: this.targetLocation }, <UnTarInstaller>installInfo, options);
         break;
       case 'git':
         throw new Error('not implemented');
@@ -122,13 +180,6 @@ export class Artifact {
     return `${this.metadata.info.id.replace(/[^\w]+/g, '.')}-${this.metadata.info.version}`;
   }
 
-  #targetLocation: Uri | undefined;
-  get targetLocation(): Uri {
-    // tools/contoso/something/x64/1.2.3/
-    // slashes to folders, non-word-chars to dot, append version
-    return this.#targetLocation || (this.#targetLocation = this.session.installFolder.join(...this.metadata.info.id.split('/').map(n => n.replace(/[^\w]+/g, '.')), this.metadata.info.version));
-  }
-
   async writeManifest() {
     await this.targetLocation.createDirectory();
     await this.metadata.save(this.targetLocation.join('artifact.yaml'));
@@ -136,23 +187,6 @@ export class Artifact {
 
   async uninstall() {
     await this.targetLocation.delete({ recursive: true, useTrash: false });
-  }
-
-  async resolveDependencies(artifacts = new Set<Artifact>()) {
-    // find the dependencies and add them to the set
-    for (const [id, version] of linq.items(this.applicableDemands.requires)) {
-      const dep = await this.session.getArtifact(id, version.raw);
-      if (!dep) {
-        throw new Error(`Unable to resolve dependency ${id}/${version}`);
-      }
-
-      if (!artifacts.has(dep)) {
-        artifacts.add(dep);
-        // process it's dependencies too.
-        await dep.resolveDependencies(artifacts);
-      }
-    }
-    return artifacts;
   }
 
   async loadActivationSettings(activation: Activation) {
@@ -234,3 +268,57 @@ export function sanitizePath(path: string) {
     replace(/\/+/g, '/'); // duplicate slashes.
 }
 
+export class ProjectManifest extends ArtifactBase {
+
+  async deduplicate() {
+    /*
+    // go thru the dependencies and see if any are uniqueId duplicates
+    const deps = await this.resolveDependencies(new Map(), false);
+    const uniqueIds = new Map<string, Artifact>();
+    for (const artifact of [...deps.keys()]) {
+      console.log(`'${artifact.uniqueId}'`);
+      const existing = uniqueIds.get(artifact.uniqueId);
+      if (existing) {
+        console.log('ouche!');
+        // we've already got this
+        // let's remove one of them from the list
+        // (keep the one declared closest to the user)
+        console.log(existing.registryId);
+        console.log(artifact.registryId);
+        if (this.metadata.registries.keys.find((v) => v === existing.registryId)) {
+          if (this.metadata.registries.keys.find((v) => v === artifact.registryId)) {
+            // neither are in the file.
+            // remove the second one
+            console.log('A');
+            this.metadata.requires.delete(artifact.reference);
+          } else {
+            console.log('B');
+            this.metadata.requires.delete(existing.reference);
+          }
+        } else {
+          if (!this.metadata.registries.keys.find((v) => v === artifact.registryId)) {
+            // both are in the file.
+            // remove the second one
+            this.metadata.requires.delete(artifact.reference);
+            console.log('C');
+          } else {
+            this.metadata.requires.delete(existing.reference);
+            console.log('D');
+          }
+        }
+      } else {
+
+        uniqueIds.set(artifact.uniqueId, artifact);
+        console.log(artifact.registryId);
+        console.log(uniqueIds.size);
+      }
+    }
+    */
+  }
+}
+
+export class InstalledArtifact extends Artifact {
+  constructor(session: Session, metadata: MetadataFile) {
+    super(session, metadata, '', Uri.invalid, 'OnDisk?', Uri.invalid); /* fixme ? */
+  }
+}

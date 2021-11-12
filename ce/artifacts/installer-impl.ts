@@ -30,7 +30,7 @@ function artifactFileName(artifact: InstallArtifactInfo, install: Installer, ext
   }
 
   result += extension;
-  return result;
+  return result.replace(/[^\w]+/g, '.');
 }
 
 function applyAcquireOptions(options: AcquireOptions, install: Verifiable): AcquireOptions {
@@ -65,7 +65,7 @@ export async function installNuGet(session: Session, artifact: InstallArtifactIn
 async function acquireInstallArtifactFile(session: Session, targetFile: string, locations: Array<string>, options: AcquireOptions, install: Verifiable) {
   const file = await acquireArtifactFile(
     session,
-    locations.map(each => session.fileSystem.parse(each)),
+    locations.map(each => session.parseUri(each)),
     targetFile,
     applyAcquireOptions(options, install));
   return file;

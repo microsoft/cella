@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Channels } from '@microsoft/vcpkg-ce/dist/lib/util/channels';
+import { Channels } from '@microsoft/vcpkg-ce/dist/util/channels';
 import { strictEqual } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 

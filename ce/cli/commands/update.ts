@@ -10,7 +10,7 @@ import { Command } from '../command';
 import { CommandLine } from '../command-line';
 import { count } from '../format';
 import { error, log, writeException } from '../styling';
-import { Repo } from '../switches/repo';
+import { Registry as RegSwitch } from '../switches/registry';
 import { WhatIf } from '../switches/whatIf';
 
 export class UpdateCommand extends Command {
@@ -18,8 +18,8 @@ export class UpdateCommand extends Command {
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
-  repo = new Repo(this);
   whatIf = new WhatIf(this);
+  registrySwitch = new RegSwitch(this);
 
   get summary() {
     return i`update the repository from the remote`;
@@ -32,24 +32,51 @@ export class UpdateCommand extends Command {
   }
 
   override async run() {
+    const registries = await this.registrySwitch.loadRegistries(session);
 
-    const repository = session.getRegistry('default');
-    if (!repository) {
-      throw new Error('Repository is not accessible');
+    // process named repositories
+    for (let each of this.inputs) {
+      if (each.indexOf(':') !== -1) {
+        each = session.parseUri(each).toString();
+      }
+      const registry = registries.getRegistryWithNameOrLocation(each);
+      if (registry) {
+        try {
+          log(i`Downloading repository data`);
+          await registry.update();
+          await registry.load();
+          log(i`Updated ${each}. Repository contains ${count(registry.count)} metadata files`);
+        } catch (e) {
+          if (e instanceof RemoteFileUnavailable) {
+            log(i`Unable to download repository snapshot`);
+            return false;
+          }
+          writeException(e);
+          return false;
+        }
+      } else {
+        error(i`Unable to find registry ${each}`);
+      }
     }
-    try {
-      log(i`Downloading repository data`);
-      await repository.update();
-      await repository.load();
-      log(i`Repository update complete. Repository contains ${count(repository.count)} metadata files`);
-    } catch (e) {
-      if (e instanceof RemoteFileUnavailable) {
-        log(i`Unable to download repository snapshot`);
+
+    // process referenced repositories
+    for (const [registry, names] of registries) {
+      try {
+        log(i`Downloading repository data`);
+        await registry.update();
+        await registry.load();
+        log(i`Updated ${names[0].toString()}. Repository contains ${count(registry.count)} metadata files`);
+      } catch (e) {
+        if (e instanceof RemoteFileUnavailable) {
+          log(i`Unable to download repository snapshot`);
+          return false;
+        }
+        writeException(e);
         return false;
       }
-      writeException(e);
-      return false;
     }
+
+
     return true;
   }
 

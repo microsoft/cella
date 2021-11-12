@@ -53,6 +53,22 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
     }
   }
 
+  delete(value: TElement) {
+    if (isSeq(this.node)) {
+      for (let i = 0; i < this.node.items.length; i++) {
+        if (this.node.items[i] === value) {
+          this.node.items.splice(i, 1);
+          return true;
+        }
+      }
+    }
+    if (isScalar(this.node) && this.node.value === value) {
+      this.dispose(true);
+      return true;
+    }
+    return false;
+  }
+
   get(index: number): TElement | undefined {
     if (isSeq(this.node)) {
       return <TElement>this.node.items[index];
