@@ -34,7 +34,7 @@ registries:
     location: https://aka.ms/vcpkg-ce-default
 
 global:
-  send-anonymous-telemetry: true 
+  send-anonymous-telemetry: true
   accepted-eula: false
 `;
 
@@ -227,7 +227,7 @@ export class Session {
 
   #postscriptFile?: Uri;
   get postscriptFile() {
-    return this.#postscriptFile || (this.#postscriptFile = this.environment['VCPKG_POSTSCRIPT'] ? this.fileSystem.file(this.environment['VCPKG_POSTSCRIPT']) : undefined);
+    return this.#postscriptFile || (this.#postscriptFile = this.environment['Z_VCPKG_POSTSCRIPT'] ? this.fileSystem.file(this.environment['Z_VCPKG_POSTSCRIPT']) : undefined);
   }
 
   async init() {
@@ -456,4 +456,3 @@ export class Session {
     return value;
   }
 }
-

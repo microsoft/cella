@@ -2,5 +2,5 @@
 // Licensed under the MIT License.
 
 export const project = 'environment.yaml';
-export const undo = 'VCPKG_UNDO';
+export const undo = 'Z_VCPKG_UNDO';
 export const blank = '\n';

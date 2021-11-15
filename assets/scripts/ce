@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
@@ -12,12 +12,12 @@
 # check to see if we've been dot-sourced (should work for most POSIX shells)
 sourced=0
 
-if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
+if [ -n "$ZSH_EVAL_CONTEXT" ]; then
   case $ZSH_EVAL_CONTEXT in *:file) sourced=1;; esac
 elif [ -n "$KSH_VERSION" ]; then
   [ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ] && sourced=1
 elif [ -n "$BASH_VERSION" ]; then
-  (return 0 2>/dev/null) && sourced=1 
+  (return 0 2>/dev/null) && sourced=1
 else # All other shells: examine $0 for known shell binary filenames
   # Detects `sh` and `dash`; add additional shell filenames as needed.
   case ${0##*/} in sh|dash) sourced=1;; esac
@@ -40,7 +40,7 @@ VCPKG_init() {
   VCPKG_OS="$(uname | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
   VCPKG_ARCH="$(uname -m | sed -e 's/x86_64/x64/;s/i86pc/x64/;s/i686/x86/;s/aarch64/arm64/')"
 
-  case $VCPKG_OS in 
+  case $VCPKG_OS in
     ( mingw64_nt* | msys_nt* ) VCPKG_OS="win";;
     ( darwin*|*bsd*) VCPKG_IS_THIS_BSD=TRUE;;
     ( aix ) VCPKG_ARCH="ppc64" ;;
@@ -48,7 +48,7 @@ VCPKG_init() {
 
   if [ ! -z "$VCPKG_IS_THIS_BSD" ]; then
     VCPKG_START_TIME=$(date +%s)
-  else 
+  else
     VCPKG_START_TIME=$(($(date +%s%N)/1000000))
   fi
 
@@ -65,12 +65,12 @@ VCPKG_init() {
 VCPKG_init "$@"
 shift $#
 
-# at this point, we're pretty sure we've been dot-sourced 
+# at this point, we're pretty sure we've been dot-sourced
 # Try to locate the $VCPKG_ROOT folder, where the ce is installed.
-if [ -n "$VCPKG_ROOT" ]; then 
-  # specify it on the command line if you like, we'll export it 
+if [ -n "$VCPKG_ROOT" ]; then
+  # specify it on the command line if you like, we'll export it
   export VCPKG_ROOT=$VCPKG_ROOT
-else 
+else
   # default is off the home folder
   export VCPKG_ROOT=~/.vcpkg
 fi;
@@ -95,64 +95,64 @@ VCPKG_debug() {
       echo "[NESTED $OFFSET] $*"
     else
       echo "[$OFFSET] $*"
-    fi  
+    fi
   fi
 
   if [ -n "$VCPKG_NESTED" ]; then
     echo "[NESTED $OFFSET] $*" >> $VCPKG_ROOT/log.txt
   else
     echo "[$OFFSET] $*" >> $VCPKG_ROOT/log.txt
-  fi      
+  fi
 }
 
 if [ ! -z "$VCPKG_RESET" ]; then
-  if [ -d $CE/node_modules ]; then 
+  if [ -d $CE/node_modules ]; then
     echo Forcing reinstall of vcpkg-ce package
     rm -rf $CE/node_modules
   fi
 
-  if [ -d $CE/bin ]; then 
+  if [ -d $CE/bin ]; then
     rm -rf $CE/bin
-  fi 
+  fi
 
-  if [ -d $CE/lib ]; then 
+  if [ -d $CE/lib ]; then
     rm -rf $CE/lib
   fi
 fi
 
 if [ ! -z "$VCPKG_REMOVE" ]; then
-  if [ -d $CE/node_modules ]; then 
+  if [ -d $CE/node_modules ]; then
     echo Removing vcpkg-ce package
     rm -rf $CE/node_modules
   fi
 
-  if [ -d $CE/bin ]; then 
+  if [ -d $CE/bin ]; then
     rm -rf $CE/bin
-  fi 
+  fi
 
-  if [ -d $CE/lib ]; then 
+  if [ -d $CE/lib ]; then
     rm -rf $CE/lib
   fi
 
-  if [ -f $VCPKG_ROOT/ce.ps1 ]; then 
+  if [ -f $VCPKG_ROOT/ce.ps1 ]; then
     rm -f $VCPKG_ROOT/ce.ps1
   fi
 
-  if [ -f $VCPKG_ROOT/ce ]; then 
+  if [ -f $VCPKG_ROOT/ce ]; then
     rm -f $VCPKG_ROOT/ce
   fi
 
-  if [ -f $VCPKG_ROOT/NOTICE.txt ]; then 
+  if [ -f $VCPKG_ROOT/NOTICE.txt ]; then
     rm -f $VCPKG_ROOT/NOTICE.txt
   fi
 
-  if [ -f $VCPKG_ROOT/LICENSE.txt ]; then 
+  if [ -f $VCPKG_ROOT/LICENSE.txt ]; then
     rm -f $VCPKG_ROOT/LICENSE.txt
   fi
 
   # cleanup environment.
   . <(set | grep -i ^VCPKG | sed -e 's/[=| |\W].*//;s/^/unset /')
-  
+
   # remove functions (zsh)
   which functions  > /dev/null 2>&1  && . <(functions | grep -i ^vcpkg | sed -e 's/[=| |\W].*//;s/^/unset -f /')
   return
@@ -175,10 +175,10 @@ VCPKG_cleanup() {
   unset VCPKG_RESET
   unset VCPKG_START_TIME
   unset VCPKG_ARGS
-  if [ -f "${VCPKG_POSTSCRIPT}" ]; then
-    command rm "${VCPKG_POSTSCRIPT}"
+  if [ -f "${Z_VCPKG_POSTSCRIPT}" ]; then
+    command rm "${Z_VCPKG_POSTSCRIPT}"
   fi
-	unset VCPKG_POSTSCRIPT
+	unset Z_VCPKG_POSTSCRIPT
 }
 
 VCPKG_bootstrap_node() {
@@ -204,19 +204,19 @@ VCPKG_bootstrap_node() {
 
 
   # we don't have a good node in the path
-  # we would install one here if we tried 
+  # we would install one here if we tried
   # before
   VCPKG_NODE=${CE}/bin/node
-  
-  if [ -f $VCPKG_NODE ]; then 
+
+  if [ -f $VCPKG_NODE ]; then
     if [ `$VCPKG_NODE -e "[major, minor, patch ] = process.versions.node.split('.'); console.log( !!(major>16 || major == 16 & minor >= 12))"` = "true" ]; then
       # looks good, lets grab NPM in case we need it, and get out.
       VCPKG_NPM=`which ${CE}/bin/npm`
-      VCPKG_debug using node from ce 
+      VCPKG_debug using node from ce
       return 0
-    fi 
+    fi
   fi
-  
+
   # we don't seem to have a suitable nodejs on the path
   # let's grab a well-known one, cache it and use it.
 
@@ -229,7 +229,7 @@ VCPKG_bootstrap_node() {
   local NODE_FULLNAME="node-v${VCPKG_NODE_LATEST}-${VCPKG_OS}-${VCPKG_ARCH}"
   local NODE_URI="${VCPKG_NODE_REMOTE}v${VCPKG_NODE_LATEST}/${NODE_FULLNAME}${VCPKG_ARCHIVE_EXT}"
   local VCPKG_ARCHIVE="${CE}/files/${NODE_FULLNAME}${VCPKG_ARCHIVE_EXT}"
-  
+
   if [ ! -d "${CE}/files" ]; then
     command mkdir -p "${CE}/files"
   fi
@@ -245,7 +245,7 @@ VCPKG_bootstrap_node() {
     echo "Failed to download node binary."
     return 1
   fi
-    
+
   # UNPACK IT
   if [ "${VCPKG_OS}" = "aix" ]; then
     gunzip "${VCPKG_ARCHIVE}" | tar -xvC "${CE}" "${NODE_FULLNAME}/bin/${NODE_EXE}" >> $VCPKG_ROOT/log.txt 2>&1
@@ -268,7 +268,7 @@ VCPKG_bootstrap_node() {
       echo ""
       echo "run (as root): "
       echo "   pkg install -y node16"
-      echo "   pkg install -y npm-node16" 
+      echo "   pkg install -y npm-node16"
     fi
     return 1;
   fi
@@ -298,7 +298,7 @@ VCPKG_bootstrap_ce() {
 
   # ensure we have a node_modules here, so npm won't search for one up the tree.
   command mkdir -p $CE/node_modules
-  
+
   echo Installing vcpkg-ce in $VCPKG_ROOT
   unset VCPKG_RESET
 
@@ -308,7 +308,7 @@ VCPKG_bootstrap_ce() {
   PATH=`dirname $VCPKG_NODE`:$PATH
   if [ ! -z "$USE_LOCAL_VCPKG_PKG" ]; then
     echo USING LOCAL CE PACKAGE $USE_LOCAL_VCPKG_PKG
-    
+
     $VCPKG_NODE $VCPKG_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true $USE_LOCAL_VCPKG_PKG  >> $VCPKG_ROOT/log.txt 2>&1
   else
     $VCPKG_NODE $VCPKG_NPM --force install --no-save --no-lockfile --scripts-prepend-node-path=true https://aka.ms/vcpkg-ce.tgz  >> $VCPKG_ROOT/log.txt 2>&1
@@ -323,7 +323,7 @@ VCPKG_bootstrap_ce() {
   # Copy the NOTICE and LICENSE files to $VCPKG_ROOT to improve discoverability.
   cp $CE/node_modules/vcpkg-ce/NOTICE.txt $VCPKG_ROOT/
   cp $CE/node_modules/vcpkg-ce/LICENSE.txt $VCPKG_ROOT/
-  
+
   if [  ! -f $VCPKG_SCRIPT ]; then
     echo "ERROR! Unable to find/get ce script command $VCPKG_SCRIPT"
     return 1;
@@ -355,7 +355,7 @@ if [ -z $VCPKG_NESTED ]; then
   VCPKG_debug executing final script: $VCPKG_SCRIPT
   VCPKG_NESTED=TRUE
   . $VCPKG_SCRIPT $VCPKG_ARGS
-  return # let the real script take over from here. 
+  return # let the real script take over from here.
 fi
 
 # So, we're the real script then.
@@ -369,20 +369,20 @@ ce() {
   VCPKG_init "$@"
 
   if [ ! -z "$VCPKG_RESET" ]; then
-    if [ -d $CE/node_modules ]; then 
+    if [ -d $CE/node_modules ]; then
       echo Forcing reinstall of vcpkg-ce package
       rm -rf $CE/node_modules
     fi
 
-    if [ -d $CE/bin ]; then 
+    if [ -d $CE/bin ]; then
       rm -rf $CE/bin
-    fi 
+    fi
 
-    if [ -d $CE/lib ]; then 
+    if [ -d $CE/lib ]; then
       rm -rf $CE/lib
     fi
     unset VCPKG_RESET
-    
+
     if [ ! -z "$USE_LOCAL_VCPKG_SCRIPT" ]; then
       echo USING LOCAL CE SCRIPT $USE_LOCAL_VCPKG_SCRIPT
       . <(cat $USE_LOCAL_VCPKG_SCRIPT) "${VCPKG_ARGS[@]}"
@@ -394,39 +394,39 @@ ce() {
   fi
 
   if [ ! -z "$VCPKG_REMOVE" ]; then
-    if [ -d $CE/node_modules ]; then 
+    if [ -d $CE/node_modules ]; then
       unset VCPKG_REMOVE
       echo Removing vcpkg-ce package
       rm -rf $CE/node_modules
     fi
 
-    if [ -d $CE/bin ]; then 
+    if [ -d $CE/bin ]; then
       rm -rf $CE/bin
-    fi 
+    fi
 
-    if [ -d $CE/lib ]; then 
+    if [ -d $CE/lib ]; then
       rm -rf $CE/lib
     fi
 
-    if [ -f $VCPKG_ROOT/ce.ps1 ]; then 
+    if [ -f $VCPKG_ROOT/ce.ps1 ]; then
       rm -f $VCPKG_ROOT/ce.ps1
     fi
 
-    if [ -f $VCPKG_ROOT/ce ]; then 
+    if [ -f $VCPKG_ROOT/ce ]; then
       rm -f $VCPKG_ROOT/ce
     fi
 
-    if [ -f $VCPKG_ROOT/NOTICE.txt ]; then 
+    if [ -f $VCPKG_ROOT/NOTICE.txt ]; then
       rm -f $VCPKG_ROOT/NOTICE.txt
     fi
 
-    if [ -f $VCPKG_ROOT/LICENSE.txt ]; then 
+    if [ -f $VCPKG_ROOT/LICENSE.txt ]; then
       rm -f $VCPKG_ROOT/LICENSE.txt
     fi
 
     # cleanup environment
     . <(set | grep -i ^VCPKG | sed -e 's/[=| |\W].*//;s/^/unset /')
-    
+
     # remove functions (zsh)
     which functions  > /dev/null 2>&1  && . <(functions | grep -i ^vcpkg | sed -e 's/[=| |\W].*//;s/^/unset -f /')
     return 0
@@ -445,21 +445,21 @@ ce() {
 
   # set the response file
 	# Generate 32 bits of randomness, to avoid clashing with concurrent executions.
-	export VCPKG_POSTSCRIPT="${VCPKG_ROOT}/VCPKG_tmp_$(dd if=/dev/urandom count=1 2> /dev/null | cksum | cut -f1 -d" ").sh"
+	export Z_VCPKG_POSTSCRIPT="${VCPKG_ROOT}/VCPKG_tmp_$(dd if=/dev/urandom count=1 2> /dev/null | cksum | cut -f1 -d" ").sh"
 
   # call ce.js
-  # it picks up the VCPKG_POSTSCRIPT environment variable to know where to dump the postscript
+  # it picks up the Z_VCPKG_POSTSCRIPT environment variable to know where to dump the postscript
   $VCPKG_NODE --harmony $VCPKG_MAIN ${VCPKG_ARGS[@]}
-  
+
   VCPKG_debug called ce.js
-  # modify the environment 
+  # modify the environment
 
   # Call the post-invocation script if it is present, then delete it.
 	# This allows the invocation to potentially modify the caller's environment (e.g. PATH)
-	if [ -f "${VCPKG_POSTSCRIPT}" ]; then
-		. "${VCPKG_POSTSCRIPT}"
-		command rm "${VCPKG_POSTSCRIPT}"
-		unset VCPKG_POSTSCRIPT
+	if [ -f "${Z_VCPKG_POSTSCRIPT}" ]; then
+		. "${Z_VCPKG_POSTSCRIPT}"
+		command rm "${Z_VCPKG_POSTSCRIPT}"
+		unset Z_VCPKG_POSTSCRIPT
 	fi
 
   VCPKG_cleanup
@@ -468,7 +468,7 @@ ce() {
 }
 
 # did they dotsource and have args go ahead and run it then!
-if [ -n "$VCPKG_ARGS" ]; then 
+if [ -n "$VCPKG_ARGS" ]; then
   ce "${VCPKG_ARGS[@]}"
 fi
 
