@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { sanitizeUri } from '../../artifacts/artifact';
 import { i } from '../../i18n';
 import { Session } from '../../session';
 import { UpdateCommand } from '../commands/update';
@@ -14,10 +15,10 @@ export class Registry extends Switch {
     ];
   }
 
-  async loadRegistries(session: Session) {
+  async loadRegistries(session: Session, more: Array<string> = []) {
     const registries = session.defaultRegistry;
-    if (this.active) {
-      for (const each of this.values) {
+    for (const each of new Set([...this.values, ...more].map(each => sanitizeUri(each)))) {
+      if (each) {
         const uri = session.parseUri(each);
         if (await session.isLocalRegistry(uri) || await session.isRemoteRegistry(uri)) {
 
@@ -34,13 +35,14 @@ export class Registry extends Switch {
             }
             // registry is loaded
             // it should be added to the
-            registries.add(r);
+            registries.add(r, each);
           }
           continue;
         }
         session.channels.error(i`Invalid registry ${each}`);
       }
     }
+
     return registries;
   }
 

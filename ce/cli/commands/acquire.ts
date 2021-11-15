@@ -58,7 +58,6 @@ export class AcquireCommand extends Command {
       return false;
     }
 
-    // const numberOfArtifacts = await [...artifacts.artifacts].count(async ([artifact, details]) => !(!this.commandLine.force && await artifact.isInstalled));
     const numberOfArtifacts = await countWhere(artifacts.artifacts, async (artifact) => !(!this.commandLine.force && await artifact.isInstalled));
 
     if (!numberOfArtifacts) {

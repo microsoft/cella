@@ -21,7 +21,7 @@ export /** @internal */ abstract class BaseMap extends Entity {
     if (this.exists) {
       const v = this.node!.get(key, true);
       if (v) {
-        return new factory(<any>v);
+        return new factory(<any>v, this, key);
       }
     }
     return undefined;

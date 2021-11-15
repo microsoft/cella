@@ -1,39 +1,35 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { Scalar } from 'yaml';
+import { VersionReference as IVersionReference } from '../interfaces/metadata/version-reference';
 import { CustomScalarMap } from '../yaml/CustomScalarMap';
 import { Yaml, YAMLDictionary } from '../yaml/yaml-types';
 import { VersionReference } from './version-reference';
-
 
 export class Requires extends CustomScalarMap<VersionReference> {
   constructor(node?: YAMLDictionary, parent?: Yaml, key?: string) {
     super(VersionReference, node, parent, key);
   }
-}
 
-
-/*
-export class Requires extends YamlDictionary<VersionReference> {
-  constructor(parent: ParentNode, kind: 'requires' | 'seeAlso' = 'requires') {
-    super(parent, kind);
-  }
-  protected override wrapMember(key: string, value: any): VersionReference {
-    return new VersionReferenceNode(this, key);
-  }
-
-  set(key: string, value: string | VersionReference): void {
+  override set(key: string, value: VersionReference | IVersionReference | string) {
     if (typeof value === 'string') {
-      const v = new VersionReferenceNode(this, key);
-      v.raw = value;
-    } else {
-      const v = new VersionReferenceNode(this, key);
+      this.assert(true);   // if we don't have a node at the moment, we need to create one.
+      this.node!.set(key, new Scalar(value));
+      return;
+    }
+    if (value.raw) {
+      this.assert(true);   // if we don't have a node at the moment, we need to create one.
+      this.node!.set(key, new Scalar(value.raw));
+    }
+    if (value.range) {
       if (value.resolved) {
-        v.raw = `${value.range} ${value.resolved}`;
+        this.assert(true);   // if we don't have a node at the moment, we need to create one.
+        this.node!.set(key, new Scalar(`${value.range} ${value.resolved}`));
       } else {
-        v.raw = `${value.range}`;
+        this.assert(true);   // if we don't have a node at the moment, we need to create one.
+        this.node!.set(key, new Scalar(value.range));
       }
     }
   }
 }
-*/

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { sanitizeUri } from '../../artifacts/artifact';
 import { i } from '../../i18n';
 import { session } from '../../main';
 import { Command } from '../command';
@@ -28,27 +29,22 @@ export class RegenerateCommand extends Command {
   }
 
   override async run() {
-    const registries = await this.regSwitch.loadRegistries(session);
+    const all = new Set([...this.regSwitch.values, ...this.inputs].map(each => sanitizeUri(each)));
 
-    for (const each of this.inputs) {
-      // regenerate a named registry
-      const registry = registries.getRegistry(each);
-      if (registry) {
-        await registry.regenerate();
-        await registry.save();
-        log(i`Regeneration complete. Index contains ${registry.count} metadata files`);
-      }
-    }
+    const registries = await this.regSwitch.loadRegistries(session, this.inputs);
 
-    // process referenced repositories
-    for (const [registry, names] of registries) {
+    for (const each of all) {
       try {
-        log(i`Regenerating index`);
-        await registry.regenerate();
-        await registry.save();
-        log(i`Regeneration complete. Index contains ${registry.count} metadata files`);
+        // regenerate a named registry
+        const registry = registries.getRegistry(each);
+        if (registry) {
+          log(i`Regenerating index for ${each}`);
+          await registry.regenerate();
+          await registry.save();
+          log(i`Regeneration complete. Index contains ${registry.count} metadata files`);
+        }
       } catch (e) {
-        log(i`Regeneration failed for ${names[0].toString()}`);
+        log(i`Regeneration failed for ${each.toString()}`);
         writeException(e);
         return false;
       }

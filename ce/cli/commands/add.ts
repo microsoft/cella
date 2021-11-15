@@ -79,8 +79,6 @@ export class AddCommand extends Command {
       projectManifest.metadata.requires.set(artifact.reference, <any>v);
     }
 
-    // deduplicate artifacts that are in the project.
-    await projectManifest.deduplicate();
     // write the file out.
     await projectManifest.metadata.save();
 

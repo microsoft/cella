@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import { isScalar, isSeq, Scalar, YAMLSeq } from 'yaml';
+import { Coerce } from './Coerce';
 import { Primitive, Yaml, YAMLScalar, YAMLSequence } from './yaml-types';
 
 /**
@@ -25,9 +26,23 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
     return 0;
   }
 
+  has(value: TElement) {
+    for (const each of this) {
+      if (value === each) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   add(value: TElement) {
     if (value === undefined || value === null) {
       throw new Error('Cannot add undefined or null to a sequence');
+    }
+
+    // check if the value is already in the set
+    if (this.has(value)) {
+      return;
     }
 
     if (!this.node) {
@@ -43,20 +58,23 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
       const n = this.node;
       const seq = new YAMLSequence();
       seq.add(n);
-      this.node = seq;
-
+      // seq.add(new Scalar(value));
+      // this.node = seq;
+      this.dispose(true);
+      this.assert(true, seq);
+      //this.parent!.node.set(this.key, seq);
       // fall thru to the sequnce add
     }
 
     if (isSeq(this.node)) {
-      this.node.add(value);
+      this.node.add(<any>(new Scalar(value)));
     }
   }
 
   delete(value: TElement) {
     if (isSeq(this.node)) {
       for (let i = 0; i < this.node.items.length; i++) {
-        if (this.node.items[i] === value) {
+        if (value === Coerce.Primitive(this.node.items[i])) {
           this.node.items.splice(i, 1);
           return true;
         }
@@ -82,13 +100,17 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
   }
 
   *[Symbol.iterator](): Iterator<TElement> {
-    if (isSeq(this.node)) {
-      return yield* this.node.items.values();
-    }
     if (isScalar(this.node)) {
       return yield this.node.value;
     }
-    return;
+    if (isSeq(this.node)) {
+      for (const each of this.node.items.values()) {
+        const v = Coerce.Primitive(each);
+        if (v) {
+          yield <any>v;
+        }
+      }
+    }
   }
 
   clear() {

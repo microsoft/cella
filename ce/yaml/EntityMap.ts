@@ -31,6 +31,9 @@ export /** @internal */ abstract class EntityMap<TNode extends Node, TElement ex
     if (this.has(key)) {
       return this.get(key)!;
     }
+    this.assert(true);
+    const child = this.factory.create();
+    this.set(key, <any>child);
     return new this.factory(this.factory.create(), this, key);
   }
 

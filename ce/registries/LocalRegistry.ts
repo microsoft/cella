@@ -25,13 +25,17 @@ export class LocalRegistry extends ArtifactRegistry implements Registry {
   }
 
   update(): Promise<void> {
-    return Promise.resolve();
+    return this.regenerate();
   }
 
   override async load(force?: boolean): Promise<void> {
     if (force || !this.loaded) {
-      strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
-
+      if (! await this.indexYaml.exists()) {
+        // generate an index from scratch
+        await this.regenerate();
+        this.loaded = true;
+        return;
+      }
       this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
       this.index.deserialize(parse(await this.indexYaml.readUTF8()));
       this.loaded = true;

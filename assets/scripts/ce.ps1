@@ -231,7 +231,7 @@ function bootstrap-vcpkg-ce {
   pushd $CE
   
   $PATH = $ENV:PATH
-  $ENV:PATH="C:\Users\garre\.vcpkg\ce\bin\;$PATH"
+  $ENV:PATH="$CE\bin\;$PATH"
   # &$VCPKG_NODE $NPM install $PKG --no-lockfile --force --verbose 2>&1 >> $VCPKG_ROOT/log.txt
   &$VCPKG_NODE $YARN add $PKG --no-lockfile --force --scripts-prepend-node-path=true --modules-folder=$MODULES 2>&1 >> $VCPKG_ROOT/log.txt
   $ENV:PATH = $PATH

@@ -22,7 +22,4 @@ export interface Registry {
   save(): Promise<void>;
   update(): Promise<void>;
   regenerate(): Promise<void>;
-
-  // openArtifact(manifestPath: string): Promise<Artifact>;
-  // openArtifacts(manifestPaths: Array<string>): Promise<Map<string, Array<Artifact>>>;
 }

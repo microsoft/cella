@@ -14,7 +14,7 @@ export class Contact extends Entity implements IContact {
   get email(): string | undefined { return Coerce.String(this.getMember('email')); }
   set email(value: string | undefined) { this.setMember('email', value); }
 
-  readonly roles = new Strings(undefined, this, 'roles');
+  readonly roles = new Strings(undefined, this, 'role');
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();

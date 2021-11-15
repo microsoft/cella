@@ -87,10 +87,11 @@ export class LocalFileSystem extends FileSystem {
     return symlink(original.fsPath, slink.fsPath, 'file');
   }
 
-  readFile(uri: Uri): Promise<Uint8Array> {
+  async readFile(uri: Uri): Promise<Uint8Array> {
     let contents!: Promise<Uint8Array>;
     try {
-      return contents = readFile(uri.fsPath);
+      contents = readFile(uri.fsPath);
+      return await contents;
     } finally {
       this.read(uri, contents);
     }

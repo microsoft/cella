@@ -36,8 +36,8 @@ settings:
     bin:
       - foo/bar/bin/baz
       - foo/bar/bin/waz
-      
-windows and arm:
-- install: 
-    nupkg: floobaloo/1.2.3
-    sha256: fluffyKittenBunnies
+demands:      
+  windows and arm:
+    install: 
+      nupkg: floobaloo/1.2.3
+      sha256: fluffyKittenBunnies

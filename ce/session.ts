@@ -156,7 +156,7 @@ export class Session {
         if (await isIndexFile(index)) {
           return true;
         }
-
+        const s = this;
         let result = false;
         const q = new Queue();
 
@@ -174,7 +174,7 @@ export class Session {
             }
 
             if (type & FileType.File && isYAML(entry.path)) {
-              void q.enqueue(async () => { result = result || await isMetadataFile(entry); });
+              void q.enqueue(async () => { result = result || await isMetadataFile(entry, s); });
             }
           }
         }

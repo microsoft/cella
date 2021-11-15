@@ -334,7 +334,7 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
   /** checks to see if the target is a directory/folder */
   async isDirectory(uri: Uri) {
     try {
-      return !!((await this.stat(uri)) && FileType.Directory);
+      return !!((await this.stat(uri)).type & FileType.Directory);
     } catch {
       // if this fails, we're assuming false
     }
@@ -344,7 +344,9 @@ export abstract class FileSystem extends EventEmitter<FileSystemEvents> {
   /** checks to see if the target is a file */
   async isFile(uri: Uri) {
     try {
-      return !!((await this.stat(uri)) && FileType.File);
+      const s = await this.stat(uri);
+
+      return !!(s.type & FileType.File);
     } catch {
       // if this fails, we're assuming false
     }

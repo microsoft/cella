@@ -268,53 +268,21 @@ export function sanitizePath(path: string) {
     replace(/\/+/g, '/'); // duplicate slashes.
 }
 
+export function sanitizeUri(u: string) {
+  return u.
+    replace(/[\\/]+/g, '/').     // forward slahses please
+    replace(/[?<>|"]/g, ''). // remove illegal characters.
+    // eslint-disable-next-line no-control-regex
+    replace(/[\x00-\x1f\x80-\x9f]/g, ''). // remove unicode control codes
+    replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i, ''). // no reserved names
+    replace(/^[/.]*\//, ''). // dots and slashes off the front.
+    replace(/[/.]+$/, ''). // dots and slashes off the back.
+    replace(/\/\.+\//g, '/'). // no parts made just of dots.
+    replace(/\/+/g, '/'); // duplicate slashes.
+}
+
 export class ProjectManifest extends ArtifactBase {
 
-  async deduplicate() {
-    /*
-    // go thru the dependencies and see if any are uniqueId duplicates
-    const deps = await this.resolveDependencies(new Map(), false);
-    const uniqueIds = new Map<string, Artifact>();
-    for (const artifact of [...deps.keys()]) {
-      console.log(`'${artifact.uniqueId}'`);
-      const existing = uniqueIds.get(artifact.uniqueId);
-      if (existing) {
-        console.log('ouche!');
-        // we've already got this
-        // let's remove one of them from the list
-        // (keep the one declared closest to the user)
-        console.log(existing.registryId);
-        console.log(artifact.registryId);
-        if (this.metadata.registries.keys.find((v) => v === existing.registryId)) {
-          if (this.metadata.registries.keys.find((v) => v === artifact.registryId)) {
-            // neither are in the file.
-            // remove the second one
-            console.log('A');
-            this.metadata.requires.delete(artifact.reference);
-          } else {
-            console.log('B');
-            this.metadata.requires.delete(existing.reference);
-          }
-        } else {
-          if (!this.metadata.registries.keys.find((v) => v === artifact.registryId)) {
-            // both are in the file.
-            // remove the second one
-            this.metadata.requires.delete(artifact.reference);
-            console.log('C');
-          } else {
-            this.metadata.requires.delete(existing.reference);
-            console.log('D');
-          }
-        }
-      } else {
-
-        uniqueIds.set(artifact.uniqueId, artifact);
-        console.log(artifact.registryId);
-        console.log(uniqueIds.size);
-      }
-    }
-    */
-  }
 }
 
 export class InstalledArtifact extends Artifact {

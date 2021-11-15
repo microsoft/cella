@@ -59,24 +59,6 @@ export class UpdateCommand extends Command {
       }
     }
 
-    // process referenced repositories
-    for (const [registry, names] of registries) {
-      try {
-        log(i`Downloading repository data`);
-        await registry.update();
-        await registry.load();
-        log(i`Updated ${names[0].toString()}. Repository contains ${count(registry.count)} metadata files`);
-      } catch (e) {
-        if (e instanceof RemoteFileUnavailable) {
-          log(i`Unable to download repository snapshot`);
-          return false;
-        }
-        writeException(e);
-        return false;
-      }
-    }
-
-
     return true;
   }
 

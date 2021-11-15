@@ -132,12 +132,16 @@ async function main() {
 
     return process.exitCode = 0;
   }
+  let result = true;
+  try {
+    result = await command.run();
+    log(blank);
 
-  const result = await command.run();
-  log(blank);
-
-  await session.writePostscript();
-
+    await session.writePostscript();
+  } catch (e) {
+    error(e);
+    return process.exitCode = 1;
+  }
   return process.exitCode = (result ? 0 : 1);
 }
 

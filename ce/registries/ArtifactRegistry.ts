@@ -93,7 +93,11 @@ export abstract class ArtifactRegistry implements Registry {
         }
       }
     }
-    this.index.reset();
+
+    // reset the index to blank.
+    this.index = new Index(RegistryIndex);
+
+    // process the files in the local folder
     await process(this.cacheFolder);
     await q.done;
 
