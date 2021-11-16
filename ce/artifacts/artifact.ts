@@ -39,7 +39,7 @@ class ArtifactBase {
     this.applicableDemands = new SetOfDemands(this.metadata, this.session);
     this.registries = new Registries(session);
 
-    // load the repositories from the project file
+    // load the registries from the project file
     for (const [name, registry] of this.metadata.registries) {
       const reg = session.loadRegistry(registry.location.get(0), registry.registryKind || 'artifact');
       if (reg) {

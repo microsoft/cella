@@ -16,9 +16,9 @@ export class Registry extends Switch {
   }
 
   async loadRegistries(session: Session, more: Array<string> = []) {
-    for (const each of new Set([...this.values, ...more].map(each => sanitizeUri(each)))) {
-      if (each) {
-        const uri = session.parseUri(each);
+    for (const repository of new Set([...this.values, ...more].map(each => sanitizeUri(each)))) {
+      if (repository) {
+        const uri = session.parseUri(repository);
         if (await session.isLocalRegistry(uri) || await session.isRemoteRegistry(uri)) {
 
           const r = session.loadRegistry(uri, 'artifact');
@@ -34,11 +34,11 @@ export class Registry extends Switch {
             }
             // registry is loaded
             // it should be added to the aggregator
-            session.defaultRegistry.add(r, each);
+            session.defaultRegistry.add(r, repository);
           }
           continue;
         }
-        session.channels.error(i`Invalid registry ${each}`);
+        session.channels.error(i`Invalid registry ${repository}`);
       }
     }
 

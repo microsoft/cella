@@ -35,17 +35,17 @@ export class UpdateCommand extends Command {
     const registries = await this.registrySwitch.loadRegistries(session);
 
     // process named registries
-    for (let each of this.inputs) {
-      if (each.indexOf(':') !== -1) {
-        each = session.parseUri(each).toString();
+    for (let repositoryName of this.inputs) {
+      if (repositoryName.indexOf(':') !== -1) {
+        repositoryName = session.parseUri(repositoryName).toString();
       }
-      const registry = registries.getRegistryWithNameOrLocation(each);
+      const registry = registries.getRegistryWithNameOrLocation(repositoryName);
       if (registry) {
         try {
           log(i`Downloading registry data`);
           await registry.update();
           await registry.load();
-          log(i`Updated ${each}. registry contains ${count(registry.count)} metadata files`);
+          log(i`Updated ${repositoryName}. registry contains ${count(registry.count)} metadata files`);
         } catch (e) {
           if (e instanceof RemoteFileUnavailable) {
             log(i`Unable to download registry snapshot`);
@@ -55,7 +55,7 @@ export class UpdateCommand extends Command {
           return false;
         }
       } else {
-        error(i`Unable to find registry ${each}`);
+        error(i`Unable to find registry ${repositoryName}`);
       }
     }
 

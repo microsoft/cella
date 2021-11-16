@@ -33,18 +33,18 @@ export class RegenerateCommand extends Command {
 
     const registries = await this.regSwitch.loadRegistries(session, this.inputs);
 
-    for (const each of all) {
+    for (const repositoryName of all) {
       try {
         // regenerate a named registry
-        const registry = registries.getRegistry(each);
+        const registry = registries.getRegistry(repositoryName);
         if (registry) {
-          log(i`Regenerating index for ${each}`);
+          log(i`Regenerating index for ${repositoryName}`);
           await registry.regenerate();
           await registry.save();
           log(i`Regeneration complete. Index contains ${registry.count} metadata files`);
         }
       } catch (e) {
-        log(i`Regeneration failed for ${each.toString()}`);
+        log(i`Regeneration failed for ${repositoryName.toString()}`);
         writeException(e);
         return false;
       }
