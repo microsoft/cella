@@ -28,7 +28,7 @@ export class Contacts extends EntityMap<YAMLDictionary, Contact> implements Dict
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
-    if (this.exists) {
+    if (this.exists()) {
       for (const [key, contact] of this) {
         yield* contact.validate();
       }

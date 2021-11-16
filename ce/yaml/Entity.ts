@@ -19,16 +19,16 @@ export /** @internal */ class Entity extends Yaml<YAMLDictionary> {
     this.assert(true);
 
     if (isNullish(value)) {
-      this.node!.delete(name);
+      this.node.delete(name);
       return;
     }
 
-    this.node!.set(name, value);
+    this.node.set(name, value);
   }
 
   protected getMember(name: string): Primitive | undefined {
 
-    return this.exists ? <Primitive | undefined>this.node?.get(name, false) : undefined;
+    return this.exists() ? <Primitive | undefined>this.node?.get(name, false) : undefined;
   }
 
   override /** @internal */ *validate(): Iterable<ValidationError> {
@@ -41,13 +41,13 @@ export /** @internal */ class Entity extends Yaml<YAMLDictionary> {
     if (this.node) {
       switch (kind) {
         case 'sequence':
-          return isSeq(this.node!.get(key));
+          return isSeq(this.node.get(key));
         case 'entity':
-          return isMap(this.node!.get(key));
+          return isMap(this.node.get(key));
         case 'scalar':
-          return isScalar(this.node!.get(key));
+          return isScalar(this.node.get(key));
         default:
-          return this.node!.has(key);
+          return this.node.has(key);
       }
     }
     return false;
@@ -55,7 +55,7 @@ export /** @internal */ class Entity extends Yaml<YAMLDictionary> {
 
   kind(key: string): 'sequence' | 'entity' | 'scalar' | 'string' | 'number' | 'boolean' | 'undefined' | undefined {
     if (this.node) {
-      const v = <Node>this.node!.get(key, true);
+      const v = <Node>this.node.get(key, true);
       if (v === undefined) {
         return 'undefined';
       }
@@ -79,7 +79,7 @@ export /** @internal */ class Entity extends Yaml<YAMLDictionary> {
 
   is(key: string, kind: 'sequence' | 'entity' | 'scalar' | 'string' | 'number' | 'boolean'): boolean | undefined {
     if (this.node) {
-      const v = <Node>this.node!.get(key, true);
+      const v = <Node>this.node.get(key, true);
       if (v === undefined) {
         return undefined;
       }

@@ -9,7 +9,7 @@ export /** @internal */ class Flags extends Yaml<YAMLSequence> {
 
   has(flag: string) {
     if (this.node) {
-      return this.node!.items.some(each => each.value === flag);
+      return this.node.items.some(each => each.value === flag);
     }
     return false;
   }
@@ -17,9 +17,9 @@ export /** @internal */ class Flags extends Yaml<YAMLSequence> {
   set(flag: string, value: boolean) {
     this.assert(true);
     if (value) {
-      this.node!.add(new Scalar(flag));
+      this.node.add(new Scalar(flag));
     } else {
-      this.node!.delete(flag);
+      this.node.delete(flag);
     }
   }
 }

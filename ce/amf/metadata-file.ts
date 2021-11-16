@@ -64,7 +64,6 @@ export class MetadataFile extends BaseMap implements Profile {
   install = new Installs(undefined, this, 'install');
 
   conditionalDemands = new Demands(undefined, this, 'demands');
-  // conditionalDemands = new Demands(this.node, undefined);
 
   get isFormatValid(): boolean {
     return this.document.errors.length === 0;

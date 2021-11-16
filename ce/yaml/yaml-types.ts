@@ -39,8 +39,8 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
       return this._node;
     }
 
-    if (this.key && isMap(this.parent?.node)) {
-      this._node = <any>this.parent!.node.get(this.key, true);
+    if (this.key && this.parent && isMap(this.parent?.node)) {
+      this._node = <ThisType>this.parent.node.get(this.key, true);
     }
 
     return this._node;
@@ -86,20 +86,21 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
     }
     return !isNullish(this.node?.value);
   }
-  /** @internal */ get exists(): boolean {
+
+  /** @internal */ exists(): this is Yaml<ThisType> & { node: ThisType } {
     if (this.node) {
       return true;
     }
     // well, if we're lazy and haven't instantiated it yet, check if it's created.
-    if (this.key && isMap(this.parent?.node)) {
-      this.node = <any>this.parent!.node.get(this.key);
+    if (this.key && this.parent && isMap(this.parent.node)) {
+      this.node = <ThisType>this.parent.node.get(this.key);
       if (this.node) {
         return true;
       }
     }
     return false;
   }
-  /** @internal */ assert(recreateIfDisposed = false, node = this.node) {
+  /** @internal */ assert(recreateIfDisposed = false, node = this.node): asserts this is Yaml<ThisType> & { node: ThisType } {
     if (this.node && this.node === node) {
       return; // quick and fast
     }
@@ -110,14 +111,14 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
 
       if (this.parent) {
         // ensure that the parent is not disposed
-        this.parent.assert(true);
+        (<any>this.parent).assert(true);
 
         if (isMap(this.parent.node)) {
           if (this.key) {
             // we have a parent, and the key, we can add the node.
             // let's just check if there is one first
             const n = this.parent.node.get(this.key);
-            this.parent!.assert(true);
+            // this.parent.assert(true);
             this.parent.node.set(this.key, this.node = this.node || this.createNode());
             return;
           }

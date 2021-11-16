@@ -13,7 +13,7 @@ export /** @internal */ abstract class EntityMap<TNode extends Node, TElement ex
   }
 
   get values(): Iterable<TElement> {
-    return this.node!.items.map(each => new this.factory(each.value));
+    return this.exists() ? this.node.items.map(each => new this.factory(each.value)) : [];
   }
 
   *[Symbol.iterator](): Iterator<[string, TElement]> {
@@ -50,11 +50,9 @@ export /** @internal */ abstract class EntityMap<TNode extends Node, TElement ex
       throw new Error('Cannot set an empty entity to a map');
     }
 
-    if (!this.node) {
-      // if we don't have a node at the moment, we need to create one.
-      this.assert(true);
-    }
+    // if we don't have a node at the moment, we need to create one.
+    this.assert(true);
 
-    this.node!.set(key, value.node);
+    this.node.set(key, value.node);
   }
 }

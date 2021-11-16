@@ -14,13 +14,13 @@ export /** @internal */ class ScalarMap<TElement extends Primitive = Primitive> 
 
   set(key: string, value: TElement) {
     this.assert(true);
-    this.node!.set(key, value);
+    this.node.set(key, value);
   }
 
 
   add(key: string): TElement {
     this.assert(true);
-    this.node!.set(key, '');
+    this.node.set(key, '');
     return <TElement>this.getValue(key);
   }
 

@@ -17,7 +17,7 @@ export async function isIndexFile(uri: Uri): Promise<boolean> {
 export async function isMetadataFile(uri: Uri, session: Session): Promise<boolean> {
   if (await uri.isFile()) {
     try {
-      return (await parseMetadata(uri, session))?.info?.exists;
+      return (await parseMetadata(uri, session))?.info?.exists();
     } catch {
       // nope. no worries.
     }

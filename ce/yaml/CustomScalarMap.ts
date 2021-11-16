@@ -13,7 +13,7 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
 
   add(key: string): TElement {
     this.assert(true);
-    this.node!.set(key, '');
+    this.node.set(key, '');
     return this.get(key)!;
   }
 
@@ -30,7 +30,7 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
 
   get(key: string): TElement | undefined {
     if (this.node) {
-      const v = this.node!.get(key, true);
+      const v = this.node.get(key, true);
       if (isScalar(v)) {
         return new this.factory(v, this, key);
       }
@@ -49,6 +49,6 @@ export /** @internal */ class CustomScalarMap<TElement extends Yaml<Scalar>> ext
 
     this.assert(true);   // if we don't have a node at the moment, we need to create one.
 
-    this.node!.set(key, new Scalar(value));
+    this.node.set(key, new Scalar(value));
   }
 }

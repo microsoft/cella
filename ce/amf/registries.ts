@@ -161,7 +161,7 @@ export class Registries extends Yaml<YAMLDictionary | YAMLSequence> implements D
   }
   /** @internal */
   override *validate(): Iterable<ValidationError> {
-    if (this.exists) {
+    if (this.exists()) {
       for (const [key, registry] of this) {
         yield* registry.validate();
       }

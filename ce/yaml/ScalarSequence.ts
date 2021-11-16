@@ -62,7 +62,7 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
       // this.node = seq;
       this.dispose(true);
       this.assert(true, seq);
-      //this.parent!.node.set(this.key, seq);
+      //this.parent.node.set(this.key, seq);
       // fall thru to the sequnce add
     }
 

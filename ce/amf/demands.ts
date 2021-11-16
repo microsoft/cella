@@ -73,7 +73,7 @@ export class DemandBlock extends Entity {
   /** @internal */
   override *validate(): Iterable<ValidationError> {
     yield* super.validate();
-    if (this.exists) {
+    if (this.exists()) {
       yield* this.settings.validate();
       yield* this.requires.validate();
       yield* this.seeAlso.validate();
