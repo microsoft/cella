@@ -117,9 +117,8 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
           if (this.key) {
             // we have a parent, and the key, we can add the node.
             // let's just check if there is one first
-            const n = this.parent.node.get(this.key);
-            // this.parent.assert(true);
-            this.parent.node.set(this.key, this.node = this.node || this.createNode());
+            this.node = this.node || <ThisType>this.parent.node.get(this.key) || this.createNode();
+            this.parent.node.set(this.key, this.node);
             return;
           }
           // the parent is a map, but we don't have a key, so we can't add the node.
@@ -127,7 +126,8 @@ export /** @internal */ abstract class Yaml<ThisType extends Node = Node> {
         }
 
         if (isSeq(this.parent.node)) {
-          this.parent.node.add(this.node = this.node || this.createNode());
+          this.node = this.node || <ThisType>this.parent.node.get(this.key) || this.createNode();
+          this.parent.node.add(this.node);
           return;
         }
 

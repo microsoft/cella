@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseConfiguration } from '../../amf/metadata-file';
+import { MetadataFile } from '../../amf/metadata-file';
 import { acquireArtifactFile } from '../../fs/acquire';
 import { FileType } from '../../fs/filesystem';
 import { i } from '../../i18n';
@@ -66,7 +66,7 @@ export class ApplyVsManCommand extends Command {
       return 0;
     }
 
-    const outputAmf = await parseConfiguration(inputPath, outputContent, session);
+    const outputAmf = await MetadataFile.parseConfiguration(inputPath, outputContent, session);
     if (!outputAmf.isValid) {
       const errors = outputAmf.validationErrors.join('\n');
       session.channels.warning(i`After transformation, ${inputPath} did not result in a valid AMF; skipping:\n${outputContent}\n${errors}`);

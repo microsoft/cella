@@ -56,7 +56,7 @@ export class VersionReference extends Yaml<YAMLScalar> implements IVersionRefere
           return [newRange, undefined];
 
         } catch (E) {
-          //
+          // ignore and fall thru
         }
       }
 
@@ -67,7 +67,7 @@ export class VersionReference extends Yaml<YAMLScalar> implements IVersionRefere
           const ver = new SemVer(b, true);
           return [range, ver];
         } catch (E) {
-          //
+          // ignore and fall thru
         }
       }
       // the range or version didn't resolve correctly.

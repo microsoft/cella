@@ -11,12 +11,11 @@ export class Registry extends Switch {
   switch = 'registry';
   get help() {
     return [
-      i`override the path to the repository`
+      i`override the path to the registry`
     ];
   }
 
   async loadRegistries(session: Session, more: Array<string> = []) {
-    const registries = session.defaultRegistry;
     for (const each of new Set([...this.values, ...more].map(each => sanitizeUri(each)))) {
       if (each) {
         const uri = session.parseUri(each);
@@ -34,8 +33,8 @@ export class Registry extends Switch {
               }
             }
             // registry is loaded
-            // it should be added to the
-            registries.add(r, each);
+            // it should be added to the aggregator
+            session.defaultRegistry.add(r, each);
           }
           continue;
         }
@@ -43,7 +42,7 @@ export class Registry extends Switch {
       }
     }
 
-    return registries;
+    return session.defaultRegistry;
   }
 
 }

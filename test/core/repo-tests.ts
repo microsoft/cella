@@ -97,22 +97,22 @@ describe('StandardRegistry Tests', () => {
 
   /* fixme!
   it('can save and load the index', async () => {
-    const repository = local.session.defaultRegistry;
-    await repository.regenerate();
-    await repository.save();
+    const registry = local.session.defaultRegistry;
+    await registry.regenerate();
+    await registry.save();
 
-    const anotherRepository = new LocalRegistry(local.session, local.session.homeFolder.join('repo', 'default'));
-    await anotherRepository.load();
-    strict.equal(repository.count, anotherRepository.count, 'repo should be the same size as the last one');
+    const anotherregistry = new LocalRegistry(local.session, local.session.homeFolder.join('repo', 'default'));
+    await anotherregistry.load();
+    strict.equal(registry.count, anotherregistry.count, 'repo should be the same size as the last one');
   });
 
   it('Loads a bunch items', async () => {
-    const repository = local.session.defaultRegistry;
-    await repository.regenerate();
+    const registry = local.session.defaultRegistry;
+    await registry.regenerate();
 
-    const all = await repository.openArtifacts(repository.values);
+    const all = await registry.openArtifacts(registry.values);
     const items = [...all.values()].flat();
-    strict.equal(items.length, repository.count, 'Should have loaded everything');
+    strict.equal(items.length, registry.count, 'Should have loaded everything');
 
   });
 
@@ -120,30 +120,30 @@ describe('StandardRegistry Tests', () => {
   it('Create index from some data', async () => {
     const start = process.uptime() * 1000;
 
-    const repository = local.session.defaultRegistry;
+    const registry = local.session.defaultRegistry;
     local.session.channels.on('debug', (d, x, m) => console.log(`${m}msec : ${d}`));
-    await repository.regenerate();
-    await repository.save();
+    await registry.regenerate();
+    await registry.save();
 
-    const arm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
+    const arm = registry.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(arm.length, 3, 'should be 3 results');
 
     local.session.channels.on('debug', (t) => console.log(t));
 
-    const map = await repository.openArtifacts(arm);
+    const map = await registry.openArtifacts(arm);
     strict.equal(map.size, 1, 'Should have one pkg id');
 
     const versions = map.get('compilers/gnu/gcc/arm-none-eabi');
     strict.ok(versions, 'should have some versions');
     strict.equal(versions.length, 3, 'should have three versions of the package');
 
-    const anotherRepository = new LocalRegistry(local.session, local.session.homeFolder.join('repo', 'default'));
-    await anotherRepository.load();
-    const anotherArm = repository.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
+    const anotherregistry = new LocalRegistry(local.session, local.session.homeFolder.join('repo', 'default'));
+    await anotherregistry.load();
+    const anotherArm = registry.where.id.equals('compilers/gnu/gcc/arm-none-eabi').items;
     strict.equal(anotherArm.length, 3, 'should be 3 results');
 
 
-    const cmakes = repository.where.id.equals('tools/kitware/cmake').items;
+    const cmakes = registry.where.id.equals('tools/kitware/cmake').items;
     strict.equal(cmakes.length, 5, 'should be 5 results');
   });
   */

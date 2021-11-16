@@ -22,7 +22,5 @@ export interface Sequence<T> extends Iterable<T> {
 
 export interface Strings extends Sequence<string> {
   get(index: number): string | undefined;
-  // add(value: string | Array<string>): void;
   delete(val: string | Array<string>): void;
-
 }

@@ -19,12 +19,12 @@ export class RegenerateCommand extends Command {
 
   whatIf = new WhatIf(this);
   get summary() {
-    return i`regenerate the index for a repository`;
+    return i`regenerate the index for a registry`;
   }
 
   get description() {
     return [
-      i`This allows the user to regenerate the index.yaml files for a ${cli} repository.`,
+      i`This allows the user to regenerate the index.yaml files for a ${cli} registry.`,
     ];
   }
 

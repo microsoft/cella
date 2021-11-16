@@ -36,7 +36,7 @@ export class LocalRegistry extends ArtifactRegistry implements Registry {
         this.loaded = true;
         return;
       }
-      this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
+      this.session.channels.debug(`Loading registry from '${this.indexYaml.fsPath}'`);
       this.index.deserialize(parse(await this.indexYaml.readUTF8()));
       this.loaded = true;
     }

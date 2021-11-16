@@ -43,12 +43,15 @@ export class Demands extends EntityMap<YAMLDictionary, DemandBlock> {
           range: demandBlock.node!.range || [0, 0, 0],
           category: ErrorKind.IncorrectType
         };
-        const query = parseQuery(mediaQuery);
-        if (!query.isValid) {
-          yield { message: i`Error parsing conditional demand '${mediaQuery}'- ${query.error?.message}`, range: this.sourcePosition(mediaQuery)/* mediaQuery.range! */, rangeOffset: query.error, category: ErrorKind.ParseError };
-          continue;
-        }
+        continue;
       }
+
+      const query = parseQuery(mediaQuery);
+      if (!query.isValid) {
+        yield { message: i`Error parsing conditional demand '${mediaQuery}'- ${query.error?.message}`, range: this.sourcePosition(mediaQuery)/* mediaQuery.range! */, rangeOffset: query.error, category: ErrorKind.ParseError };
+        continue;
+      }
+
       yield* demandBlock.validate();
     }
   }

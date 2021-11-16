@@ -34,14 +34,6 @@ export class Registries implements Iterable<[Registry, Array<string>]> {
     return this.session.defaultRegistry.getRegistryName(registry);
   }
 
-  *getRegistryNames(registry: Registry): Iterable<string> {
-    for (const [name, reg] of this.registries) {
-      if (reg === registry && name.indexOf('://') === -1) {
-        yield* name;
-      }
-    }
-  }
-
   getRegistry(id: string | Uri): Registry | undefined {
     return this.registries.get(id.toString());
   }

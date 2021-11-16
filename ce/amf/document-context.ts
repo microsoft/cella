@@ -13,8 +13,3 @@ export interface DocumentContext {
   folder: Uri;
   lineCounter: LineCounter;
 }
-
-
-export function hasDocumentContext(document: any): document is { context: DocumentContext } {
-  return document && document.context && document.context.filename;
-}

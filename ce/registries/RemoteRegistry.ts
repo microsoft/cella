@@ -58,14 +58,14 @@ export class RemoteRegistry extends ArtifactRegistry implements Registry {
 
       strict.ok(await this.indexYaml.exists(), `Index file is missing '${this.indexYaml.fsPath}'`);
 
-      this.session.channels.debug(`Loading repository from '${this.indexYaml.fsPath}'`);
+      this.session.channels.debug(`Loading registry from '${this.indexYaml.fsPath}'`);
       this.index.deserialize(parse(await this.indexYaml.readUTF8()));
       this.loaded = true;
     }
   }
 
   async update() {
-    this.session.channels.message(i`Updating repository data from ${this.location.toString()}`);
+    this.session.channels.message(i`Updating registry data from ${this.location.toString()}`);
 
     // get zip file location if
     const ref = /^https:\/\/github.com\/([a-zA-Z0-9-_]*\/[a-zA-Z0-9-_]*\/?)$/gi.exec(this.location.toString());
@@ -75,7 +75,7 @@ export class RemoteRegistry extends ArtifactRegistry implements Registry {
       locations = [this.location.join('archive/refs/heads/main.zip'), this.location.join('archive/refs/heads/master.zip')];
     }
 
-    const file = await acquireArtifactFile(this.session, [this.location], `${this.safeName}-repository.zip`, {});
+    const file = await acquireArtifactFile(this.session, [this.location], `${this.safeName}-registry.zip`, {});
     if (await file.exists()) {
       const unpacker = new ZipUnpacker(this.session);
       await unpacker.unpack(file, this.cacheFolder, { strip: 1 });

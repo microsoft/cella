@@ -24,7 +24,7 @@ export class FindCommand extends Command {
   project = new Project(this);
 
   get summary() {
-    return i`Find artifacts in the repository`;
+    return i`Find artifacts in the registry`;
   }
 
   get description() {

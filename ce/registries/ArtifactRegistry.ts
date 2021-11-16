@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { compare } from 'semver';
-import { parseConfiguration, parseMetadata } from '../amf/metadata-file';
+import { MetadataFile } from '../amf/metadata-file';
 import { Artifact } from '../artifacts/artifact';
 import { Registry, SearchCriteria } from '../artifacts/registry';
 import { FileType } from '../fs/filesystem';
@@ -55,7 +55,7 @@ export abstract class ArtifactRegistry implements Registry {
         return;
       }
       try {
-        const amf = await parseConfiguration(uri.fsPath, content, session);
+        const amf = await MetadataFile.parseConfiguration(uri.fsPath, content, session);
 
         if (!amf.isFormatValid) {
           for (const err of amf.formatErrors) {
@@ -125,7 +125,7 @@ export abstract class ArtifactRegistry implements Registry {
 
 
   private async openArtifact(manifestPath: string, parent: Registries): Promise<Artifact> {
-    const metadata = await parseMetadata(this.cacheFolder.join(manifestPath), this.session);
+    const metadata = await MetadataFile.parseMetadata(this.cacheFolder.join(manifestPath), this.session);
 
     return new Artifact(this.session,
       metadata,

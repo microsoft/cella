@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseConfiguration } from '../../amf/metadata-file';
+import { MetadataFile } from '../../amf/metadata-file';
 import { i } from '../../i18n';
 import { session } from '../../main';
 import { Command } from '../command';
@@ -32,7 +32,7 @@ export class NewCommand extends Command {
       return false;
     }
 
-    await (await parseConfiguration(project, '# Environment configuration\n', session)).save(session.currentDirectory.join(project));
+    await (await MetadataFile.parseConfiguration(project, '# Environment configuration\n', session)).save(session.currentDirectory.join(project));
 
     return true;
   }

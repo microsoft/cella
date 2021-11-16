@@ -3,7 +3,7 @@
 
 import { strict } from 'assert';
 import { delimiter } from 'path';
-import { MetadataFile, parseConfiguration, parseMetadata } from './amf/metadata-file';
+import { MetadataFile } from './amf/metadata-file';
 import { Activation } from './artifacts/activation';
 import { Artifact, InstalledArtifact } from './artifacts/artifact';
 import { Registry } from './artifacts/registry';
@@ -189,11 +189,7 @@ export class Session {
   }
 
   async isRemoteRegistry(location: Uri | string): Promise<boolean> {
-    location = this.parseUri(location);
-    if (location.scheme === 'https') {
-      return true;
-    }
-    return false;
+    return this.parseUri(location).scheme === 'https';
   }
 
   parseName(id: string): [string, string] {
@@ -255,8 +251,7 @@ export class Session {
     }
 
     // got past the checks, let's load the configuration.
-    // this.configuration = parseConfiguration(this.globalConfig.toString(), (await this.fileSystem.readFile(this.globalConfig)).toString());
-    this.configuration = await parseMetadata(this.globalConfig, this);
+    this.configuration = await MetadataFile.parseMetadata(this.globalConfig, this);
     this.channels.debug(`Loaded global configuration file '${this.globalConfig.fsPath}'`);
 
     // load the registries
@@ -419,7 +414,7 @@ export class Session {
     }
     for (const [folder, stat] of await this.installFolder.readDirectory(undefined, { recursive: true })) {
       try {
-        const metadata = await parseMetadata(folder.join('artifact.yaml'), this);
+        const metadata = await MetadataFile.parseMetadata(folder.join('artifact.yaml'), this);
         result.push({
           folder,
           id: metadata.info.id,
@@ -433,7 +428,7 @@ export class Session {
   }
 
   async openManifest(manifestFile: Uri): Promise<MetadataFile> {
-    return await parseConfiguration(manifestFile.fsPath, await manifestFile.readUTF8(), this);
+    return await MetadataFile.parseConfiguration(manifestFile.fsPath, await manifestFile.readUTF8(), this);
   }
 
   serializer(key: any, value: any) {

@@ -27,8 +27,8 @@ import { Settings } from './settings';
 export class MetadataFile extends BaseMap implements Profile {
   readonly context: DocumentContext;
   session!: Session;
-  /** @internal */
-  constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
+
+  private constructor(protected readonly document: Document.Parsed, public readonly filename: string, public lineCounter: LineCounter) {
     super(<YAMLMap<string, any>><any>document.contents);
     this.context = <DocumentContext>{
       filename,
@@ -41,6 +41,18 @@ export class MetadataFile extends BaseMap implements Profile {
     this.context.file = session.parseUri(this.context.filename);
     this.context.folder = this.context.file.parent;
     return this;
+  }
+
+  static async parseMetadata(uri: Uri, session: Session): Promise<MetadataFile> {
+    const lc = new LineCounter();
+    const content = await uri.readUTF8();
+    return new MetadataFile(parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true }), uri.toString(), lc).init(session);
+  }
+
+  static async parseConfiguration(filename: string, content: string, session: Session): Promise<MetadataFile> {
+    const lc = new LineCounter();
+    const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
+    return new MetadataFile(doc, filename, lc).init(session);
   }
 
   info = new Info(undefined, this, 'info');
@@ -81,9 +93,9 @@ export class MetadataFile extends BaseMap implements Profile {
       case '.yaml':
       case '.yml':
         // format as yaml
-        content = toYAML(this.document.toString());
+        content = this.content;
         break;
-      case '':
+
       case '.json':
         content = JSON.stringify(this.document.toJSON(), null, 2);
         break;
@@ -94,12 +106,21 @@ export class MetadataFile extends BaseMap implements Profile {
   }
   #errors!: Array<string>;
   get formatErrors(): Array<string> {
+    const t = this;
     return this.#errors || (this.#errors = this.document.errors.map(each => {
       const message = each.message;
-      const line = each.linePos?.[0] || 1;
-      const column = each.linePos?.[1] || 1;
-      return `${this.filename}:${line}:${column} ${each.name}, ${message}`;
+      const line = each.linePos?.[0].line || 1;
+      const column = each.linePos?.[0].col || 1;
+      return t.formatMessage(each.name, message, line, column);
     }));
+  }
+
+  /** @internal */ formatMessage(category: ErrorKind | string, message: string, line?: number, column?: number): string {
+    if (line !== undefined && column !== undefined) {
+      return `${this.filename}:${line}:${column} ${category}, ${message}`;
+    } else {
+      return `${this.filename}: ${category}, ${message}`;
+    }
   }
 
   get isValid(): boolean {
@@ -117,11 +138,7 @@ export class MetadataFile extends BaseMap implements Profile {
       const r = Array.isArray(range) ? range : range?.sourcePosition();
 
       const { line, column } = this.positionAt(r, rangeOffset);
-      if (line) {
-        errs.add(`${this.filename}:${line}:${column} ${category}, ${message}`);
-      } else {
-        errs.add(`${this.filename}: ${category}, ${message}`);
-      }
+      errs.add(this.formatMessage(category, message, line, column));
     }
     this.#validationErrors = [...errs];
     return this.#validationErrors;
@@ -163,7 +180,7 @@ export class MetadataFile extends BaseMap implements Profile {
     for (const [mediaQuery, demandBlock] of this.conditionalDemands) {
 
       if (set.has(mediaQuery)) {
-        yield { message: i`Duplicate Keys detected in manifest: '${mediaQuery}'`, range: demandBlock, category: ErrorKind.DuplicateKey };
+        yield { message: i`Duplicate keys detected in manifest: '${mediaQuery}'`, range: demandBlock, category: ErrorKind.DuplicateKey };
       }
       set.add(mediaQuery);
 
@@ -179,7 +196,7 @@ export class MetadataFile extends BaseMap implements Profile {
     yield* this.seeAlso.validate();
   }
 }
-
+/*
 export async function parseMetadata(uri: Uri, session: Session): Promise<MetadataFile> {
   const lc = new LineCounter();
   const content = await uri.readUTF8();
@@ -191,3 +208,4 @@ export async function parseConfiguration(filename: string, content: string, sess
   const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
   return new MetadataFile(doc, filename, lc).init(session);
 }
+*/

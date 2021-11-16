@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseConfiguration as parse } from '@microsoft/vcpkg-ce/dist/amf/metadata-file';
+import { MetadataFile } from '@microsoft/vcpkg-ce/dist/amf/metadata-file';
 import { strict } from 'assert';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -20,7 +20,7 @@ describe('Amf', () => {
 
   it('readProfile', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
-    const doc = await parse('./sample1.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./sample1.yaml', content, local.session);
 
     strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
@@ -31,7 +31,7 @@ describe('Amf', () => {
 
   it('reads file with nupkg', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'repo', 'sdks', 'microsoft', 'windows.yaml'))).toString('utf-8');
-    const doc = await parse('./windows.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./windows.yaml', content, local.session);
 
     strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
     strict.ok(doc.isValid, 'Is it valid?');
@@ -41,7 +41,7 @@ describe('Amf', () => {
 
   it('load/persist environment.yaml', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'environment.yaml'))).toString('utf-8');
-    const doc = await parse('./cenvironment.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./cenvironment.yaml', content, local.session);
 
     console.log(doc.content);
     for (const each of doc.validationErrors) {
@@ -56,7 +56,7 @@ describe('Amf', () => {
 
   it('profile checks', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'sample1.yaml'))).toString('utf-8');
-    const doc = await parse('./sample1.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./sample1.yaml', content, local.session);
 
     strict.ok(doc.isFormatValid, 'Ensure it\'s valid yaml');
     console.log(doc.validationErrors);
@@ -140,7 +140,7 @@ describe('Amf', () => {
 
   it('read invalid yaml file', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'errors.yaml'))).toString('utf-8');
-    const doc = await parse('./errors.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./errors.yaml', content, local.session);
 
     strict.equal(doc.isFormatValid, false, 'this document should have errors');
     strict.equal(doc.formatErrors.length, 2, 'This document should have one error');
@@ -151,7 +151,7 @@ describe('Amf', () => {
 
   it('read empty yaml file', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'empty.yaml'))).toString('utf-8');
-    const doc = await parse('./empty.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./empty.yaml', content, local.session);
 
     strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
 
@@ -161,7 +161,7 @@ describe('Amf', () => {
 
   it('validation errors', async () => {
     const content = await (await readFile(join(rootFolder(), 'resources', 'validation-errors.yaml'))).toString('utf-8');
-    const doc = await parse('./validation-errors.yaml', content, local.session);
+    const doc = await MetadataFile.parseConfiguration('./validation-errors.yaml', content, local.session);
 
     strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
 

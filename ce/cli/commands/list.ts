@@ -32,8 +32,8 @@ export class ListCommand extends Command {
       const table = new Table('Artifact', 'Version', 'Summary');
 
       for (const { artifact, id, folder } of artifacts) {
-        const latest = artifacts[0];
-        const name = artifactIdentity('?????', id);
+
+        const name = artifactIdentity('<registry-name-goes-here>', id); //todo: fixme
         table.push(name, artifact.version, artifact.metadata.info.summary || '');
       }
       log(table.toString());

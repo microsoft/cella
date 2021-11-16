@@ -104,16 +104,16 @@ export class Artifact extends ArtifactBase {
     if (installInfo.lang && !options.allLanguages && options.language && options.language.toLowerCase() !== installInfo.lang.toLowerCase()) {
       return;
     }
-
+    const target = { name: this.id, targetLocation: this.targetLocation };
     switch (installInfo.installerKind) {
       case 'nupkg':
-        await installNuGet(this.session, { name: this.id, targetLocation: this.targetLocation }, <NupkgInstaller>installInfo, options);
+        await installNuGet(this.session, target, <NupkgInstaller>installInfo, options);
         break;
       case 'unzip':
-        await installUnZip(this.session, { name: this.id, targetLocation: this.targetLocation }, <UnZipInstaller>installInfo, options);
+        await installUnZip(this.session, target, <UnZipInstaller>installInfo, options);
         break;
       case 'untar':
-        await installUnTar(this.session, { name: this.id, targetLocation: this.targetLocation }, <UnTarInstaller>installInfo, options);
+        await installUnTar(this.session, target, <UnTarInstaller>installInfo, options);
         break;
       case 'git':
         throw new Error('not implemented');

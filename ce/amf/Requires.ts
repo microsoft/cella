@@ -15,21 +15,19 @@ export class Requires extends CustomScalarMap<VersionReference> {
   override set(key: string, value: VersionReference | IVersionReference | string) {
     if (typeof value === 'string') {
       this.assert(true);   // if we don't have a node at the moment, we need to create one.
-      this.node!.set(key, new Scalar(value));
+      this.node.set(key, new Scalar(value));
       return;
     }
     if (value.raw) {
       this.assert(true);   // if we don't have a node at the moment, we need to create one.
-      this.node!.set(key, new Scalar(value.raw));
+      this.node.set(key, new Scalar(value.raw));
     }
-    if (value.range) {
-      if (value.resolved) {
-        this.assert(true);   // if we don't have a node at the moment, we need to create one.
-        this.node!.set(key, new Scalar(`${value.range} ${value.resolved}`));
-      } else {
-        this.assert(true);   // if we don't have a node at the moment, we need to create one.
-        this.node!.set(key, new Scalar(value.range));
-      }
+    if (value.resolved) {
+      this.assert(true);   // if we don't have a node at the moment, we need to create one.
+      this.node.set(key, new Scalar(`${value.range} ${value.resolved}`));
+    } else {
+      this.assert(true);   // if we don't have a node at the moment, we need to create one.
+      this.node.set(key, new Scalar(value.range));
     }
   }
 }

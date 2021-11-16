@@ -6,7 +6,7 @@ import { UnpackSettings } from './unpack-settings';
 import { Verifiable } from './verifiable';
 
 /**
- * a special version of UnZip, this assumes the nuget.org package repository
+ * a special version of UnZip, this assumes the nuget.org package service
  * the 'nupkg' value is the package id (ie, 'Microsoft.Windows.SDK.CPP.x64/10.0.19041.5')
  *
  * and that is appended to the known-url https://www.nuget.org/api/v2/package/ to get

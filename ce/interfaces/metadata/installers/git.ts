@@ -11,7 +11,7 @@ import { Installer } from './Installer';
  */
 
 export interface GitInstaller extends Installer {
-  /** the git repository location to be cloned */
+  /** the git repo location to be cloned */
   location: Strings;
 
   /** optionally, a tag/branch to be checked out */

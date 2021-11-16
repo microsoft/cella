@@ -35,22 +35,22 @@ export class Info extends Entity implements IInfo {
     if (!this.has('id')) {
       yield { message: i`Missing identity '${'info.id'}'`, range: this, category: ErrorKind.FieldMissing };
     } else if (!this.is('id', 'string')) {
-      yield { message: i`info.id should be of type 'string', found ${this.kind('id')}`, range: this.sourcePosition('id'), category: ErrorKind.IncorrectType };
+      yield { message: i`info.id should be of type 'string', found '${this.kind('id')}'`, range: this.sourcePosition('id'), category: ErrorKind.IncorrectType };
     }
 
     if (!this.has('version')) {
       yield { message: i`Missing version '${'info.version'}'`, range: this, category: ErrorKind.FieldMissing };
     } else if (!this.is('version', 'string')) {
-      yield { message: i`info.version should be of type 'string', found ${this.kind('version')}`, range: this.sourcePosition('version'), category: ErrorKind.IncorrectType };
+      yield { message: i`info.version should be of type 'string', found '${this.kind('version')}'`, range: this.sourcePosition('version'), category: ErrorKind.IncorrectType };
     }
     if (this.is('summary', 'string') === false) {
-      yield { message: i`info.summary should be of type 'string', found ${this.kind('summary')}`, range: this.sourcePosition('summary'), category: ErrorKind.IncorrectType };
+      yield { message: i`info.summary should be of type 'string', found '${this.kind('summary')}'`, range: this.sourcePosition('summary'), category: ErrorKind.IncorrectType };
     }
     if (this.is('description', 'string') === false) {
-      yield { message: i`info.description should be of type 'string', found ${this.kind('description')}`, range: this.sourcePosition('description'), category: ErrorKind.IncorrectType };
+      yield { message: i`info.description should be of type 'string', found '${this.kind('description')}'`, range: this.sourcePosition('description'), category: ErrorKind.IncorrectType };
     }
     if (this.is('options', 'sequence') === false) {
-      yield { message: i`info.options should be a seqence, found ${this.kind('options')}`, range: this.sourcePosition('options'), category: ErrorKind.IncorrectType };
+      yield { message: i`info.options should be a sequence, found '${this.kind('options')}'`, range: this.sourcePosition('options'), category: ErrorKind.IncorrectType };
     }
   }
 }

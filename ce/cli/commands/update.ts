@@ -22,19 +22,19 @@ export class UpdateCommand extends Command {
   registrySwitch = new RegSwitch(this);
 
   get summary() {
-    return i`update the repository from the remote`;
+    return i`update the registry from the remote`;
   }
 
   get description() {
     return [
-      i`This downloads the latest contents of the repository from the remote service.`,
+      i`This downloads the latest contents of the registry from the remote service.`,
     ];
   }
 
   override async run() {
     const registries = await this.registrySwitch.loadRegistries(session);
 
-    // process named repositories
+    // process named registries
     for (let each of this.inputs) {
       if (each.indexOf(':') !== -1) {
         each = session.parseUri(each).toString();
@@ -42,13 +42,13 @@ export class UpdateCommand extends Command {
       const registry = registries.getRegistryWithNameOrLocation(each);
       if (registry) {
         try {
-          log(i`Downloading repository data`);
+          log(i`Downloading registry data`);
           await registry.update();
           await registry.load();
-          log(i`Updated ${each}. Repository contains ${count(registry.count)} metadata files`);
+          log(i`Updated ${each}. registry contains ${count(registry.count)} metadata files`);
         } catch (e) {
           if (e instanceof RemoteFileUnavailable) {
-            log(i`Unable to download repository snapshot`);
+            log(i`Unable to download registry snapshot`);
             return false;
           }
           writeException(e);
@@ -63,8 +63,8 @@ export class UpdateCommand extends Command {
   }
 
   static async update(registry: Registry) {
-    log(i`Artifact repository data is not loaded`);
-    log(i`Attempting to update artifact repository`);
+    log(i`Artifact registry data is not loaded`);
+    log(i`Attempting to update artifact registry`);
     const update = new UpdateCommand(new CommandLine([]));
 
     let success = true;
@@ -75,7 +75,7 @@ export class UpdateCommand extends Command {
       success = false;
     }
     if (!success) {
-      error(i`Unable to load repository index`);
+      error(i`Unable to load registry index`);
       return false;
     }
     try {
@@ -83,7 +83,7 @@ export class UpdateCommand extends Command {
     } catch (e) {
       writeException(e);
       // it just doesn't want to load.
-      error(i`Unable to load repository index`);
+      error(i`Unable to load registry index`);
       return false;
     }
     return true;

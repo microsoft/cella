@@ -23,7 +23,7 @@ export class AcquireCommand extends Command {
   registrySwitch = new Registry(this);
 
   get summary() {
-    return i`Acquire artifacts in the repository`;
+    return i`Acquire artifacts in the registry`;
   }
 
   get description() {

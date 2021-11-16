@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { parseMetadata } from '../amf/metadata-file';
+import { MetadataFile } from '../amf/metadata-file';
 import { Session } from '../session';
 import { Uri } from '../util/uri';
 
@@ -17,7 +17,7 @@ export async function isIndexFile(uri: Uri): Promise<boolean> {
 export async function isMetadataFile(uri: Uri, session: Session): Promise<boolean> {
   if (await uri.isFile()) {
     try {
-      return (await parseMetadata(uri, session))?.info?.exists();
+      return (await MetadataFile.parseMetadata(uri, session))?.info?.exists();
     } catch {
       // nope. no worries.
     }

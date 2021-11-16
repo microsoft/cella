@@ -52,7 +52,7 @@ export class Project extends Switch {
       }
 
       debug(`Loading project manifest ${project} `);
-      return project ? new ProjectManifest(session, await session.openManifest(project)) : undefined;
+      return new ProjectManifest(session, await session.openManifest(project));
     });
   }
 }

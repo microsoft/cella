@@ -420,18 +420,9 @@ export class ManyMap<K, V> extends Map<K, Array<V>> {
   }
 }
 
-/*
-export function* select<T, U>(items: Iterable < T >, selector: (value: T, index: number) => U) {
-  let index = 0;
-  for (const each of items) {
-    yield selector(each, index++);
-  }
-}
-*/
-
 export function countWhere<T>(from: Iterable<T>, predicate: (each: T) => Promise<boolean>): Promise<number>
 export function countWhere<T>(from: Iterable<T>, predicate: (each: T) => boolean): number
-export function countWhere<T>(from: Iterable<T>, predicate: (e: any) => boolean | Promise<boolean>) {
+export function countWhere<T>(from: Iterable<T>, predicate: (e: T) => boolean | Promise<boolean>) {
   let v = 0;
   const all = [];
   for (const each of from) {
