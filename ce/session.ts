@@ -35,7 +35,6 @@ registries:
 
 global:
   send-anonymous-telemetry: true
-  accepted-eula: false
 `;
 
 const profileName = ['vcpkg-configuration.json', 'vcpkg-configuration.yaml', 'environment.yaml', 'environment.yml', 'environment.json'];
@@ -206,15 +205,6 @@ export class Session {
 
   get telemetryEnabled() {
     return !!this.configuration.globalSettings.get('send-anonymous-telemetry');
-  }
-
-  get acceptedEula() {
-    return !!this.configuration.globalSettings.get('accepted-eula');
-  }
-
-  async acceptEula() {
-    this.configuration.globalSettings.set('accepted-eula', true);
-    await this.saveConfig();
   }
 
   async saveConfig() {
