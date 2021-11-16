@@ -64,24 +64,11 @@ steps:
     displayName: Use Node 16 or later
     inputs:
       version: "16.x"
-  - script: npm install -g @microsoft/rush
-    displayName: Install Rush
-  - script: rush update
-    displayName: Install dependencies
-  - script: rush lint
-    displayName: Check for linting errors
-  - script: rush rebuild
-    displayName: Build all packages
-  - script: rush test
-    displayName: Run tests
-
-  # Collect all dependencies. Output will be placed in the ./common/deploy directory.
-  - script: |
-      rush set-versions
-      node -e "const c = require('./ce/package.json'); p = require('./assets/package.json') ; p.version = c.version; require('fs').writeFileSync('./assets/package.json', JSON.stringify(p,undefined,2)); console.log(``set asset version to `${p.version}``);"
-    displayName: Set package versions
-  - script: rush deploy
-    displayName: Collect dependencies
+  - task: PowerShell@2
+    displayName: 'Generate vcpkg-ce deploy directory'
+    inputs:
+      pwsh: true
+      filePath: generate-deploy-directory.ps1
 
   - task: ComponentGovernanceComponentDetection@0
     displayName: Detect components
