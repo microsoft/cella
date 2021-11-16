@@ -4,6 +4,6 @@
 import { ScalarMap } from '../yaml/ScalarMap';
 
 export class GlobalSettings extends ScalarMap {
-
+  // global settings is just a map at this point.
 }
 

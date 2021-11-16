@@ -143,7 +143,7 @@ describe('Amf', () => {
     const doc = await MetadataFile.parseConfiguration('./errors.yaml', content, local.session);
 
     strict.equal(doc.isFormatValid, false, 'this document should have errors');
-    strict.equal(doc.formatErrors.length, 2, 'This document should have one error');
+    strict.equal(doc.formatErrors.length, 2, 'This document should have two error');
 
     strict.equal(doc.info.id, 'bob', 'identity incorrect');
     strict.equal(doc.info.version, '1.0.2', 'version incorrect');
@@ -166,6 +166,6 @@ describe('Amf', () => {
     strict.ok(doc.isFormatValid, 'Ensure it is valid yaml');
 
     console.log(doc.validationErrors);
-    strict.equal(doc.validationErrors.length, 2, `Expecting five errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
+    strict.equal(doc.validationErrors.length, 2, `Expecting two errors, found: ${JSON.stringify(doc.validationErrors, null, 2)}`);
   });
 });
