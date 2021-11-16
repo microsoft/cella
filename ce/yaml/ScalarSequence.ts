@@ -58,11 +58,8 @@ export /** @internal */ class ScalarSequence<TElement extends Primitive> extends
       const n = this.node;
       const seq = new YAMLSequence();
       seq.add(n);
-      // seq.add(new Scalar(value));
-      // this.node = seq;
       this.dispose(true);
       this.assert(true, seq);
-      //this.parent.node.set(this.key, seq);
       // fall thru to the sequnce add
     }
 
