@@ -196,16 +196,3 @@ export class MetadataFile extends BaseMap implements Profile {
     yield* this.seeAlso.validate();
   }
 }
-/*
-export async function parseMetadata(uri: Uri, session: Session): Promise<MetadataFile> {
-  const lc = new LineCounter();
-  const content = await uri.readUTF8();
-  return new MetadataFile(parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true }), uri.toString(), lc).init(session);
-}
-
-export async function parseConfiguration(filename: string, content: string, session: Session): Promise<MetadataFile> {
-  const lc = new LineCounter();
-  const doc = parseDocument(content, { prettyErrors: false, lineCounter: lc, strict: true });
-  return new MetadataFile(doc, filename, lc).init(session);
-}
-*/
