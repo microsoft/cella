@@ -3,9 +3,9 @@
 
 import { strict } from 'assert';
 import { parse } from 'semver';
-import { i } from '../../lib/i18n';
-import { Version } from '../../lib/version';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Version } from '../../version';
 import { Command } from '../command';
 import { cli, product } from '../constants';
 import { debug, error, log } from '../styling';
@@ -37,7 +37,7 @@ export class VersionCommand extends Command {
   check = new Check(this);
   update = new Update(this);
 
-  versionUrl = session.fileSystem.parse('https://aka.ms/vcpkg-ce.version');
+  versionUrl = session.parseUri('https://aka.ms/vcpkg-ce.version');
 
   get summary() {
     return i`manage the version of ${cli}`;

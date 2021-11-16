@@ -1,6 +1,6 @@
 {
   "name": "vcpkg-ce.test",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "ce test project",
   "directories": {
     "doc": "docs"
@@ -47,7 +47,7 @@
     "shx": "0.3.3"
   },
   "dependencies": {
-    "@microsoft/vcpkg-ce": "~0.5.0",
+    "@microsoft/vcpkg-ce": "~0.6.0",
     "yaml": "2.0.0-8",
     "semver": "~7.3.4",
     "txtgen": "2.2.8"

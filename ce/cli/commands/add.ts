@@ -1,16 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { MetadataFile } from '../../lib/amf/metadata-file';
-import { i } from '../../lib/i18n';
+import { i } from '../../i18n';
 import { session } from '../../main';
-import { selectArtifacts, Selections } from '../artifacts';
+import { selectArtifacts } from '../artifacts';
 import { Command } from '../command';
 import { cmdSwitch, projectFile } from '../format';
 import { activateProject } from '../project';
 import { debug, error } from '../styling';
 import { Project } from '../switches/project';
-import { Repo } from '../switches/repo';
+import { Registry } from '../switches/registry';
 import { Version } from '../switches/version';
 import { WhatIf } from '../switches/whatIf';
 
@@ -19,10 +18,12 @@ export class AddCommand extends Command {
   readonly aliases = [];
   seeAlso = [];
   argumentsHelp = [];
-  repo = new Repo(this);
+
   version = new Version(this)
   project: Project = new Project(this);
   whatIf = new WhatIf(this);
+  registrySwitch = new Registry(this);
+
 
   get summary() {
     return i`Adds an artifact to the project`;
@@ -35,10 +36,15 @@ export class AddCommand extends Command {
   }
 
   override async run() {
-    const project = await this.project.value;
-    if (!project) {
+    const projectManifest = await this.project.manifest;
+
+    if (!projectManifest) {
+      error(i`Unable to find project in folder (or parent folders) for ${session.currentDirectory.fsPath}`);
       return false;
     }
+
+    // pull in any registries that are on the command line
+    await this.registrySwitch.loadRegistries(session);
 
     if (this.inputs.length === 0) {
       error(i`No artifacts specified`);
@@ -51,26 +57,34 @@ export class AddCommand extends Command {
       return false;
     }
 
-    const selections = <Selections>this.inputs.map((v, i) => [v, versions[i]]);
-    const selectedArtifacts = await selectArtifacts(selections);
+    const selections = new Map(this.inputs.map((v, i) => [v, versions[i] || '*']));
+    const selectedArtifacts = await selectArtifacts(selections, projectManifest.registries);
 
     if (!selectedArtifacts) {
       return false;
     }
 
-    const manifest = await session.openManifest(project);
-    let m: MetadataFile;
+    for (const [artifact, id, requested] of selectedArtifacts.values()) {
+      // make sure the registry is in the project
+      const registry = projectManifest.registries.getRegistry(artifact.registryUri);
+      if (!registry) {
+        const r = projectManifest.metadata.registries.add(artifact.registryId, artifact.registryUri, 'artifact');
 
-    for (const artifact of selectedArtifacts) {
-      manifest.requires.set(artifact.id, <any>artifact.version.toString());
+      }
+
+
+      // add the artifact to the project
+      const fulfilled = artifact.version.toString();
+      const v = requested !== fulfilled ? `${requested} ${fulfilled}` : fulfilled;
+      projectManifest.metadata.requires.set(artifact.reference, <any>v);
     }
 
     // write the file out.
-    await manifest.save(project);
+    await projectManifest.metadata.save();
 
-    debug(i`Deactivating project ${projectFile(project)}`);
+    debug(i`Deactivating project ${projectFile(projectManifest.metadata.context.file)}`);
     await session.deactivate();
 
-    return await activateProject(project, this.commandLine);
+    return await activateProject(projectManifest, this.commandLine);
   }
 }

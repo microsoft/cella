@@ -1,41 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { ManyMap } from './lib/util/linq';
-import { Queue } from './lib/util/promise';
-
-
-/*
-export * from './lib/artifacts/activation';
-export * from './lib/artifacts/artifact';
-export * from './lib/artifacts/registry';
-export * from './lib/fs/acquire';
-export * from './lib/fs/archive';
-export * from './lib/fs/filesystem';
-export * from './lib/fs/http-filesystem';
-export * from './lib/fs/local-filesystem';
-export * from './lib/fs/unified-filesystem';
-export * from './lib/fs/unzip';
-export * from './lib/i18n';
-export * from './lib/interfaces/metadata-format';
-export * from './lib/mediaquery/media-query';
-export * from './lib/registries/catalog';
-export * from './lib/registries/standard-registry';
-export * from './lib/session';
-export * from './lib/util/channels';
-export * from './lib/util/events';
-export * from './lib/util/exceptions';
-export * from './lib/util/hash';
-export * from './lib/util/intersect';
-export * from './lib/util/linq';
-export * from './lib/util/percentage-scaler';
-export * from './lib/util/uri';
-export * from './lib/version';
-export * from './lib/willow/template-amf';
-export * from './lib/willow/willow';
-export * from './lib/yaml/strings';
-export * from './lib/yaml/yaml';
-*/
+import { ManyMap } from './util/linq';
+import { Queue } from './util/promise';
 
 /** This adds the expected declarations to the Array type. */
 declare global {

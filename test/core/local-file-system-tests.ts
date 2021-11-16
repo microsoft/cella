@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { FileType } from '@microsoft/vcpkg-ce/dist/lib/fs/filesystem';
-import { hash } from '@microsoft/vcpkg-ce/dist/lib/util/hash';
+import { FileType } from '@microsoft/vcpkg-ce/dist/fs/filesystem';
+import { hash } from '@microsoft/vcpkg-ce/dist/util/hash';
 import { strict } from 'assert';
 import { pipeline as origPipeline, Writable } from 'stream';
 import { promisify } from 'util';

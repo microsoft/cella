@@ -5,7 +5,7 @@ import { blue, cyan, gray, green, red, white, yellow } from 'chalk';
 import * as markdown from 'marked';
 import * as renderer from 'marked-terminal';
 import { argv } from 'process';
-import { Session } from '../lib/session';
+import { Session } from '../session';
 import { CommandLine } from './command-line';
 
 function formatTime(t: number) {
@@ -53,7 +53,7 @@ function md(text = '', session?: Session): string {
     text = markdown(`${text}`.replace(/\\\./g, '\\\\.')); // work around md messing up paths with .\ in them.
 
     // rewrite file:// urls to be locl filesystem urls.
-    return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.fileSystem.parse(a).fsPath)) : text;
+    return (!!text && !!session) ? text.replace(/(file:\/\/\S*)/g, (s, a) => yellow.dim(session.parseUri(a).fsPath)) : text;
   }
   return '';
 }

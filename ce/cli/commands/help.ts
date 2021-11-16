@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from '../../lib/i18n';
+import { i } from '../../i18n';
 import { Argument } from '../argument';
 import { Command } from '../command';
 import { blank, cli } from '../constants';

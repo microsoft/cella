@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/vcpkg-ce/dist/lib/fs/acquire';
+import { acquireArtifactFile, resolveNugetUrl } from '@microsoft/vcpkg-ce/dist/fs/acquire';
 import { strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 
@@ -13,7 +13,7 @@ describe('Acquire', () => {
 
   it('try some downloads', async () => {
 
-    const remoteFile = local.session.fileSystem.parse('https://raw.githubusercontent.com/microsoft/vscode/main/README.md');
+    const remoteFile = local.session.parseUri('https://raw.githubusercontent.com/microsoft/vscode/main/README.md');
 
     let acq = acquireArtifactFile(local.session, [remoteFile], 'readme.md');
 
@@ -42,7 +42,7 @@ describe('Acquire', () => {
 
 
   it('larger file', async () => {
-    const remoteFile = local.session.fileSystem.parse('https://user-images.githubusercontent.com/1487073/58344409-70473b80-7e0a-11e9-8570-b2efc6f8fa44.png');
+    const remoteFile = local.session.parseUri('https://user-images.githubusercontent.com/1487073/58344409-70473b80-7e0a-11e9-8570-b2efc6f8fa44.png');
 
     let acq = acquireArtifactFile(local.session, [remoteFile], 'xyz.png');
 

@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { acquireArtifactFile } from '../../lib/fs/acquire';
-import { FileType } from '../../lib/fs/filesystem';
-import { i } from '../../lib/i18n';
-import { parseConfiguration } from '../../lib/interfaces/metadata-format';
-import { Session } from '../../lib/session';
-import { Uri } from '../../lib/util/uri';
-import { templateAmfApplyVsManifestInformation } from '../../lib/willow/template-amf';
-import { parseVsManFromChannel, VsManDatabase } from '../../lib/willow/willow';
+import { MetadataFile } from '../../amf/metadata-file';
+import { acquireArtifactFile } from '../../fs/acquire';
+import { FileType } from '../../fs/filesystem';
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Session } from '../../session';
+import { Uri } from '../../util/uri';
+import { templateAmfApplyVsManifestInformation } from '../../willow/template-amf';
+import { parseVsManFromChannel, VsManDatabase } from '../../willow/willow';
 import { Command } from '../command';
 import { log } from '../styling';
 import { Switch } from '../switch';
@@ -66,7 +66,7 @@ export class ApplyVsManCommand extends Command {
       return 0;
     }
 
-    const outputAmf = parseConfiguration(inputPath, outputContent);
+    const outputAmf = await MetadataFile.parseConfiguration(inputPath, outputContent, session);
     if (!outputAmf.isValid) {
       const errors = outputAmf.validationErrors.join('\n');
       session.channels.warning(i`After transformation, ${inputPath} did not result in a valid AMF; skipping:\n${outputContent}\n${errors}`);
@@ -120,11 +120,11 @@ export class ApplyVsManCommand extends Command {
     const channelUriStr = this.channelUri.requiredValue;
     const repoRoot = session.fileSystem.file(this.repoRoot.requiredValue);
     log(i`Downloading channel manifest from ${channelUriStr}`);
-    const channelUriUri = session.fileSystem.parse(channelUriStr);
+    const channelUriUri = session.parseUri(channelUriStr);
     const channelFile = await acquireArtifactFile(session, [channelUriUri], 'channel.chman');
     const vsManPayload = parseVsManFromChannel(await channelFile.readUTF8());
     log(i`Downloading Visual Studio manifest version ${vsManPayload.version} (${vsManPayload.url})`);
-    const vsManUri = await acquireArtifactFile(session, [session.fileSystem.parse(vsManPayload.url)], vsManPayload.fileName);
+    const vsManUri = await acquireArtifactFile(session, [session.parseUri(vsManPayload.url)], vsManPayload.fileName);
     const vsManLookup = new VsManDatabase(await vsManUri.readUTF8());
     let totalProcessed = 0;
     for (const inputPath of this.inputs) {

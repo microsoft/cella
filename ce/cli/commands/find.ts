@@ -1,26 +1,30 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { i } from '../../lib/i18n';
+
+import { i } from '../../i18n';
 import { session } from '../../main';
+import { Registries } from '../../registries/registries';
 import { Command } from '../command';
 import { artifactIdentity } from '../format';
 import { Table } from '../markdown-table';
-import { log } from '../styling';
-import { Repo } from '../switches/repo';
+import { debug, log } from '../styling';
+import { Project } from '../switches/project';
+import { Registry } from '../switches/registry';
 import { Version } from '../switches/version';
-import { UpdateCommand } from './update';
 
 export class FindCommand extends Command {
   readonly command = 'find';
   readonly aliases = ['search'];
   seeAlso = [];
   argumentsHelp = [];
-  repo = new Repo(this);
+
   version = new Version(this)
+  registrySwitch = new Registry(this);
+  project = new Project(this);
 
   get summary() {
-    return i`Find artifacts in the repository`;
+    return i`Find artifacts in the registry`;
   }
 
   get description() {
@@ -30,35 +34,23 @@ export class FindCommand extends Command {
   }
 
   override async run() {
-    const repository = session.getRegistry('default');
-    try {
-      await repository.load();
-    } catch (e) {
-      // try to update the repo
-      if (!await UpdateCommand.update(repository)) {
-        return false;
-      }
-    }
-    const selections = repository.where;
-    for (const each of this.inputs) {
-      selections.id.contains(each);
-    }
+    // load registries (from the current project too if available)
+    let registries: Registries = await this.registrySwitch.loadRegistries(session);
+    registries = (await this.project.manifest)?.registries ?? registries;
 
-    for (const each of this.version.values) {
-      selections.version.rangeMatch(each);
-    }
-
-    const results = await repository.openArtifacts(selections.items);
-
+    debug(`using registries: ${[...registries].map(([registry, registryNames]) => registryNames[0]).join(', ')}`);
     const table = new Table('Artifact', 'Version', 'Summary');
 
-    for (const [fullName, artifacts] of results) {
-      const latest = artifacts[0];
-      if (!latest.metadata.info.dependencyOnly) {
-        const name = artifactIdentity(fullName, latest.shortName);
-        table.push(name, latest.metadata.info.version, latest.metadata.info.summary || '');
+    for (const each of this.inputs) {
+      for (const [registry, id, artifacts] of await registries.search({ idOrShortName: each, version: this.version.value })) {
+        const latest = artifacts[0];
+        if (!latest.metadata.info.dependencyOnly) {
+          const name = artifactIdentity(latest.registryId, id, latest.shortName);
+          table.push(name, latest.metadata.info.version, latest.metadata.info.summary || '');
+        }
       }
     }
+
     log(table.toString());
     log();
     return true;

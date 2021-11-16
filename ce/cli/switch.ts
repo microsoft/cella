@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { strict } from 'assert';
-import { i } from '../lib/i18n';
+import { i } from '../i18n';
 import { Command } from './command';
 import { Help } from './command-line';
 import { cmdSwitch } from './format';
@@ -12,9 +12,17 @@ export abstract class Switch implements Help {
   readonly abstract switch: string;
   readonly title = '';
   readonly abstract help: Array<string>;
+  readonly required: boolean;
+  readonly multipleAllowed: boolean;
 
-  constructor(protected command: Command) {
+  constructor(protected command: Command, options?: { multipleAllowed?: boolean, required?: boolean }) {
     command.switches.push(this);
+    this.multipleAllowed = options?.multipleAllowed || false;
+    this.required = options?.required || false;
+  }
+
+  get valid() {
+    return this.required || this.active;
   }
 
   #values?: Array<string>;

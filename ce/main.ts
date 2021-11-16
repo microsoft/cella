@@ -24,11 +24,11 @@ import { UpdateCommand } from './cli/commands/update';
 import { UseCommand } from './cli/commands/use';
 import { VersionCommand } from './cli/commands/version';
 import { blank, cli, product } from './cli/constants';
-import { cmdSwitch, command as formatCommand, hint } from './cli/format';
+import { command as formatCommand, hint } from './cli/format';
 import { debug, error, initStyling, log } from './cli/styling';
-import { i, setLocale } from './lib/i18n';
-import { Session } from './lib/session';
-import { Version as cliVersion } from './lib/version';
+import { i, setLocale } from './i18n';
+import { Session } from './session';
+import { Version as cliVersion } from './version';
 
 // parse the command line
 const commandline = new CommandLine(argv.slice(2));
@@ -61,20 +61,6 @@ async function main() {
 
   // start up the session and init the channel listeners.
   await session.init();
-
-  if (!session.acceptedEula) {
-    if (commandline.switches['accept-eula']) {
-      log(i`You are accepting the end-user license agreement available at https://aka.ms/vcpkg-ce-eula.txt`);
-      log(blank);
-      await session.acceptEula();
-    } else {
-      log(i`Usage of ${product} is subject to the end-user license agreement available at https://aka.ms/vcpkg-ce-eula.txt`);
-      log(blank);
-      log(i`To accept the end-user license agreement, specify ${cmdSwitch('accept-eula')} on the command line`);
-      log(blank);
-      return process.exitCode = 1;
-    }
-  }
 
   debug(`Anonymous Telemetry Enabled: ${session.telemetryEnabled}`);
   // find a project profile.
@@ -132,12 +118,16 @@ async function main() {
 
     return process.exitCode = 0;
   }
+  let result = true;
+  try {
+    result = await command.run();
+    log(blank);
 
-  const result = await command.run();
-  log(blank);
-
-  await session.writePostscript();
-
+    await session.writePostscript();
+  } catch (e) {
+    error(e);
+    return process.exitCode = 1;
+  }
   return process.exitCode = (result ? 0 : 1);
 }
 

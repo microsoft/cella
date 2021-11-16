@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-
-import { FileEntry, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, ZipUnpacker } from '@microsoft/vcpkg-ce/dist/lib/fs/archive';
-import { Uri } from '@microsoft/vcpkg-ce/dist/lib/util/uri';
+import { FileEntry, TarBzUnpacker, TarGzUnpacker, TarUnpacker, Unpacker, ZipUnpacker } from '@microsoft/vcpkg-ce/dist/fs/archive';
+import { Uri } from '@microsoft/vcpkg-ce/dist/util/uri';
 import { rejects, strict } from 'assert';
 import { SuiteLocal } from './SuiteLocal';
 

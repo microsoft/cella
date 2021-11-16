@@ -4,8 +4,8 @@
 import { strict } from 'assert';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
-import { i } from '../lib/i18n';
-import { intersect } from '../lib/util/intersect';
+import { i } from '../i18n';
+import { intersect } from '../util/intersect';
 import { Command } from './command';
 import { cmdSwitch } from './format';
 
@@ -96,10 +96,6 @@ export class CommandLine {
       join(process.env['HOME'] || tmpdir(), '.vcpkg')));
   }
 
-  get repositoryFolder() {
-    return resolvePath(this.switches['repo']?.[0] || this.switches['repository']?.[0] || undefined);
-  }
-
   get force() {
     return !!this.switches['force'];
   }
@@ -144,19 +140,24 @@ export class CommandLine {
   }
 
   constructor(args: Array<string>) {
-    for (const each of args) {
-      // --name
-      // --name:value
-      // --name=value
-      const [, name, value] = /^--([^=:]+)[=:]?(.+)?$/g.exec(each) || [];
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+      // eslint-disable-next-line prefer-const
+      let [, name, sep, value] = /^--([^=:]+)([=:])?(.+)?$/g.exec(arg) || [];
       if (name) {
+        if (!value) {
+          if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+            // if you say --foo bar then bar is the value
+            value = args[++i];
+          }
+        }
         this.switches[name] = this.switches[name] === undefined ? [] : this.switches[name];
         this.switches[name].push(value);
         continue;
       }
-
-      this.inputs.push(each);
+      this.inputs.push(arg);
     }
+
     this.context = intersect(new Ctx(this), this.switches);
   }
 }
